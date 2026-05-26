@@ -58,3 +58,11 @@ export interface QuickLogPayload {
   startTime?: string;
   note?: string;
 }
+
+export interface StartTimerPayload {
+  goalId?: string;
+  taskId?: string;
+  habitId?: string;
+  note?: string;
+  entryType?: TimerEntryType;
+}

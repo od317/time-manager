@@ -2,6 +2,10 @@
 // COMMON TYPES
 // ============================================================================
 
+export type GoalType = "quantity" | "time";
+
+export type TimerMode = "SIMPLE" | "POMODORO" | "QUICK_LOG";
+export type PomodoroPhase = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 export type GoalStatus =

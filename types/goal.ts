@@ -1,4 +1,4 @@
-import { GoalId, Priority, GoalStatus } from "./common";
+import { GoalId, Priority, GoalStatus, GoalType } from "./common";
 import { Task } from "./task";
 import { TimeEntry } from "./timeEntry";
 
@@ -34,7 +34,7 @@ export interface Goal {
   recurringRule: string | null;
   createdAt: string;
   updatedAt: string;
-
+  goalType: GoalType;
   // Relations (optional, included when requested)
   children?: Goal[];
   tasks?: Task[];
@@ -73,6 +73,7 @@ export interface CreateGoalPayload {
   icon?: string;
   isRecurring?: boolean;
   recurringRule?: string;
+  goalType: GoalType;
 }
 
 export interface UpdateGoalPayload extends Partial<CreateGoalPayload> {

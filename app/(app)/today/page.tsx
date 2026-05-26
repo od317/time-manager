@@ -29,7 +29,7 @@ export default async function TodayPage() {
     <>
       <TimerTitle />
       <div className="space-y-6 pb-20 md:pb-6">
-        <TodayTimer runningTimer={runningTimer} />
+        <TodayTimer runningTimer={runningTimer} goals={goals} />
         <TodayOverview goals={goals} habitsDue={habitsDueToday.length} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TodayHabits habits={habitsDueToday} />
