@@ -23,6 +23,10 @@ export function GoalCard({ goal, subGoals, allGoals }: GoalCardProps) {
   return (
     <div>
       <div className="bg-surface rounded-xl border border-border hover:border-primary/20 transition-all">
+        <div
+          className="h-1 w-full"
+          style={{ backgroundColor: goal.color || "#6366F1" }}
+        />
         <Link href={`/goals/${goal.id}`} className="block p-4">
           <div className="flex items-start gap-3">
             {hasChildren && (

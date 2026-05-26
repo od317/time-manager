@@ -18,6 +18,15 @@ export function GoalHeader({ goal }: GoalHeaderProps) {
       </Link>
 
       <div className="flex items-start gap-3">
+        <div
+          className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center"
+          style={{ backgroundColor: `${goal.color || "#6366F1"}20` }}
+        >
+          <div
+            className="w-6 h-6 rounded-full"
+            style={{ backgroundColor: goal.color || "#6366F1" }}
+          />
+        </div>
         {goal.icon && <span className="text-3xl">{goal.icon}</span>}
         <div>
           <h1 className="text-2xl font-bold text-text">{goal.title}</h1>

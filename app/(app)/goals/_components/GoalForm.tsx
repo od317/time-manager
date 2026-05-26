@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { goalService } from "@/lib/services";
 import { CreateGoalPayload, Priority, GoalType } from "@/types";
+import { DEFAULT_GOAL_COLOR } from "@/lib/constants";
+import { ColorPicker } from "./ColorPicker";
 
 interface GoalFormProps {
   onClose: () => void;
   parentId?: string | null;
+  parentColor?: string | null;
 }
 
 const priorities: { value: Priority; label: string; color: string }[] = [
@@ -18,7 +21,7 @@ const priorities: { value: Priority; label: string; color: string }[] = [
   { value: "URGENT", label: "Urgent", color: "bg-priority-urgent" },
 ];
 
-export function GoalForm({ onClose, parentId }: GoalFormProps) {
+export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -26,10 +29,20 @@ export function GoalForm({ onClose, parentId }: GoalFormProps) {
   const [goalType, setGoalType] = useState<GoalType>("quantity");
   const [targetValue, setTargetValue] = useState("");
   const [unit, setUnit] = useState("");
+  const [color, setColor] = useState(parentColor || DEFAULT_GOAL_COLOR);
   const [endDate, setEndDate] = useState("");
   const [hasEndDate, setHasEndDate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const isSubGoal = !!parentId;
+  const isColorLocked = isSubGoal;
+
+  useEffect(() => {
+    if (parentColor) {
+      setColor(parentColor);
+    }
+  }, [parentColor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +62,7 @@ export function GoalForm({ onClose, parentId }: GoalFormProps) {
         goalType,
         targetValue: targetValue ? parseFloat(targetValue) : undefined,
         unit: goalType === "time" ? "hours" : unit.trim() || undefined,
+        color: isSubGoal ? undefined : color,
         endDate:
           hasEndDate && endDate ? new Date(endDate).toISOString() : undefined,
         parentId,
@@ -66,10 +80,10 @@ export function GoalForm({ onClose, parentId }: GoalFormProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md animate-slide-up">
-        <div className="flex items-center justify-between p-6 border-b border-border">
+      <div className="bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up">
+        <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-surface z-10">
           <h3 className="text-lg font-semibold text-text">
-            {parentId ? "Create Sub-Goal" : "Create Goal"}
+            {isSubGoal ? "Create Sub-Goal" : "Create Goal"}
           </h3>
           <button
             onClick={onClose}
@@ -114,6 +128,13 @@ export function GoalForm({ onClose, parentId }: GoalFormProps) {
               placeholder="What do you want to achieve?"
             />
           </div>
+
+          {/* Color Picker */}
+          <ColorPicker
+            value={color}
+            onChange={setColor}
+            disabled={isColorLocked}
+          />
 
           {/* Goal Type */}
           <div>
@@ -175,7 +196,7 @@ export function GoalForm({ onClose, parentId }: GoalFormProps) {
             </div>
           </div>
 
-          {/* Target */}
+          {/* Target Value & Unit */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">
@@ -249,7 +270,7 @@ export function GoalForm({ onClose, parentId }: GoalFormProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-2.5 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 transition-all"
+              className="flex-1 py-2.5 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {isSubmitting ? "Creating..." : "Create Goal"}
             </button>

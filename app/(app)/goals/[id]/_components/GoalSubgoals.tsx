@@ -20,6 +20,10 @@ export function GoalSubgoals({ subGoals }: GoalSubgoalsProps) {
             href={`/goals/${subGoal.id}`}
             className="flex items-center gap-3 p-3 rounded-lg bg-bg border border-border hover:border-primary/30 transition-all group"
           >
+            <div
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: subGoal.color || "#6366F1" }}
+            />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 {subGoal.icon && <span>{subGoal.icon}</span>}

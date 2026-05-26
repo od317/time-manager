@@ -71,8 +71,11 @@ export function GoalProgress({ goal }: GoalProgressProps) {
         </div>
         <div className="w-full h-3 bg-border rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary rounded-full transition-all"
-            style={{ width: `${Math.min(goalProgress, 100)}%` }}
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${Math.min(goalProgress, 100)}%`,
+              backgroundColor: goal.color || "#6366F1",
+            }}
           />
         </div>
         {goal.targetValue && (

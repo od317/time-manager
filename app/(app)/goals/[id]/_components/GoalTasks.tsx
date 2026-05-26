@@ -178,6 +178,10 @@ export function GoalTasks({ goal }: GoalTasksProps) {
               >
                 <Circle size={20} />
               </button>
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: goal.color || "#6366F1" }}
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-text truncate">
                   {task.title}

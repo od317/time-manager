@@ -33,6 +33,10 @@ function GoalItem({
                 className="text-text-muted flex-shrink-0"
               />
             )}
+            <div
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: goal.color || "#6366F1" }}
+            />
             {goal.icon && <span className="flex-shrink-0">{goal.icon}</span>}
             <p className="text-sm font-medium text-text truncate">
               {goal.title}

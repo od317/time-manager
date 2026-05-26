@@ -67,6 +67,17 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
       >
         {selectedLabel ? (
           <>
+            <div
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{
+                backgroundColor:
+                  selectedGoal?.color ||
+                  goals.find((g) =>
+                    g.tasks?.some((t) => t.id === selectedTask?.id),
+                  )?.color ||
+                  "#6366F1",
+              }}
+            />
             {selectedTask ? <CheckCircle2 size={16} /> : <Target size={16} />}
             <span className="max-w-[150px] truncate">{selectedLabel}</span>
             <X
@@ -106,6 +117,10 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                     onClick={() => handleSelectGoal(goal)}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-border-light transition-all text-left"
                   >
+                    <div
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: goal.color || "#6366F1" }}
+                    />
                     {goal.icon && <span>{goal.icon}</span>}
                     <span className="text-sm font-medium text-text flex-1 truncate">
                       {goal.title}

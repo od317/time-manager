@@ -3,6 +3,7 @@ import { TimeEntry } from "./timeEntry";
 
 export interface Task {
   id: TaskId;
+  color: string | null;
   userId: string;
   goalId: GoalId | null;
   title: string;
