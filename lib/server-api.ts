@@ -56,8 +56,11 @@ class ServerApiClient {
       method,
       headers: authHeaders,
       body: body ? JSON.stringify(body) : undefined,
-      next: { revalidate, tags },
-      cache: revalidate === false ? "no-store" : undefined,
+      next: {
+        ...(revalidate !== undefined && { revalidate }),
+        ...(tags && { tags }),
+      },
+      ...(revalidate === false && { cache: "no-store" as RequestCache }),
     });
 
     if (response.status === 204) return undefined as TResponse;

@@ -2,7 +2,7 @@ import { serverApi } from "@/lib/server-api";
 import { Goal, GoalStats, GoalQueryParams } from "@/types";
 
 export const serverGoalService = {
-  getAll: async (params?: GoalQueryParams, revalidate = 60) => {
+  getAll: async (params?: GoalQueryParams, revalidate: number | false = 60) => {
     return serverApi.get<Goal[], GoalQueryParams>("/goals", {
       params,
       revalidate,

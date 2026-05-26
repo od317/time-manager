@@ -7,7 +7,10 @@ import {
 } from "@/types";
 
 export const serverHabitService = {
-  getAll: async (params?: HabitQueryParams, revalidate = 60) => {
+  getAll: async (
+    params?: HabitQueryParams,
+    revalidate: number | false = 60,
+  ) => {
     return serverApi.get<Habit[], HabitQueryParams>("/habits", {
       params,
       revalidate,
