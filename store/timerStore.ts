@@ -2,6 +2,12 @@ import { create } from "zustand";
 import { TimeEntry, Task, Goal, TimerMode, PomodoroPhase } from "@/types";
 import { timeEntryService } from "@/lib/services";
 import {
+  playWorkStartSound,
+  playBreakStartSound,
+  playLongBreakSound,
+} from "@/lib/sounds";
+
+import {
   saveTimerState,
   loadTimerState,
   clearTimerState,
@@ -555,13 +561,16 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       if (newSessionsCompleted % pomodoroConfig.sessionsBeforeLongBreak === 0) {
         nextPhase = "LONG_BREAK";
         nextDuration = pomodoroConfig.longBreakDuration;
+        playLongBreakSound(); // 👈 Add
       } else {
         nextPhase = "SHORT_BREAK";
         nextDuration = pomodoroConfig.shortBreakDuration;
+        playBreakStartSound();
       }
     } else {
       nextPhase = "WORK";
       nextDuration = pomodoroConfig.workDuration;
+      playWorkStartSound();
     }
 
     const now = Date.now();
