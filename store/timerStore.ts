@@ -128,7 +128,6 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       }
     }
 
-    // Calculate actual elapsed time from the backend timer
     const now = Date.now();
     const backendStartTime = backendTimer.startTime
       ? new Date(backendTimer.startTime).getTime()
@@ -137,17 +136,14 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     let elapsed: number;
 
     if (backendTimer.status === "RUNNING") {
-      // Timer was running - calculate from backend start time
       elapsed = Math.floor((now - backendStartTime) / 1000);
 
-      // Pause the backend timer so it doesn't keep counting
       try {
         backendTimer = await timeEntryService.pause(backendTimer.id);
       } catch {
         // Continue with calculated elapsed
       }
     } else if (backendTimer.status === "PAUSED") {
-      // Timer was paused - use the stored duration
       elapsed = backendTimer.duration || persisted.accumulatedBeforePause || 0;
     } else {
       elapsed = 0;
@@ -159,7 +155,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       endTime: entry.endTime === null ? now : entry.endTime,
     }));
 
-    set({
+    const newState = {
       runningTimer: backendTimer,
       selectedTask,
       sessionStartTime: null,
@@ -168,7 +164,14 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       sessionHistory: fixedHistory,
       timerMode: (persisted.timerMode as TimerMode) || "SIMPLE",
       elapsed,
-    });
+    };
+
+    set(newState);
+
+    // 👇 SAVE THE FIXED STATE so it survives another reload
+    saveTimerState(
+      buildPersistedState({ ...get(), ...newState }, backendTimer.id),
+    );
   },
 
   setRunningTimer: (timer) => set({ runningTimer: timer }),
