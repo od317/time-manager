@@ -24,7 +24,7 @@ export function PomodoroTimer() {
   } = useTimerStore();
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const hasSelection = selectedTask !== null || selectedGoal !== null;
+  const hasSelection = selectedTask !== null;
 
   const clearTimerInterval = useCallback(() => {
     if (intervalRef.current) {

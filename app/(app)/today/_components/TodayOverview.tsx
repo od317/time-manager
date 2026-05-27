@@ -1,12 +1,17 @@
 import { Goal } from "@/types";
-import { Target, CheckCircle2, Clock, Flame } from "lucide-react";
+import { Target, CheckCircle2, Clock, Flame, ListTodo } from "lucide-react";
 
 interface TodayOverviewProps {
   goals: Goal[];
   habitsDue: number;
+  tasksCount: number;
 }
 
-export function TodayOverview({ goals, habitsDue }: TodayOverviewProps) {
+export function TodayOverview({
+  goals,
+  habitsDue,
+  tasksCount,
+}: TodayOverviewProps) {
   const activeGoals = goals.filter((g) => g.status === "ACTIVE").length;
   const completedGoals = goals.filter((g) => g.status === "COMPLETED").length;
   const urgentGoals = goals.filter(
@@ -41,6 +46,13 @@ export function TodayOverview({ goals, habitsDue }: TodayOverviewProps) {
       icon: Flame,
       color: "text-danger",
       bg: "bg-danger-bg",
+    },
+    {
+      label: "Tasks",
+      value: tasksCount,
+      icon: ListTodo,
+      color: "text-info",
+      bg: "bg-info-bg",
     },
   ];
 

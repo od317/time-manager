@@ -8,6 +8,7 @@ import { TimerModeTabs } from "./TimerModeTabs";
 import { QuickLogForm } from "./QuickLogForm";
 import { PomodoroTimer } from "./PomodoroTimer";
 import { Play, Pause, Square, Clock } from "lucide-react";
+import { SessionHistory } from "./SessionHistory";
 
 interface TodayTimerProps {
   runningTimer: TimeEntry | null;
@@ -34,7 +35,7 @@ export function TodayTimer({
     selectedGoal,
   } = useTimerStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const hasSelection = selectedTask !== null || selectedGoal !== null;
+  const hasSelection = selectedTask !== null;
 
   useEffect(() => {
     if (initialTimer && !runningTimer) {
@@ -101,6 +102,7 @@ export function TodayTimer({
         <div className="flex items-center gap-2">
           <Clock size={20} className="text-primary" />
           <h3 className="text-lg font-semibold text-text">Focus Timer</h3>
+          <SessionHistory />
         </div>
         <TaskSelector goals={goals} />
       </div>

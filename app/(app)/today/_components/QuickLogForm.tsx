@@ -14,10 +14,9 @@ export function QuickLogForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const hasSelection = selectedTask !== null || selectedGoal !== null;
+  const hasSelection = selectedTask !== null;
 
-  const selectedLabel =
-    selectedTask?.title || selectedGoal?.title || "No task selected";
+  const selectedLabel = selectedTask?.title || "No task selected";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
