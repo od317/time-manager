@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { TimeEntry, Task, Goal, TimerMode, PomodoroPhase } from "@/types";
 import { timeEntryService } from "@/lib/services";
+import {
+  saveTimerState,
+  loadTimerState,
+  clearTimerState,
+} from "@/lib/timerPersistence";
 
 interface PomodoroConfig {
   workDuration: number;
@@ -32,7 +37,7 @@ interface TimerState {
   lastStoppedId: string | null;
   timerMode: TimerMode;
   currentTaskStartTime: number | null;
-
+  initializeFromStorage: (goals: Goal[]) => Promise<void>;
   sessionStartTime: number | null;
   accumulatedBeforePause: number;
   sessionHistory: TimerSessionEntry[];
@@ -64,6 +69,22 @@ const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
   sessionsBeforeLongBreak: 2,
 };
 
+function buildPersistedState(state: TimerState, runningTimerId: string | null) {
+  return {
+    runningTimerId,
+    sessionStartTime: state.sessionStartTime,
+    currentTaskStartTime: state.currentTaskStartTime,
+    accumulatedBeforePause: state.accumulatedBeforePause,
+    selectedTaskId: state.selectedTask?.id || null,
+    selectedTaskTitle: state.selectedTask?.title || null,
+    selectedTaskColor: state.selectedTask?.color || null,
+    selectedTaskGoalId: state.selectedTask?.goalId || null,
+    sessionHistory: state.sessionHistory,
+    timerMode: state.timerMode,
+    savedAt: Date.now(),
+  };
+}
+
 export const useTimerStore = create<TimerState>((set, get) => ({
   runningTimer: null,
   elapsed: 0,
@@ -78,6 +99,77 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   sessionHistory: [],
   pomodoroConfig: { ...DEFAULT_POMODORO_CONFIG },
   pomodoroState: null,
+
+  initializeFromStorage: async (goals: Goal[]) => {
+    const persisted = loadTimerState();
+    if (!persisted) return;
+
+    let backendTimer: TimeEntry | null = null;
+    if (persisted.runningTimerId) {
+      try {
+        backendTimer = await timeEntryService.getById(persisted.runningTimerId);
+      } catch {
+        // Timer no longer exists
+      }
+    }
+
+    if (!backendTimer || backendTimer.status === "COMPLETED") {
+      clearTimerState();
+      return;
+    }
+
+    // Restore selected task
+    let selectedTask: Task | null = null;
+    if (persisted.selectedTaskId && persisted.selectedTaskGoalId) {
+      const goal = goals.find((g) => g.id === persisted.selectedTaskGoalId);
+      if (goal?.tasks) {
+        selectedTask =
+          goal.tasks.find((t) => t.id === persisted.selectedTaskId) || null;
+      }
+    }
+
+    // Calculate actual elapsed time from the backend timer
+    const now = Date.now();
+    const backendStartTime = backendTimer.startTime
+      ? new Date(backendTimer.startTime).getTime()
+      : now;
+
+    let elapsed: number;
+
+    if (backendTimer.status === "RUNNING") {
+      // Timer was running - calculate from backend start time
+      elapsed = Math.floor((now - backendStartTime) / 1000);
+
+      // Pause the backend timer so it doesn't keep counting
+      try {
+        backendTimer = await timeEntryService.pause(backendTimer.id);
+      } catch {
+        // Continue with calculated elapsed
+      }
+    } else if (backendTimer.status === "PAUSED") {
+      // Timer was paused - use the stored duration
+      elapsed = backendTimer.duration || persisted.accumulatedBeforePause || 0;
+    } else {
+      elapsed = 0;
+    }
+
+    // Fix history: close any running entry
+    const fixedHistory = persisted.sessionHistory.map((entry) => ({
+      ...entry,
+      endTime: entry.endTime === null ? now : entry.endTime,
+    }));
+
+    set({
+      runningTimer: backendTimer,
+      selectedTask,
+      sessionStartTime: null,
+      currentTaskStartTime: null,
+      accumulatedBeforePause: elapsed,
+      sessionHistory: fixedHistory,
+      timerMode: (persisted.timerMode as TimerMode) || "SIMPLE",
+      elapsed,
+    });
+  },
 
   setRunningTimer: (timer) => set({ runningTimer: timer }),
 
@@ -166,6 +258,8 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         currentTaskStartTime: now,
         sessionHistory: finalHistory,
       });
+      const newState = get();
+      saveTimerState(buildPersistedState(newState, newTimer.id));
       return;
     }
 
@@ -218,6 +312,8 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         ],
         pomodoroState: null,
       });
+      const newState = get();
+      saveTimerState(buildPersistedState(newState, timer.id));
     } catch {
       set({ isLoading: false });
       throw new Error("Failed to start timer");
@@ -250,28 +346,44 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         sessionHistory: finalHistory,
         pomodoroState: null,
       });
+      clearTimerState();
     } catch {
       throw new Error("Failed to stop timer");
     }
   },
 
   pause: async () => {
-    const { runningTimer } = get();
+    const { runningTimer, selectedTask } = get();
     if (!runningTimer) return;
     try {
       const updated = await timeEntryService.pause(runningTimer.id);
 
       const { sessionStartTime, accumulatedBeforePause } = get();
+      const now = Date.now();
       const currentElapsed = sessionStartTime
-        ? Math.floor((Date.now() - sessionStartTime) / 1000)
+        ? Math.floor((now - sessionStartTime) / 1000)
         : 0;
+
+      const totalElapsed = accumulatedBeforePause + currentElapsed;
+
+      // Close the current history entry
+      const updatedHistory = get().sessionHistory.map((entry) => {
+        if (entry.taskId === selectedTask?.id && entry.endTime === null) {
+          return { ...entry, endTime: now };
+        }
+        return entry;
+      });
 
       set({
         runningTimer: updated,
-        accumulatedBeforePause: accumulatedBeforePause + currentElapsed,
-        elapsed: accumulatedBeforePause + currentElapsed,
+        accumulatedBeforePause: totalElapsed,
+        elapsed: totalElapsed,
         sessionStartTime: null,
+        sessionHistory: updatedHistory,
       });
+
+      const newState = get();
+      saveTimerState(buildPersistedState(newState, updated.id));
     } catch {
       throw new Error("Failed to pause timer");
     }
@@ -280,16 +392,39 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   resume: async () => {
     const { runningTimer, selectedTask } = get();
     if (!runningTimer) return;
+
+    const now = Date.now();
+
     try {
       await timeEntryService.update(runningTimer.id, {
         goalId: selectedTask?.goalId ?? undefined,
         taskId: selectedTask?.id ?? undefined,
       });
       const updated = await timeEntryService.resume(runningTimer.id);
+
+      // Add a new history entry for the resumed task (or reopen if it was the last one)
+      const newHistory = selectedTask
+        ? [
+            ...get().sessionHistory,
+            {
+              taskId: selectedTask.id,
+              taskTitle: selectedTask.title,
+              startTime: now,
+              endTime: null,
+              color: selectedTask.color || "#6366F1",
+            },
+          ]
+        : get().sessionHistory;
+
       set({
         runningTimer: updated,
-        sessionStartTime: Date.now(),
+        sessionStartTime: now,
+        currentTaskStartTime: now,
+        sessionHistory: newHistory,
       });
+
+      const newState = get();
+      saveTimerState(buildPersistedState(newState, updated.id));
     } catch {
       throw new Error("Failed to resume timer");
     }
