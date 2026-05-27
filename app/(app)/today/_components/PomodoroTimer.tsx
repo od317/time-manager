@@ -7,19 +7,16 @@ import { resumeAudioContext } from "@/lib/sounds";
 
 export function PomodoroTimer() {
   const {
-    runningTimer,
     elapsed,
     isLoading,
-    sessionStartTime,
-    accumulatedBeforePause,
     pomodoroState,
     pomodoroConfig,
-    start,
+    runningTimer,
+    sessionStartTime,
     stop,
     pause,
     resume,
     handlePhaseComplete,
-    selectedGoal,
     selectedTask,
   } = useTimerStore();
 
@@ -33,27 +30,15 @@ export function PomodoroTimer() {
     }
   }, []);
 
-  // Countdown timer for pomodoro
+  // Single countdown: uses store's sessionStartTime and elapsed
   useEffect(() => {
-    if (
-      runningTimer?.status === "RUNNING" &&
-      sessionStartTime &&
-      pomodoroState
-    ) {
+    if (pomodoroState && sessionStartTime) {
       const tick = () => {
-        const elapsedInPhase = Math.floor(
-          (Date.now() - sessionStartTime) / 1000,
-        );
-        const timeLeft = Math.max(
-          pomodoroState.timeLeftInPhase - elapsedInPhase,
-          0,
-        );
+        const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+        const timeLeft = Math.max(pomodoroState.timeLeftInPhase - elapsed, 0);
 
-        useTimerStore.setState({
-          elapsed: timeLeft,
-        });
+        useTimerStore.setState({ elapsed: timeLeft });
 
-        // Phase complete
         if (timeLeft <= 0) {
           clearTimerInterval();
           handlePhaseComplete();
@@ -62,28 +47,34 @@ export function PomodoroTimer() {
 
       tick();
       intervalRef.current = setInterval(tick, 1000);
-    } else if (runningTimer?.status === "PAUSED") {
+    } else {
       clearTimerInterval();
     }
 
     return clearTimerInterval;
   }, [
-    runningTimer?.status,
+    pomodoroState?.phase,
     sessionStartTime,
-    pomodoroState,
-    handlePhaseComplete,
     clearTimerInterval,
+    handlePhaseComplete,
   ]);
 
+  const handleStartPomodoro = () => {
+    resumeAudioContext();
+    const { startPomodoro } = useTimerStore.getState();
+    startPomodoro();
+  };
+
+  const isRunning = !!sessionStartTime;
+  const isPaused = pomodoroState && !sessionStartTime;
+  const isActive = isRunning || isPaused;
+
   const formatTime = (seconds: number): string => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
+    const m = Math.floor(Math.abs(seconds) / 60);
+    const s = Math.floor(Math.abs(seconds) % 60);
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const isRunning = runningTimer?.status === "RUNNING";
-  const isPaused = runningTimer?.status === "PAUSED";
-  const isActive = isRunning || isPaused;
   const phase = pomodoroState?.phase;
 
   const getPhaseInfo = () => {
@@ -130,7 +121,6 @@ export function PomodoroTimer() {
 
   return (
     <div className="text-center">
-      {/* Phase indicator */}
       <div className="flex items-center justify-center gap-2 mb-4">
         <div
           className={`w-8 h-8 rounded-lg ${phaseInfo.bg} flex items-center justify-center`}
@@ -142,7 +132,6 @@ export function PomodoroTimer() {
         </span>
       </div>
 
-      {/* Sessions counter */}
       {pomodoroState && (
         <div className="flex items-center justify-center gap-1 mb-4">
           {Array.from({ length: pomodoroConfig.sessionsBeforeLongBreak }).map(
@@ -165,33 +154,25 @@ export function PomodoroTimer() {
         </div>
       )}
 
-      {/* Timer display */}
       <div className="mb-6">
         <span
-          className={`text-5xl font-mono font-bold tabular-nums ${
-            isRunning ? phaseInfo.color : "text-text"
-          }`}
+          className={`text-5xl font-mono font-bold tabular-nums ${isRunning ? phaseInfo.color : "text-text"}`}
         >
           {formatTime(elapsed)}
         </span>
       </div>
 
-      {/* Progress bar */}
       <div className="w-full h-2 bg-border rounded-full overflow-hidden mb-6">
         <div
           className={`h-full rounded-full transition-all ${phaseInfo.color.replace("text", "bg")}`}
-          style={{ width: `${progress}%` }}
+          style={{ width: `${Math.min(progress, 100)}%` }}
         />
       </div>
 
-      {/* Controls */}
       <div className="flex items-center justify-center gap-3">
         {!isActive ? (
           <button
-            onClick={() => {
-              resumeAudioContext();
-              start();
-            }}
+            onClick={handleStartPomodoro}
             disabled={isLoading || !hasSelection}
             className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 transition-all"
           >

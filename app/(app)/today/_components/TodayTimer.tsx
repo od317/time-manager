@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { TimeEntry, Goal } from "@/types";
+import { Goal, TimeEntry } from "@/types";
 import { useTimerStore } from "@/store/timerStore";
 import { TaskSelector } from "./TaskSelector";
 import { TimerModeTabs } from "./TimerModeTabs";
@@ -19,6 +19,7 @@ export function TodayTimer({
   runningTimer: initialTimer,
   goals,
 }: TodayTimerProps) {
+  const store = useTimerStore();
   const {
     runningTimer,
     elapsed,
@@ -26,22 +27,18 @@ export function TodayTimer({
     sessionStartTime,
     accumulatedBeforePause,
     timerMode,
-    setRunningTimer,
-    start,
-    stop,
-    pause,
-    resume,
     selectedTask,
-    selectedGoal,
-  } = useTimerStore();
+  } = store;
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = selectedTask !== null;
 
+  // Sync initial server timer to store ONCE
   useEffect(() => {
-    if (initialTimer && !runningTimer) {
-      setRunningTimer(initialTimer);
+    if (initialTimer && !store.runningTimer) {
+      store.setRunningTimer(initialTimer);
     }
-  }, [initialTimer, runningTimer, setRunningTimer]);
+  }, []); // Empty deps - run once
 
   const clearTimerInterval = useCallback(() => {
     if (intervalRef.current) {
@@ -64,15 +61,11 @@ export function TodayTimer({
           elapsed: accumulatedBeforePause + currentElapsed,
         });
       };
-
       tick();
       intervalRef.current = setInterval(tick, 1000);
-    } else if (runningTimer?.status === "PAUSED") {
-      clearTimerInterval();
-    } else if (!runningTimer || runningTimer.status === "COMPLETED") {
+    } else {
       clearTimerInterval();
     }
-
     return clearTimerInterval;
   }, [
     runningTimer?.status,
@@ -83,9 +76,9 @@ export function TodayTimer({
   ]);
 
   const formatTime = (seconds: number): string => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
+    const h = Math.floor(Math.abs(seconds) / 3600);
+    const m = Math.floor((Math.abs(seconds) % 3600) / 60);
+    const s = Math.floor(Math.abs(seconds) % 60);
     if (h > 0)
       return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
@@ -97,7 +90,6 @@ export function TodayTimer({
 
   return (
     <div className="bg-surface rounded-xl border border-border p-6">
-      {/* Header with task selector */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Clock size={20} className="text-primary" />
@@ -107,39 +99,27 @@ export function TodayTimer({
         <TaskSelector goals={goals} />
       </div>
 
-      {/* Mode switcher */}
       <div className="mb-6">
         <TimerModeTabs />
       </div>
 
-      {/* Quick Log Mode */}
       {timerMode === "QUICK_LOG" && <QuickLogForm />}
-
-      {/* Pomodoro Mode */}
       {timerMode === "POMODORO" && <PomodoroTimer />}
 
-      {/* Simple Mode */}
       {timerMode === "SIMPLE" && (
         <>
           <div className="text-center mb-6">
             <span
-              className={`text-5xl font-mono font-bold tabular-nums ${
-                isRunning ? "text-primary" : "text-text"
-              }`}
+              className={`text-5xl font-mono font-bold tabular-nums ${isRunning ? "text-primary" : "text-text"}`}
             >
               {formatTime(elapsed)}
             </span>
-            {runningTimer?.note && (
-              <p className="text-sm text-text-muted mt-2 truncate">
-                {runningTimer.note}
-              </p>
-            )}
           </div>
 
           <div className="flex items-center justify-center gap-3">
             {!isActive ? (
               <button
-                onClick={() => start()}
+                onClick={() => useTimerStore.getState().start()}
                 disabled={isLoading || !hasSelection}
                 className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 transition-all"
               >
@@ -150,7 +130,7 @@ export function TodayTimer({
               <>
                 {isRunning && (
                   <button
-                    onClick={pause}
+                    onClick={() => useTimerStore.getState().pause()}
                     className="flex items-center gap-2 px-5 py-2.5 bg-warning-bg text-warning rounded-lg font-medium hover:bg-warning/10 transition-all"
                   >
                     <Pause size={18} /> Pause
@@ -158,14 +138,14 @@ export function TodayTimer({
                 )}
                 {isPaused && (
                   <button
-                    onClick={resume}
+                    onClick={() => useTimerStore.getState().resume()}
                     className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-all"
                   >
                     <Play size={18} /> Resume
                   </button>
                 )}
                 <button
-                  onClick={stop}
+                  onClick={() => useTimerStore.getState().stop()}
                   className="flex items-center gap-2 px-5 py-2.5 bg-danger-bg text-danger rounded-lg font-medium hover:bg-danger/10 transition-all"
                 >
                   <Square size={18} /> Stop

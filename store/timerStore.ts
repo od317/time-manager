@@ -81,6 +81,9 @@ function buildPersistedState(state: TimerState, runningTimerId: string | null) {
     selectedTaskGoalId: state.selectedTask?.goalId || null,
     sessionHistory: state.sessionHistory,
     timerMode: state.timerMode,
+    pomodoroPhase: state.pomodoroState?.phase || null,
+    pomodoroSessionsCompleted: state.pomodoroState?.sessionsCompleted || 0,
+    pomodoroTimeLeft: state.pomodoroState?.timeLeftInPhase || null,
     savedAt: Date.now(),
   };
 }
@@ -167,7 +170,18 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     };
 
     set(newState);
-
+    if (persisted.timerMode === "POMODORO") {
+      set({
+        pomodoroState: {
+          phase: (persisted.pomodoroPhase as PomodoroPhase) || "WORK",
+          sessionsCompleted: persisted.pomodoroSessionsCompleted || 0,
+          timeLeftInPhase:
+            persisted.pomodoroTimeLeft || DEFAULT_POMODORO_CONFIG.workDuration,
+        },
+        timerMode: "POMODORO",
+        elapsed: persisted.pomodoroTimeLeft || elapsed,
+      });
+    }
     // 👇 SAVE THE FIXED STATE so it survives another reload
     saveTimerState(
       buildPersistedState({ ...get(), ...newState }, backendTimer.id),
@@ -179,12 +193,18 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   setTimerMode: (mode) => {
     const { runningTimer } = get();
     if (
-      runningTimer?.status === "RUNNING" ||
-      runningTimer?.status === "PAUSED"
+      runningTimer &&
+      (runningTimer.status === "RUNNING" || runningTimer.status === "PAUSED")
     ) {
       return;
     }
-    set({ timerMode: mode, elapsed: 0 });
+    set({
+      timerMode: mode,
+      elapsed: 0,
+      pomodoroState: null,
+      sessionStartTime: null,
+      accumulatedBeforePause: 0,
+    });
   },
 
   getCurrentPhaseLabel: () => {
@@ -277,10 +297,19 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   clearLastStopped: () => set({ lastStoppedId: null }),
 
   start: async (note?: string) => {
-    const { timerMode, selectedTask } = get();
+    const { timerMode, selectedTask, runningTimer } = get();
 
     if (!selectedTask) {
       throw new Error("Please select a task first");
+    }
+
+    // If there's somehow a running timer, stop it first
+    if (runningTimer) {
+      try {
+        await timeEntryService.stop(runningTimer.id);
+      } catch {
+        // Ignore
+      }
     }
 
     if (timerMode === "POMODORO") {
@@ -324,44 +353,50 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   },
 
   stop: async () => {
-    const { runningTimer, selectedTask } = get();
-    if (!runningTimer) return;
-
+    const { runningTimer } = get();
     const now = Date.now();
 
-    try {
-      const updated = await timeEntryService.stop(runningTimer.id);
-
-      const finalHistory = get().sessionHistory.map((entry) => {
-        if (entry.taskId === selectedTask?.id && entry.endTime === null) {
-          return { ...entry, endTime: now };
-        }
-        return entry;
-      });
-
-      set({
-        runningTimer: updated,
-        elapsed: 0,
-        lastStoppedId: runningTimer.id,
-        sessionStartTime: null,
-        currentTaskStartTime: null,
-        accumulatedBeforePause: 0,
-        sessionHistory: finalHistory,
-        pomodoroState: null,
-      });
-      clearTimerState();
-    } catch {
-      throw new Error("Failed to stop timer");
+    // Stop backend timer if it exists
+    if (runningTimer) {
+      try {
+        await timeEntryService.stop(runningTimer.id);
+      } catch {
+        // Ignore - timer might already be stopped
+      }
     }
+
+    // Close history entries
+    const finalHistory = get().sessionHistory.map((entry) => {
+      if (entry.endTime === null) {
+        return { ...entry, endTime: now };
+      }
+      return entry;
+    });
+
+    // Complete reset
+    set({
+      runningTimer: null,
+      elapsed: 0,
+      lastStoppedId: runningTimer?.id || null,
+      sessionStartTime: null,
+      currentTaskStartTime: null,
+      accumulatedBeforePause: 0,
+      sessionHistory: finalHistory,
+      pomodoroState: null,
+      timerMode: get().timerMode, // Keep the current mode
+    });
+
+    clearTimerState();
   },
 
   pause: async () => {
-    const { runningTimer, selectedTask } = get();
+    const { runningTimer } = get();
     if (!runningTimer) return;
+
     try {
       const updated = await timeEntryService.pause(runningTimer.id);
 
-      const { sessionStartTime, accumulatedBeforePause } = get();
+      const { sessionStartTime, accumulatedBeforePause, pomodoroState } = get();
       const now = Date.now();
       const currentElapsed = sessionStartTime
         ? Math.floor((now - sessionStartTime) / 1000)
@@ -371,7 +406,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
       // Close the current history entry
       const updatedHistory = get().sessionHistory.map((entry) => {
-        if (entry.taskId === selectedTask?.id && entry.endTime === null) {
+        if (entry.endTime === null) {
           return { ...entry, endTime: now };
         }
         return entry;
@@ -380,9 +415,10 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       set({
         runningTimer: updated,
         accumulatedBeforePause: totalElapsed,
-        elapsed: totalElapsed,
         sessionStartTime: null,
         sessionHistory: updatedHistory,
+        // For Pomodoro, keep the current elapsed
+        elapsed: pomodoroState ? get().elapsed : totalElapsed,
       });
 
       const newState = get();
@@ -393,8 +429,17 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   },
 
   resume: async () => {
-    const { runningTimer, selectedTask } = get();
-    if (!runningTimer) return;
+    const { runningTimer, selectedTask, timerMode } = get();
+
+    if (!runningTimer) {
+      console.warn("No timer to resume");
+      return;
+    }
+
+    if (runningTimer.status === "COMPLETED") {
+      console.warn("Timer already completed, cannot resume");
+      return;
+    }
 
     const now = Date.now();
 
@@ -405,43 +450,57 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       });
       const updated = await timeEntryService.resume(runningTimer.id);
 
-      // Add a new history entry for the resumed task (or reopen if it was the last one)
-      const newHistory = selectedTask
-        ? [
-            ...get().sessionHistory,
-            {
-              taskId: selectedTask.id,
-              taskTitle: selectedTask.title,
-              startTime: now,
-              endTime: null,
-              color: selectedTask.color || "#6366F1",
-            },
-          ]
-        : get().sessionHistory;
+      const newHistory =
+        selectedTask && timerMode !== "POMODORO"
+          ? [
+              ...get().sessionHistory,
+              {
+                taskId: selectedTask.id,
+                taskTitle: selectedTask.title,
+                startTime: now,
+                endTime: null,
+                color: selectedTask.color || "#6366F1",
+              },
+            ]
+          : get().sessionHistory;
 
       set({
         runningTimer: updated,
         sessionStartTime: now,
-        currentTaskStartTime: now,
+        currentTaskStartTime: timerMode === "POMODORO" ? null : now,
         sessionHistory: newHistory,
       });
 
       const newState = get();
       saveTimerState(buildPersistedState(newState, updated.id));
-    } catch {
+    } catch (error) {
+      console.error("Resume failed:", error);
       throw new Error("Failed to resume timer");
     }
   },
 
   startPomodoro: async () => {
-    const { selectedTask, pomodoroConfig } = get();
+    const { selectedTask, pomodoroConfig, runningTimer } = get();
 
     if (!selectedTask) {
       throw new Error("Please select a task first");
     }
 
+    // If there's already a running timer, stop it first
+    if (
+      runningTimer &&
+      (runningTimer.status === "RUNNING" || runningTimer.status === "PAUSED")
+    ) {
+      try {
+        await timeEntryService.stop(runningTimer.id);
+      } catch {
+        // Ignore
+      }
+    }
+
     set({ isLoading: true });
     try {
+      const now = Date.now();
       const timer = await timeEntryService.start({
         entryType: "POMODORO",
         taskId: selectedTask.id,
@@ -453,15 +512,27 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         runningTimer: timer,
         isLoading: false,
         elapsed: pomodoroConfig.workDuration,
-        sessionStartTime: Date.now(),
+        sessionStartTime: now,
+        currentTaskStartTime: now,
         accumulatedBeforePause: 0,
-        sessionHistory: [],
+        sessionHistory: [
+          {
+            taskId: selectedTask.id,
+            taskTitle: selectedTask.title,
+            startTime: now,
+            endTime: null,
+            color: selectedTask.color || "#6366F1",
+          },
+        ],
         pomodoroState: {
           phase: "WORK",
           sessionsCompleted: 0,
           timeLeftInPhase: pomodoroConfig.workDuration,
         },
       });
+
+      const newState = get();
+      saveTimerState(buildPersistedState(newState, timer.id));
     } catch {
       set({ isLoading: false });
       throw new Error("Failed to start pomodoro");
@@ -469,7 +540,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   },
 
   handlePhaseComplete: () => {
-    const { pomodoroState, pomodoroConfig } = get();
+    const { pomodoroState, pomodoroConfig, runningTimer, selectedTask } = get();
     if (!pomodoroState) return;
 
     const isWorkPhase = pomodoroState.phase === "WORK";
@@ -493,6 +564,37 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       nextDuration = pomodoroConfig.workDuration;
     }
 
+    const now = Date.now();
+
+    let updatedHistory = get().sessionHistory;
+    if (isWorkPhase) {
+      updatedHistory = updatedHistory.map((entry) => {
+        if (entry.endTime === null) {
+          return { ...entry, endTime: now };
+        }
+        return entry;
+      });
+    }
+
+    if (!isWorkPhase && selectedTask) {
+      updatedHistory = [
+        ...updatedHistory,
+        {
+          taskId: selectedTask.id,
+          taskTitle: selectedTask.title,
+          startTime: now,
+          endTime: null,
+          color: selectedTask.color || "#6366F1",
+        },
+      ];
+    }
+
+    // Stop old entry
+    if (runningTimer) {
+      timeEntryService.stop(runningTimer.id).catch(() => {});
+    }
+
+    // Update state immediately (don't wait for new timer)
     set({
       pomodoroState: {
         phase: nextPhase,
@@ -500,8 +602,28 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         timeLeftInPhase: nextDuration,
       },
       elapsed: nextDuration,
-      sessionStartTime: Date.now(),
+      sessionStartTime: now, // Always set for countdown
+      currentTaskStartTime: nextPhase === "WORK" ? now : null,
       accumulatedBeforePause: 0,
+      sessionHistory: updatedHistory,
+      runningTimer: null,
     });
+
+    // Start new time entry for work phase
+    if (!isWorkPhase && selectedTask) {
+      timeEntryService
+        .start({
+          entryType: "POMODORO",
+          taskId: selectedTask.id,
+          goalId: selectedTask.goalId || undefined,
+          note: `Pomodoro - ${selectedTask.title}`,
+        })
+        .then((newTimer) => {
+          set({ runningTimer: newTimer });
+          const newState = get();
+          saveTimerState(buildPersistedState(newState, newTimer.id));
+        })
+        .catch(() => {});
+    }
   },
 }));

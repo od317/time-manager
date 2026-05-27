@@ -1,6 +1,8 @@
+// lib/timerPersistence.ts
+
 const STORAGE_KEY = "timer-session";
 
-interface PersistedTimerState {
+export interface PersistedTimerState {
   runningTimerId: string | null;
   sessionStartTime: number | null;
   currentTaskStartTime: number | null;
@@ -17,6 +19,9 @@ interface PersistedTimerState {
     color: string;
   }[];
   timerMode: string;
+  pomodoroPhase: string | null;
+  pomodoroSessionsCompleted: number;
+  pomodoroTimeLeft: number | null;
   savedAt: number;
 }
 
