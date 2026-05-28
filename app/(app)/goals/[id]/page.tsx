@@ -18,7 +18,7 @@ interface GoalDetailPageProps {
 export default async function GoalDetailPage({ params }: GoalDetailPageProps) {
   const { id } = await params;
   const goal = await serverGoalService.getById(id);
-
+  console.log(goal);
   if (!goal) notFound();
 
   return (

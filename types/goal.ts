@@ -73,7 +73,7 @@ export interface CreateGoalPayload {
   icon?: string;
   isRecurring?: boolean;
   recurringRule?: string;
-  goalType: GoalType;
+  goalType?: GoalType;
 }
 
 export interface UpdateGoalPayload extends Partial<CreateGoalPayload> {
