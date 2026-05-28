@@ -8,6 +8,7 @@ import { HabitFormSection } from "./HabitFormSection";
 import { ContextPanel } from "./ContextPanel";
 import { Target, Repeat, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { useSearchParams } from "next/navigation";
 
 type CreateType = "goal" | "habit";
 
@@ -35,7 +36,9 @@ const tabs = [
 type DateMode = "start" | "end" | null;
 
 export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
-  const [activeTab, setActiveTab] = useState<CreateType>("goal");
+  const params = useSearchParams();
+  const tab = params.get("tab") as CreateType;
+  const [activeTab, setActiveTab] = useState<CreateType>(tab || "goal");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [endDate, setEndDate] = useState<Date | null>(null);

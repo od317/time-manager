@@ -20,7 +20,7 @@ export default async function GoalsPage() {
           </p>
         </div>
         <Link
-          href="/create"
+          href="/create?tab=goal"
           className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-all"
         >
           <Plus size={18} />
