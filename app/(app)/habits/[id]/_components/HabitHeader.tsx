@@ -8,9 +8,10 @@ import { EditHabitModal } from "./EditHabitModal";
 
 interface HabitHeaderProps {
   habit: Habit;
+  todayStr: string;
 }
 
-export function HabitHeader({ habit }: HabitHeaderProps) {
+export function HabitHeader({ habit, todayStr }: HabitHeaderProps) {
   const [showEdit, setShowEdit] = useState(false);
 
   const getFrequencyLabel = (): string => {
@@ -21,6 +22,12 @@ export function HabitHeader({ habit }: HabitHeaderProps) {
     }
     return "Custom";
   };
+
+  // Check if due today
+  const today = new Date().getDay();
+  const isDueToday =
+    habit.frequencyType === "DAILY" ||
+    (habit.frequencyType === "WEEKLY" && habit.frequencyDays.includes(today));
 
   return (
     <div>
@@ -66,6 +73,11 @@ export function HabitHeader({ habit }: HabitHeaderProps) {
             {habit.trackAmount && habit.targetValue && (
               <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-border text-text-secondary">
                 {habit.targetValue} {habit.unit}
+              </span>
+            )}
+            {isDueToday && (
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-success-bg text-success">
+                Due today
               </span>
             )}
             <span

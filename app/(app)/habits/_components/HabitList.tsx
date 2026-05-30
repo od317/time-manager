@@ -9,13 +9,20 @@ interface HabitListProps {
 }
 
 export function HabitList({ habits }: HabitListProps) {
-  if (habits.length === 0) {
-    return <EmptyHabits />;
-  }
+  if (habits.length === 0) return <EmptyHabits />;
 
-  // Use the backend's isDueToday flag
-  const dueToday = habits.filter((h) => (h as any).isDueToday);
-  const notDueToday = habits.filter((h) => !(h as any).isDueToday);
+  // Browser determines today's day of week
+  const today = new Date().getDay(); // 0=Sun, 1=Mon, ...
+  const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local timezone
+
+  const dueToday = habits.filter((h) => {
+    if (h.status !== "ACTIVE") return false;
+    if (h.frequencyType === "DAILY") return true;
+    if (h.frequencyType === "WEEKLY") return h.frequencyDays.includes(today);
+    return false;
+  });
+
+  const notDueToday = habits.filter((h) => !dueToday.includes(h));
 
   return (
     <div>
@@ -26,7 +33,7 @@ export function HabitList({ habits }: HabitListProps) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {dueToday.map((habit) => (
-              <HabitCard key={habit.id} habit={habit} currentDay={true} />
+              <HabitCard key={habit.id} habit={habit} todayStr={todayStr} />
             ))}
           </div>
         </div>
@@ -39,7 +46,7 @@ export function HabitList({ habits }: HabitListProps) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {notDueToday.map((habit) => (
-              <HabitCard key={habit.id} habit={habit} currentDay={false} />
+              <HabitCard key={habit.id} habit={habit} todayStr={todayStr} />
             ))}
           </div>
         </div>

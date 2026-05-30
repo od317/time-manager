@@ -139,9 +139,10 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
                       if (!day) return <div key={di} className="w-3 h-3" />;
                       const dateStr = formatDate(day);
                       const entry = data.find((e) => {
-                        const entryDate = new Date(e.date)
-                          .toISOString()
-                          .split("T")[0];
+                        const entryDate = new Date(e.date).toLocaleDateString(
+                          "en-CA",
+                        );
+
                         return entryDate === dateStr;
                       });
                       const isCompleted = entry?.status === "COMPLETED";

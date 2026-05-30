@@ -1,12 +1,14 @@
+"use client";
+
 import { Habit } from "@/types";
 import { Flame, Trophy, CheckCircle2, TrendingUp } from "lucide-react";
 
 interface HabitStatsProps {
   habit: Habit;
+  todayStr: string;
 }
 
-export function HabitStats({ habit }: HabitStatsProps) {
-  // Calculate monthly completion rate
+export function HabitStats({ habit, todayStr }: HabitStatsProps) {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -16,12 +18,15 @@ export function HabitStats({ habit }: HabitStatsProps) {
     return logDate >= thirtyDaysAgo;
   }).length;
 
-  const expectedThisMonth =
-    habit.frequencyType === "DAILY"
-      ? 30
-      : habit.frequencyType === "WEEKLY"
-        ? Math.round((30 / 7) * habit.frequencyDays.length)
-        : 30;
+  // Calculate expected completions this month based on frequency
+  const today = new Date().getDay();
+  let expectedThisMonth = 0;
+
+  if (habit.frequencyType === "DAILY") {
+    expectedThisMonth = 30;
+  } else if (habit.frequencyType === "WEEKLY") {
+    expectedThisMonth = Math.round((30 / 7) * habit.frequencyDays.length);
+  }
 
   const monthlyRate =
     expectedThisMonth > 0

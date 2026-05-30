@@ -22,8 +22,13 @@ export default async function TodayPage() {
     serverApi.get<Task[]>("/tasks", { revalidate: false, tags: ["tasks"] }),
   ]);
 
-  const today = getDayOfWeek();
-  const habitsDueToday = habits.filter((h) => (h as any).isDueToday !== false);
+  const today = new Date().getDay();
+  const habitsDueToday = habits.filter((habit) => {
+    if (habit.frequencyType === "DAILY") return true;
+    if (habit.frequencyType === "WEEKLY")
+      return habit.frequencyDays.includes(today);
+    return false;
+  });
 
   // Get active tasks (TODO or IN_PROGRESS)
   const activeTasks = Array.isArray(allTasks) ? allTasks : [];

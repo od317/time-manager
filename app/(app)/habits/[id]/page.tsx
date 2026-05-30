@@ -20,12 +20,15 @@ export default async function HabitDetailPage({
 
   if (!habit) notFound();
 
+  // Pass today's date for client components to use
+  const todayStr = new Date().toLocaleDateString("en-CA");
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6">
-      <HabitHeader habit={habit} />
-      <HabitStats habit={habit} />
+      <HabitHeader habit={habit} todayStr={todayStr} />
+      <HabitStats habit={habit} todayStr={todayStr} />
       <HabitHeatmap habitId={habit.id} />
-      <HabitLogHistory habit={habit} />
+      <HabitLogHistory habit={habit} todayStr={todayStr} />
       <HabitActions habit={habit} />
     </div>
   );

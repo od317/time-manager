@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Habit } from "@/types";
 import {
   CheckCircle2,
@@ -12,24 +12,22 @@ import {
 
 interface HabitLogHistoryProps {
   habit: Habit;
+  todayStr: string;
 }
 
-export function HabitLogHistory({ habit }: HabitLogHistoryProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [now, setNow] = useState(() => new Date());
+// Calculate yesterday once at module level
+function getYesterdayStr(): string {
+  const now = Date.now();
+  return new Date(now - 86400000).toLocaleDateString("en-CA");
+}
 
-  // Update "now" periodically for accurate "Today" labels
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60000);
-    return () => clearInterval(interval);
-  }, []);
+export function HabitLogHistory({ habit, todayStr }: HabitLogHistoryProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [yesterdayStr] = useState(() => getYesterdayStr());
 
   const logs = habit.logs || [];
   const recentLogs = isExpanded ? logs : logs.slice(0, 5);
   const hasMore = logs.length > 5;
-
-  const todayStr = now.toDateString();
-  const yesterdayStr = new Date(now.getTime() - 86400000).toDateString();
 
   if (logs.length === 0) {
     return (
@@ -52,14 +50,13 @@ export function HabitLogHistory({ habit }: HabitLogHistoryProps) {
 
       <div className="space-y-2">
         {recentLogs.map((log, index) => {
-          const logDate = new Date(log.date);
-          const logDateStr = logDate.toDateString();
+          const logDateStr = new Date(log.date).toLocaleDateString("en-CA");
 
           let dateLabel: string;
           if (logDateStr === todayStr) dateLabel = "Today";
           else if (logDateStr === yesterdayStr) dateLabel = "Yesterday";
           else
-            dateLabel = logDate.toLocaleDateString("en-US", {
+            dateLabel = new Date(log.date).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
             });

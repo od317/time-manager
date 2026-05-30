@@ -9,29 +9,36 @@ import { Check, Flame, Repeat } from "lucide-react";
 
 interface HabitCardProps {
   habit: Habit;
-  currentDay: boolean;
+  todayStr: string;
 }
 
-export function HabitCard({ habit, currentDay }: HabitCardProps) {
+export function HabitCard({ habit, todayStr }: HabitCardProps) {
   const router = useRouter();
   const [isCompleting, setIsCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
 
-  // The backend already filtered logs for today
-  const todayLog = habit.logs?.[0];
-  const isCompletedToday = todayLog?.status === "COMPLETED" || completed;
+  const today = new Date().getDay();
 
-  // A habit is "due today" if the backend returned it -
-  // the backend already filters by today's date in the user's timezone.
-  // If the habit is active, it's due (the filtering happens on the habits page level)
+  // Check if due today using browser's day
+  const isDueToday =
+    habit.status === "ACTIVE" &&
+    (habit.frequencyType === "DAILY" ||
+      (habit.frequencyType === "WEEKLY" &&
+        habit.frequencyDays.includes(today)));
 
-  const showCompleted = isCompletedToday;
+  // Check if already completed today using browser's date string
+  const todayLog = habit.logs?.find((log) => {
+    if (log.status !== "COMPLETED") return false;
+    const logDateStr = new Date(log.date).toLocaleDateString("en-CA");
+    return logDateStr === todayStr;
+  });
+  const isCompletedToday = !!todayLog || completed;
 
   const handleComplete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isCompleting || showCompleted) return;
+    if (isCompleting || !isDueToday || isCompletedToday) return;
 
     setIsCompleting(true);
     try {
@@ -60,7 +67,7 @@ export function HabitCard({ habit, currentDay }: HabitCardProps) {
     <Link
       href={`/habits/${habit.id}`}
       className={`block bg-surface rounded-xl border transition-all hover:shadow-md ${
-        showCompleted && currentDay
+        isCompletedToday
           ? "border-success ring-2 ring-success/20"
           : habit.status === "ACTIVE"
             ? "border-border hover:border-primary/20"
@@ -77,17 +84,24 @@ export function HabitCard({ habit, currentDay }: HabitCardProps) {
             />
             <h3 className="font-semibold text-text truncate">{habit.title}</h3>
           </div>
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              habit.status === "ACTIVE"
-                ? "bg-success-bg text-success"
-                : habit.status === "PAUSED"
-                  ? "bg-warning-bg text-warning"
-                  : "bg-border text-text-muted"
-            }`}
-          >
-            {habit.status}
-          </span>
+          <div className="flex items-center gap-2">
+            {!isDueToday && habit.status === "ACTIVE" && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-border text-text-muted">
+                Not today
+              </span>
+            )}
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                habit.status === "ACTIVE"
+                  ? "bg-success-bg text-success"
+                  : habit.status === "PAUSED"
+                    ? "bg-warning-bg text-warning"
+                    : "bg-border text-text-muted"
+              }`}
+            >
+              {habit.status}
+            </span>
+          </div>
         </div>
 
         {/* Description */}
@@ -118,19 +132,19 @@ export function HabitCard({ habit, currentDay }: HabitCardProps) {
         </div>
 
         {/* Complete button */}
-        {habit.status === "ACTIVE" && currentDay && (
+        {habit.status === "ACTIVE" && isDueToday && (
           <button
             onClick={handleComplete}
-            disabled={isCompleting || showCompleted}
+            disabled={isCompleting || isCompletedToday}
             className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              showCompleted
+              isCompletedToday
                 ? "bg-success text-white cursor-default"
                 : "bg-primary-bg text-primary hover:bg-primary hover:text-white"
             }`}
           >
             {isCompleting ? (
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            ) : showCompleted ? (
+            ) : isCompletedToday ? (
               <>
                 <Check size={16} />
                 Done for today
@@ -142,6 +156,12 @@ export function HabitCard({ habit, currentDay }: HabitCardProps) {
               </>
             )}
           </button>
+        )}
+
+        {habit.status === "ACTIVE" && !isDueToday && (
+          <div className="w-full py-2.5 rounded-lg text-sm font-medium text-center text-text-muted bg-bg">
+            Available {getFrequencyLabel()}
+          </div>
         )}
       </div>
     </Link>
