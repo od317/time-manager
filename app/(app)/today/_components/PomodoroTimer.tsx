@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useTimerStore } from "@/store/timerStore";
 import { Play, Pause, Square, Brain, Coffee, Zap } from "lucide-react";
 import { resumeAudioContext } from "@/lib/sounds";
+import { PomodoroSettings } from "./PomodoroSettings";
 
 export function PomodoroTimer() {
   const {
@@ -130,6 +131,7 @@ export function PomodoroTimer() {
         <span className={`text-sm font-semibold ${phaseInfo.color}`}>
           {phaseInfo.label}
         </span>
+        <PomodoroSettings />
       </div>
 
       {pomodoroState && (

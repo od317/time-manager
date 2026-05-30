@@ -18,3 +18,62 @@ export const GOAL_COLORS = [
 ];
 
 export const DEFAULT_GOAL_COLOR = "#6366F1";
+
+export const POMODORO_PRESETS = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Traditional Pomodoro",
+    workDuration: 25,
+    shortBreakDuration: 5,
+    longBreakDuration: 15,
+    sessionsBeforeLongBreak: 4,
+  },
+  {
+    id: "short",
+    name: "Short Focus",
+    description: "Quick sessions for small tasks",
+    workDuration: 15,
+    shortBreakDuration: 3,
+    longBreakDuration: 10,
+    sessionsBeforeLongBreak: 4,
+  },
+  {
+    id: "long",
+    name: "Deep Work",
+    description: "Extended focus sessions",
+    workDuration: 50,
+    shortBreakDuration: 10,
+    longBreakDuration: 20,
+    sessionsBeforeLongBreak: 3,
+  },
+  {
+    id: "meeting",
+    name: "Meeting Style",
+    description: "30 min blocks with quick breaks",
+    workDuration: 30,
+    shortBreakDuration: 5,
+    longBreakDuration: 15,
+    sessionsBeforeLongBreak: 4,
+  },
+  {
+    id: "power",
+    name: "Power Hour",
+    description: "Intense 60 min sessions",
+    workDuration: 60,
+    shortBreakDuration: 10,
+    longBreakDuration: 25,
+    sessionsBeforeLongBreak: 2,
+  },
+  {
+    id: "custom",
+    name: "Custom",
+    description: "Set your own timings",
+    workDuration: 25,
+    shortBreakDuration: 5,
+    longBreakDuration: 15,
+    sessionsBeforeLongBreak: 4,
+  },
+] as const;
+
+export const DEFAULT_POMODORO_PRESET = "classic";
