@@ -10,6 +10,7 @@ import { TodayTasks } from "./_components/TodayTasks";
 import { TodayTimer } from "./_components/TodayTimer";
 import { TimerTitle } from "./_components/TimerTitle";
 import { TimerInitializer } from "./_components/TimerInitializer";
+import { getDayOfWeek, isHabitDueToday } from "@/lib/dateUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -18,20 +19,11 @@ export default async function TodayPage() {
     serverGoalService.getAll({ status: "ACTIVE" }, false),
     serverHabitService.getAll({ status: "ACTIVE" }, false),
     serverTimeEntryService.getRunning(),
-    serverApi.get<Task[]>("/tasks", {
-      revalidate: false,
-      tags: ["tasks"],
-    }),
+    serverApi.get<Task[]>("/tasks", { revalidate: false, tags: ["tasks"] }),
   ]);
 
-  const today = new Date().getDay();
-  const habitsDueToday = habits.filter((habit) => {
-    if (habit.frequencyType === "DAILY") return true;
-    if (habit.frequencyType === "WEEKLY") {
-      return habit.frequencyDays.includes(today);
-    }
-    return true;
-  });
+  const today = getDayOfWeek();
+  const habitsDueToday = habits.filter((h) => (h as any).isDueToday !== false);
 
   // Get active tasks (TODO or IN_PROGRESS)
   const activeTasks = Array.isArray(allTasks) ? allTasks : [];

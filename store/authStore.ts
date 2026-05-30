@@ -63,8 +63,15 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   register: async (email: string, password: string, name?: string) => {
     set({ isLoading: true });
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
     try {
-      const response = await authService.register({ email, password, name });
+      const response = await authService.register({
+        email,
+        password,
+        name,
+        timezone,
+      });
       setAuthCookie(response.token);
       set({ user: response.user, isAuthenticated: true, isLoading: false });
     } catch (error) {

@@ -31,7 +31,7 @@ export interface Habit {
   lastEvaluatedAt: string | null;
   createdAt: string;
   updatedAt: string;
-
+  isDueToday?: boolean;
   // Relations
   logs?: HabitLog[];
   timeEntries?: TimeEntry[];

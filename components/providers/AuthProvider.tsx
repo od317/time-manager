@@ -1,10 +1,12 @@
 "use client";
-
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
+import { setUserTimezone } from "@/lib/dateUtils";
+import { useTimezone } from "@/hooks/useTimezone";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { initialize, isInitialized } = useAuthStore();
+  const { initialize, isInitialized, user } = useAuthStore();
+  useTimezone();
 
   useEffect(() => {
     if (!isInitialized) {
@@ -12,7 +14,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [initialize, isInitialized]);
 
-  // Show nothing while checking auth
+  // Set timezone from user data or browser
+  useEffect(() => {
+    if (user) {
+      const tz =
+        user.timezone ||
+        Intl.DateTimeFormat().resolvedOptions().timeZone ||
+        "UTC";
+      setUserTimezone(tz);
+    }
+  }, [user]);
+
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
