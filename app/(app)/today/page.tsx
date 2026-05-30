@@ -9,6 +9,7 @@ import { TodayGoals } from "./_components/TodayGoals";
 import { TodayTasks } from "./_components/TodayTasks";
 import { TodayTimer } from "./_components/TodayTimer";
 import { TimerTitle } from "./_components/TimerTitle";
+import { DashboardLayout } from "./_components/DashboardLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -58,16 +59,21 @@ export default async function TodayPage() {
         {/* Timer */}
         <TodayTimer runningTimer={runningTimer} goals={goals} />
 
-        {/* Habits */}
-        <TodayHabits habits={habitsDueToday} />
-
-        {/* Tasks */}
-        {activeTasks.length > 0 && (
-          <TodayTasks tasks={activeTasks} goals={goals} />
-        )}
-
-        {/* Goals */}
-        <TodayGoals goals={goals} totalCount={goals.length} allGoals={goals} />
+        <DashboardLayout
+          habitsSection={<TodayHabits habits={habitsDueToday} />}
+          tasksSection={
+            activeTasks.length > 0 ? (
+              <TodayTasks tasks={activeTasks} goals={goals} />
+            ) : null
+          }
+          goalsSection={
+            <TodayGoals
+              goals={goals}
+              totalCount={goals.length}
+              allGoals={goals}
+            />
+          }
+        />
       </div>
     </>
   );
