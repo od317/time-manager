@@ -7,27 +7,62 @@ interface UIState {
   isSidebarOpen: boolean;
   layoutMode: LayoutMode;
   sectionOrder: SectionOrder;
+  goalOrder: string[];
 
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setLayoutMode: (mode: LayoutMode) => void;
   setSectionOrder: (order: SectionOrder) => void;
+  setGoalOrder: (order: string[]) => void;
 }
 
-// Load saved layout from localStorage
 function loadLayoutPrefs(): {
   layoutMode: LayoutMode;
   sectionOrder: SectionOrder;
+  goalOrder: string[];
 } {
-  if (typeof window === "undefined")
-    return { layoutMode: "single", sectionOrder: ["habits", "tasks", "goals"] };
+  if (typeof window === "undefined") {
+    return {
+      layoutMode: "single",
+      sectionOrder: ["habits", "tasks", "goals"],
+      goalOrder: [],
+    };
+  }
 
   try {
     const saved = localStorage.getItem("dashboard-layout");
-    if (saved) return JSON.parse(saved);
-  } catch {}
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        layoutMode: parsed.layoutMode || "single",
+        sectionOrder: parsed.sectionOrder || ["habits", "tasks", "goals"],
+        goalOrder: parsed.goalOrder || [],
+      };
+    }
+  } catch {
+    // Invalid JSON, use defaults
+  }
 
-  return { layoutMode: "single", sectionOrder: ["habits", "tasks", "goals"] };
+  return {
+    layoutMode: "single",
+    sectionOrder: ["habits", "tasks", "goals"],
+    goalOrder: [],
+  };
+}
+
+function saveLayoutPrefs(state: UIState) {
+  try {
+    localStorage.setItem(
+      "dashboard-layout",
+      JSON.stringify({
+        layoutMode: state.layoutMode,
+        sectionOrder: state.sectionOrder,
+        goalOrder: state.goalOrder,
+      }),
+    );
+  } catch {
+    // localStorage full or unavailable
+  }
 }
 
 const savedPrefs = loadLayoutPrefs();
@@ -36,32 +71,34 @@ export const useUIStore = create<UIState>((set) => ({
   isSidebarOpen: true,
   layoutMode: savedPrefs.layoutMode,
   sectionOrder: savedPrefs.sectionOrder,
+  goalOrder: savedPrefs.goalOrder,
 
   toggleSidebar: () =>
     set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
 
   setLayoutMode: (mode) => {
-    set({ layoutMode: mode });
-    const current = useUIStore.getState();
-    localStorage.setItem(
-      "dashboard-layout",
-      JSON.stringify({
-        layoutMode: mode,
-        sectionOrder: current.sectionOrder,
-      }),
-    );
+    set((state) => {
+      const newState = { ...state, layoutMode: mode };
+      saveLayoutPrefs(newState);
+      return { layoutMode: mode };
+    });
   },
 
   setSectionOrder: (order) => {
-    set({ sectionOrder: order });
-    const current = useUIStore.getState();
-    localStorage.setItem(
-      "dashboard-layout",
-      JSON.stringify({
-        layoutMode: current.layoutMode,
-        sectionOrder: order,
-      }),
-    );
+    set((state) => {
+      const newState = { ...state, sectionOrder: order };
+      saveLayoutPrefs(newState);
+      return { sectionOrder: order };
+    });
+  },
+
+  setGoalOrder: (order) => {
+    set((state) => {
+      const newState = { ...state, goalOrder: order };
+      saveLayoutPrefs(newState);
+      return { goalOrder: order };
+    });
   },
 }));

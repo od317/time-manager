@@ -3,6 +3,25 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Goal, Task } from "@/types";
+import { useTimerStore } from "@/store/timerStore";
+import { useUIStore } from "@/store/uiStore";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Target,
   ChevronDown,
@@ -12,13 +31,13 @@ import {
   CheckSquare,
   Circle,
   Play,
+  GripVertical,
 } from "lucide-react";
-import { useTimerStore } from "@/store/timerStore";
 
 interface TodayGoalsProps {
   goals: Goal[];
   totalCount: number;
-  allGoals: Goal[]; // All goals including sub-goals
+  allGoals: Goal[];
 }
 
 function TaskRow({ task }: { task: Task }) {
@@ -50,7 +69,6 @@ function TaskRow({ task }: { task: Task }) {
           {task.estimatedMinutes}m
         </span>
       )}
-
       <button
         onClick={handleStartTask}
         className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all flex-shrink-0 ${
@@ -64,13 +82,12 @@ function TaskRow({ task }: { task: Task }) {
       >
         {isSelected ? (
           <>
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />{" "}
             Selected
           </>
         ) : (
           <>
-            <Play size={12} />
-            Start
+            <Play size={12} /> Start
           </>
         )}
       </button>
@@ -78,7 +95,7 @@ function TaskRow({ task }: { task: Task }) {
   );
 }
 
-function GoalItem({
+function SortableGoalItem({
   goal,
   allGoals,
   depth = 0,
@@ -88,7 +105,21 @@ function GoalItem({
   depth?: number;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { setSelectedTask } = useTimerStore();
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: goal.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+  };
 
   const subGoals = allGoals.filter((g) => g.parentId === goal.id);
   const activeTasks = (goal.tasks || []).filter(
@@ -96,20 +127,12 @@ function GoalItem({
   );
   const hasChildren = subGoals.length > 0 || activeTasks.length > 0;
 
-  const handleStartTask = (task: Task) => {
-    setSelectedTask(task);
-    document
-      .querySelector("#focus-timer")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
-    <div>
-      {/* Goal row */}
+    <div ref={setNodeRef} style={style}>
       <div
-        className={`flex items-center gap-2 p-2.5 rounded-lg transition-all ${
+        className={`flex items-center gap-2 p-2.5 rounded-lg transition-all group ${
           depth > 0 ? "ml-4" : ""
-        }`}
+        } ${isDragging ? "bg-primary-bg/20" : ""}`}
       >
         {depth > 0 && (
           <CornerDownRight
@@ -118,7 +141,15 @@ function GoalItem({
           />
         )}
 
-        {/* Expand button - the whole left side */}
+        {/* Drag handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="text-text-muted hover:text-text cursor-grab active:cursor-grabbing flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all"
+        >
+          <GripVertical size={14} />
+        </div>
+
         <button
           onClick={() => hasChildren && setIsExpanded(!isExpanded)}
           disabled={!hasChildren}
@@ -139,13 +170,10 @@ function GoalItem({
           ) : (
             <div className="w-[14px] flex-shrink-0" />
           )}
-
           <div
             className="w-2.5 h-2.5 rounded-full flex-shrink-0"
             style={{ backgroundColor: goal.color || "#6366F1" }}
           />
-
-          {/* Title - links to detail page */}
           <Link
             href={`/goals/${goal.id}`}
             onClick={(e) => e.stopPropagation()}
@@ -155,7 +183,6 @@ function GoalItem({
           </Link>
         </button>
 
-        {/* Right side info - not clickable */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {goal.targetValue && goal.targetValue > 0 && (
             <span className="text-xs text-text-muted">
@@ -176,17 +203,13 @@ function GoalItem({
         </div>
       </div>
 
-      {/* Children */}
       {isExpanded && hasChildren && (
         <div className="ml-4 border-l-2 border-border pl-2 space-y-1">
-          {/* Tasks */}
           {activeTasks.map((task) => (
             <TaskRow key={task.id} task={task} />
           ))}
-
-          {/* Sub-goals */}
           {subGoals.map((subGoal) => (
-            <GoalItem
+            <SortableGoalItem
               key={subGoal.id}
               goal={subGoal}
               allGoals={allGoals}
@@ -201,14 +224,47 @@ function GoalItem({
 
 export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const { goalOrder, setGoalOrder } = useUIStore();
+
+  const topLevelGoals = goals.filter((g) => !g.parentId);
+
+  // Sort by saved order, then by default
+  const sortedGoals =
+    goalOrder.length > 0
+      ? [...topLevelGoals].sort((a, b) => {
+          const aIndex = goalOrder.indexOf(a.id);
+          const bIndex = goalOrder.indexOf(b.id);
+          if (aIndex === -1 && bIndex === -1) return 0;
+          if (aIndex === -1) return 1;
+          if (bIndex === -1) return -1;
+          return aIndex - bIndex;
+        })
+      : topLevelGoals;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIds =
+        goalOrder.length > 0 ? goalOrder : sortedGoals.map((g) => g.id);
+      const oldIndex = oldIds.indexOf(active.id as string);
+      const newIndex = oldIds.indexOf(over.id as string);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setGoalOrder(arrayMove(oldIds, oldIndex, newIndex));
+      }
+    }
+  };
 
   if (goals.length === 0) return null;
 
-  // Only show top-level goals
-  const topLevelGoals = goals.filter((g) => !g.parentId);
-
   return (
-    <div className="bg-surface rounded-xl border border-border p-4 w-full">
+    <div className="bg-surface rounded-xl border border-border p-4">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between"
@@ -222,11 +278,11 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
         <div className="flex items-center gap-2">
           {!isExpanded && (
             <span className="text-xs text-text-muted max-w-[200px] truncate">
-              {topLevelGoals
+              {sortedGoals
                 .slice(0, 2)
                 .map((g) => g.title)
                 .join(", ")}
-              {topLevelGoals.length > 2 && "..."}
+              {sortedGoals.length > 2 && "..."}
             </span>
           )}
           {isExpanded ? (
@@ -238,20 +294,35 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
       </button>
 
       {isExpanded && (
-        <div className="mt-3 space-y-1">
-          {topLevelGoals.map((goal) => (
-            <GoalItem key={goal.id} goal={goal} allGoals={allGoals} />
-          ))}
-          {totalCount > topLevelGoals.length && (
-            <Link
-              href="/goals"
-              className="flex items-center justify-center gap-1 py-2 text-xs text-primary hover:text-primary-dark font-medium"
-            >
-              View all {totalCount} goals
-              <ArrowRight size={12} />
-            </Link>
-          )}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={sortedGoals.map((g) => g.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="mt-3 space-y-1">
+              {sortedGoals.map((goal) => (
+                <SortableGoalItem
+                  key={goal.id}
+                  goal={goal}
+                  allGoals={allGoals}
+                />
+              ))}
+              {totalCount > sortedGoals.length && (
+                <Link
+                  href="/goals"
+                  className="flex items-center justify-center gap-1 py-2 text-xs text-primary hover:text-primary-dark font-medium"
+                >
+                  View all {totalCount} goals
+                  <ArrowRight size={12} />
+                </Link>
+              )}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );
