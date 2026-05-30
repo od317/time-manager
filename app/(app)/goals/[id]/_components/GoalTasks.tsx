@@ -3,9 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Goal, Task, Priority } from "@/types";
-import { goalService } from "@/lib/services";
 import { taskService } from "@/lib/services/taskService";
-import { Plus, CheckCircle2, Circle, Clock, Trash2 } from "lucide-react";
+import { TaskEditModal } from "@/app/(app)/today/_components/TaskEditModal";
+import {
+  Plus,
+  CheckCircle2,
+  Circle,
+  Clock,
+  Trash2,
+  Pencil,
+} from "lucide-react";
+import { TaskItem } from "@/components/tasks/TaskItem";
 
 interface GoalTasksProps {
   goal: Goal;
@@ -19,6 +27,7 @@ export function GoalTasks({ goal }: GoalTasksProps) {
   const [priority, setPriority] = useState<Priority>("MEDIUM");
   const [dueDate, setDueDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const tasks = goal.tasks || [];
   const activeTasks = tasks.filter(
@@ -168,53 +177,15 @@ export function GoalTasks({ goal }: GoalTasksProps) {
       {activeTasks.length > 0 && (
         <div className="space-y-1 mb-4">
           {activeTasks.map((task) => (
-            <div
+            <TaskItem
               key={task.id}
-              className="flex items-center gap-3 p-3 rounded-lg bg-bg border border-border hover:border-primary/20 transition-all group"
-            >
-              <button
-                onClick={() => handleToggleTask(task)}
-                className="text-text-muted hover:text-success transition-all flex-shrink-0"
-              >
-                <Circle size={20} />
-              </button>
-              <div
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: goal.color || "#6366F1" }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text truncate">
-                  {task.title}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {task.estimatedMinutes && (
-                    <span className="text-xs text-text-muted flex items-center gap-1">
-                      <Clock size={10} />
-                      {task.estimatedMinutes}m
-                    </span>
-                  )}
-                  {task.priority && task.priority !== "MEDIUM" && (
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                        task.priority === "URGENT"
-                          ? "bg-danger-bg text-danger"
-                          : task.priority === "HIGH"
-                            ? "bg-warning-bg text-warning"
-                            : "bg-primary-bg text-primary"
-                      }`}
-                    >
-                      {task.priority}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => handleDeleteTask(task.id)}
-                className="text-text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
+              task={task}
+              onToggle={handleToggleTask}
+              onEdit={setEditingTask}
+              onDelete={(t) => handleDeleteTask(t.id)}
+              showGoalColor
+              goalColor={goal.color || "#6366F1"}
+            />
           ))}
         </div>
       )}
@@ -227,26 +198,13 @@ export function GoalTasks({ goal }: GoalTasksProps) {
           </p>
           <div className="space-y-1">
             {completedTasks.map((task) => (
-              <div
+              <TaskItem
                 key={task.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-success-bg/30 border border-success/10"
-              >
-                <button
-                  onClick={() => handleToggleTask(task)}
-                  className="text-success flex-shrink-0"
-                >
-                  <CheckCircle2 size={20} />
-                </button>
-                <span className="text-sm text-text-secondary line-through truncate flex-1">
-                  {task.title}
-                </span>
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  className="text-text-muted hover:text-danger transition-all flex-shrink-0"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+                task={task}
+                onToggle={handleToggleTask}
+                onEdit={setEditingTask}
+                onDelete={(t) => handleDeleteTask(t.id)}
+              />
             ))}
           </div>
         </div>
@@ -256,6 +214,14 @@ export function GoalTasks({ goal }: GoalTasksProps) {
         <p className="text-sm text-text-muted text-center py-6">
           No tasks yet. Break down your goal into actionable steps.
         </p>
+      )}
+
+      {/* Edit Modal */}
+      {editingTask && (
+        <TaskEditModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
       )}
     </div>
   );

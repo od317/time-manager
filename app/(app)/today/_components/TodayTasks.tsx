@@ -6,7 +6,16 @@ import { useRouter } from "next/navigation";
 import { Task, Goal } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { useTimerStore } from "@/store/timerStore";
-import { CheckCircle2, Circle, Clock, Play, ChevronRight } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  Clock,
+  Play,
+  ChevronRight,
+  Pencil,
+} from "lucide-react";
+import { TaskEditModal } from "./TaskEditModal";
+import { TaskItem } from "@/components/tasks/TaskItem";
 
 interface TodayTasksProps {
   tasks: Task[];
@@ -18,7 +27,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   const { setSelectedTask } = useTimerStore();
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
-
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const handleToggle = async (task: Task) => {
     setCompletingId(task.id);
     try {
@@ -121,6 +130,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
                   isCompleting={completingId === task.id}
                   onToggle={handleToggle}
                   onStartTimer={handleStartTimer}
+                  onEdit={setEditingTask}
                 />
               ))}
             </div>
@@ -175,6 +185,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
                       isCompleting={completingId === task.id}
                       onToggle={handleToggle}
                       onStartTimer={handleStartTimer}
+                      onEdit={setEditingTask}
                     />
                   ))}
                 </div>
@@ -183,89 +194,12 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
           );
         })}
       </div>
-    </div>
-  );
-}
 
-// Individual task item component
-function TaskItem({
-  task,
-  isCompleting,
-  onToggle,
-  onStartTimer,
-}: {
-  task: Task;
-  isCompleting: boolean;
-  onToggle: (task: Task) => void;
-  onStartTimer: (task: Task) => void;
-}) {
-  const isCompleted = task.status === "COMPLETED";
-
-  return (
-    <div
-      className={`flex items-center gap-3 p-3 rounded-lg border transition-all group ${
-        isCompleted
-          ? "bg-success-bg/20 border-success/10"
-          : "bg-bg border-border hover:border-primary/20"
-      }`}
-    >
-      {/* Complete button */}
-      <button
-        onClick={() => onToggle(task)}
-        disabled={isCompleting}
-        className="text-text-muted hover:text-success transition-all flex-shrink-0"
-      >
-        {isCompleting ? (
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        ) : isCompleted ? (
-          <CheckCircle2 size={20} className="text-success" />
-        ) : (
-          <Circle size={20} />
-        )}
-      </button>
-
-      {/* Task info */}
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm font-medium truncate ${
-            isCompleted ? "text-text-secondary line-through" : "text-text"
-          }`}
-        >
-          {task.title}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          {task.estimatedMinutes && (
-            <span className="text-xs text-text-muted flex items-center gap-1">
-              <Clock size={10} />
-              {task.estimatedMinutes}m
-            </span>
-          )}
-          {task.priority && task.priority !== "MEDIUM" && (
-            <span
-              className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                task.priority === "URGENT"
-                  ? "bg-danger-bg text-danger"
-                  : task.priority === "HIGH"
-                    ? "bg-warning-bg text-warning"
-                    : "bg-primary-bg text-primary"
-              }`}
-            >
-              {task.priority}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Start timer button (only for incomplete tasks) */}
-      {!isCompleted && (
-        <button
-          onClick={() => onStartTimer(task)}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-primary hover:bg-primary-bg rounded-lg transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
-          title="Start timer for this task"
-        >
-          <Play size={12} />
-          Start
-        </button>
+      {editingTask && (
+        <TaskEditModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
       )}
     </div>
   );
