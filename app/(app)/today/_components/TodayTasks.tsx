@@ -13,6 +13,8 @@ import {
   Play,
   ChevronRight,
   Pencil,
+  CheckSquare,
+  ChevronDown,
 } from "lucide-react";
 import { TaskEditModal } from "./TaskEditModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
@@ -28,6 +30,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true);
   const handleToggle = async (task: Task) => {
     setCompletingId(task.id);
     try {
@@ -104,96 +107,104 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   }
 
   return (
-    <div
-      id="focus-timer"
-      className="bg-surface rounded-xl border border-border p-6"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text">Tasks</h3>
-        <span className="text-sm text-text-muted">
-          {completedTasks}/{totalTasks} done
-        </span>
-      </div>
-
-      <div className="space-y-4">
-        {/* Unassigned tasks */}
-        {unassignedTasks.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-text-muted uppercase tracking-wider mb-2 px-1">
-              No Goal
-            </p>
-            <div className="space-y-1">
-              {unassignedTasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  isCompleting={completingId === task.id}
-                  onToggle={handleToggle}
-                  onStartTimer={handleStartTimer}
-                  onEdit={setEditingTask}
-                />
-              ))}
-            </div>
-          </div>
+    <div className="bg-surface rounded-xl border border-border p-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between"
+      >
+        <div className="flex items-center gap-2">
+          <CheckSquare size={18} className="text-success" />
+          <h3 className="text-sm font-semibold text-text">Focus Tasks</h3>
+          <span className="text-xs text-text-muted">
+            {completedTasks}/{totalTasks}
+          </span>
+        </div>
+        {isExpanded ? (
+          <ChevronDown size={18} className="text-text-muted" />
+        ) : (
+          <ChevronRight size={18} className="text-text-muted" />
         )}
+      </button>
 
-        {/* Tasks grouped by goal */}
-        {Array.from(tasksByGoal.entries()).map(([goalId, group]) => {
-          const isCollapsed = collapsedGoals.has(goalId);
-          const completedInGroup = group.tasks.filter(
-            (t) => t.status === "COMPLETED",
-          ).length;
-
-          return (
-            <div key={goalId}>
-              {/* Goal header */}
-              {group.goal && (
-                <button
-                  onClick={() => toggleGoalCollapse(goalId)}
-                  className="w-full flex items-center gap-2 px-1 py-1 mb-2 hover:bg-bg rounded-lg transition-all group"
-                >
-                  <div
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: group.goal.color || "#6366F1" }}
+      {isExpanded && (
+        <div className="mt-3 space-y-4">
+          {/* Unassigned tasks */}
+          {unassignedTasks.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-text-muted uppercase tracking-wider mb-2 px-1">
+                No Goal
+              </p>
+              <div className="space-y-1">
+                {unassignedTasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    isCompleting={completingId === task.id}
+                    onToggle={handleToggle}
+                    onStartTimer={handleStartTimer}
+                    onEdit={setEditingTask}
                   />
-                  <Link
-                    href={`/goals/${group.goal.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-sm font-medium text-text hover:text-primary transition-all truncate"
-                  >
-                    {group.goal.title}
-                  </Link>
-                  <span className="text-xs text-text-muted flex-shrink-0">
-                    {completedInGroup}/{group.tasks.length}
-                  </span>
-                  <ChevronRight
-                    size={14}
-                    className={`text-text-muted transition-transform flex-shrink-0 ${
-                      isCollapsed ? "" : "rotate-90"
-                    }`}
-                  />
-                </button>
-              )}
-
-              {/* Tasks */}
-              {!isCollapsed && (
-                <div className="space-y-1 ml-2">
-                  {group.tasks.map((task) => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      isCompleting={completingId === task.id}
-                      onToggle={handleToggle}
-                      onStartTimer={handleStartTimer}
-                      onEdit={setEditingTask}
-                    />
-                  ))}
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          );
-        })}
-      </div>
+          )}
+
+          {/* Tasks grouped by goal */}
+          {Array.from(tasksByGoal.entries()).map(([goalId, group]) => {
+            const isCollapsed = collapsedGoals.has(goalId);
+            const completedInGroup = group.tasks.filter(
+              (t) => t.status === "COMPLETED",
+            ).length;
+
+            return (
+              <div key={goalId}>
+                {group.goal && (
+                  <button
+                    onClick={() => toggleGoalCollapse(goalId)}
+                    className="w-full flex items-center gap-2 px-1 py-1 mb-2 hover:bg-bg rounded-lg transition-all group"
+                  >
+                    <div
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: group.goal.color || "#6366F1" }}
+                    />
+                    <Link
+                      href={`/goals/${group.goal.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm font-medium text-text hover:text-primary transition-all truncate"
+                    >
+                      {group.goal.title}
+                    </Link>
+                    <span className="text-xs text-text-muted flex-shrink-0">
+                      {completedInGroup}/{group.tasks.length}
+                    </span>
+                    <ChevronRight
+                      size={14}
+                      className={`text-text-muted transition-transform flex-shrink-0 ${
+                        isCollapsed ? "" : "rotate-90"
+                      }`}
+                    />
+                  </button>
+                )}
+
+                {!isCollapsed && (
+                  <div className="space-y-1 ml-2">
+                    {group.tasks.map((task) => (
+                      <TaskItem
+                        key={task.id}
+                        task={task}
+                        isCompleting={completingId === task.id}
+                        onToggle={handleToggle}
+                        onStartTimer={handleStartTimer}
+                        onEdit={setEditingTask}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {editingTask && (
         <TaskEditModal

@@ -9,8 +9,6 @@ import { TodayGoals } from "./_components/TodayGoals";
 import { TodayTasks } from "./_components/TodayTasks";
 import { TodayTimer } from "./_components/TodayTimer";
 import { TimerTitle } from "./_components/TimerTitle";
-import { TimerInitializer } from "./_components/TimerInitializer";
-import { getDayOfWeek, isHabitDueToday } from "@/lib/dateUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +21,8 @@ export default async function TodayPage() {
   ]);
 
   const today = new Date().getDay();
+
+  // Filter habits due today
   const habitsDueToday = habits.filter((habit) => {
     if (habit.frequencyType === "DAILY") return true;
     if (habit.frequencyType === "WEEKLY")
@@ -30,28 +30,44 @@ export default async function TodayPage() {
     return false;
   });
 
-  // Get active tasks (TODO or IN_PROGRESS)
-  const activeTasks = Array.isArray(allTasks) ? allTasks : [];
+  // Filter tasks - only show due today or urgent
+  const activeTasks = (Array.isArray(allTasks) ? allTasks : []).filter(
+    (task) => {
+      if (task.status === "COMPLETED") return false;
+      if (task.priority === "URGENT") return true;
+      if (task.dueDate) {
+        const dueDate = new Date(task.dueDate).toLocaleDateString("en-CA");
+        const todayStr = new Date().toLocaleDateString("en-CA");
+        return dueDate === todayStr;
+      }
+      return false;
+    },
+  );
 
   return (
     <>
       <TimerTitle />
-      <div className="space-y-6 pb-20 md:pb-6">
-        <TimerInitializer goals={goals} />
-        <TodayTimer runningTimer={runningTimer} goals={goals} />
+      <div className="space-y-4 pb-20 md:pb-6">
+        {/* Overview - compact strip above timer */}
         <TodayOverview
           goals={goals}
           habitsDue={habitsDueToday.length}
           tasksCount={activeTasks.length}
         />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TodayHabits habits={habitsDueToday} />
-          <TodayGoals goals={goals.slice(0, 5)} />
-        </div>
-        {/* Tasks section */}
+
+        {/* Timer */}
+        <TodayTimer runningTimer={runningTimer} goals={goals} />
+
+        {/* Habits */}
+        <TodayHabits habits={habitsDueToday} />
+
+        {/* Tasks */}
         {activeTasks.length > 0 && (
-          <TodayTasks tasks={activeTasks.slice(0, 5)} goals={goals} />
+          <TodayTasks tasks={activeTasks} goals={goals} />
         )}
+
+        {/* Goals */}
+        <TodayGoals goals={goals} totalCount={goals.length} allGoals={goals} />
       </div>
     </>
   );

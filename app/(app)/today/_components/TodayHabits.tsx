@@ -130,7 +130,7 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
+    <div className="bg-surface rounded-xl border border-border p-6 w-full">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-text">Today&apos;s Habits</h3>
         <span className="text-sm text-text-muted">
