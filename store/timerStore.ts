@@ -362,16 +362,14 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     const { runningTimer } = get();
     const now = Date.now();
 
-    // Stop backend timer if it exists
     if (runningTimer) {
       try {
         await timeEntryService.stop(runningTimer.id);
       } catch {
-        // Ignore - timer might already be stopped
+        // Ignore
       }
     }
 
-    // Close history entries
     const finalHistory = get().sessionHistory.map((entry) => {
       if (entry.endTime === null) {
         return { ...entry, endTime: now };
@@ -379,17 +377,16 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       return entry;
     });
 
-    // Complete reset
     set({
       runningTimer: null,
       elapsed: 0,
-      lastStoppedId: runningTimer?.id || null,
+      lastStoppedId: runningTimer?.id || null, // ✅ This must be set
       sessionStartTime: null,
       currentTaskStartTime: null,
       accumulatedBeforePause: 0,
       sessionHistory: finalHistory,
       pomodoroState: null,
-      timerMode: get().timerMode, // Keep the current mode
+      timerMode: get().timerMode,
     });
 
     clearTimerState();

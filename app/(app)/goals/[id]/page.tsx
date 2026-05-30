@@ -24,11 +24,12 @@ export default async function GoalDetailPage({ params }: GoalDetailPageProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6">
       <GoalHeader goal={goal} />
-      {goal.targetValue && <ProgressUpdate goal={goal} />}
+      {goal.targetValue && goal.targetValue > 0 && (
+        <ProgressUpdate goal={goal} />
+      )}
       <GoalProgress goal={goal} />
       <GoalStats goal={goal} />
       <GoalTasks goal={goal} />
-
       {/* Sub-goals section */}
       <div className="bg-surface rounded-xl border border-border p-6">
         <div className="flex items-center justify-between mb-4">
@@ -46,7 +47,6 @@ export default async function GoalDetailPage({ params }: GoalDetailPageProps) {
           </p>
         )}
       </div>
-
       <GoalActions goal={goal} />
     </div>
   );

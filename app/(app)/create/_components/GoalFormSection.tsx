@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { goalService } from "@/lib/services";
-import { CreateGoalPayload, Priority } from "@/types";
+import { CreateGoalPayload, Priority, GoalType } from "@/types";
 import { ColorPicker } from "../../goals/_components/ColorPicker";
 import { DEFAULT_GOAL_COLOR } from "@/lib/constants";
 import { CreateSummary } from "./CreateSummary";
@@ -36,6 +36,7 @@ export function GoalFormSection({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("MEDIUM");
+  const [goalType, setGoalType] = useState<GoalType>("quantity");
   const [targetValue, setTargetValue] = useState("");
   const [unit, setUnit] = useState("");
   const [color, setColor] = useState(DEFAULT_GOAL_COLOR);
@@ -76,8 +77,17 @@ export function GoalFormSection({
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
-        targetValue: targetValue ? parseFloat(targetValue) : undefined,
-        unit: unit.trim() || undefined,
+        goalType,
+        targetValue:
+          goalType !== "project" && targetValue
+            ? parseFloat(targetValue)
+            : undefined,
+        unit:
+          goalType === "time"
+            ? unit || "hours"
+            : goalType === "quantity"
+              ? unit.trim() || undefined
+              : undefined,
         color,
         startDate: startDate.toISOString(),
         endDate: endDate
@@ -159,6 +169,100 @@ export function GoalFormSection({
         />
       </div>
 
+      {/* Goal Type */}
+      <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          Goal Type
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setGoalType("quantity");
+              setUnit("");
+            }}
+            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
+              goalType === "quantity"
+                ? "bg-primary text-white border-primary"
+                : "bg-bg text-text-secondary border-border hover:border-primary/30"
+            }`}
+          >
+            📏 Quantity
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGoalType("time");
+              setUnit("hours");
+            }}
+            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
+              goalType === "time"
+                ? "bg-primary text-white border-primary"
+                : "bg-bg text-text-secondary border-border hover:border-primary/30"
+            }`}
+          >
+            ⏱️ Time
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGoalType("project");
+              setUnit("");
+              setTargetValue("");
+            }}
+            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
+              goalType === "project"
+                ? "bg-primary text-white border-primary"
+                : "bg-bg text-text-secondary border-border hover:border-primary/30"
+            }`}
+          >
+            📂 Project
+          </button>
+        </div>
+      </div>
+
+      {/* Target Value & Unit - Only for quantity and time */}
+      {goalType !== "project" && (
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            Target Value & Unit
+          </label>
+          <div className="grid grid-cols-5 gap-3">
+            <div className="col-span-3">
+              <input
+                type="number"
+                value={targetValue}
+                onChange={(e) => setTargetValue(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                placeholder={goalType === "time" ? "e.g., 10" : "e.g., 100"}
+                min="0"
+                step={goalType === "time" ? "0.5" : "1"}
+              />
+            </div>
+            <div className="col-span-2">
+              {goalType === "time" ? (
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                >
+                  <option value="hours">Hours</option>
+                  <option value="minutes">Minutes</option>
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  placeholder="e.g., words, km"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Start Date Display */}
       <div>
         <label className="block text-sm font-medium text-text-secondary mb-1.5">
@@ -235,46 +339,19 @@ export function GoalFormSection({
         </div>
       </div>
 
-      {/* Target Value & Unit */}
-      <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">
-          Target Value & Unit
-        </label>
-        <div className="grid grid-cols-5 gap-3">
-          <div className="col-span-3">
-            <input
-              type="number"
-              value={targetValue}
-              onChange={(e) => setTargetValue(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              placeholder="e.g., 100"
-              min="0"
-              step="1"
-            />
-          </div>
-          <div className="col-span-2">
-            <input
-              type="text"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              placeholder="e.g., words"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Color */}
       <ColorPicker value={color} onChange={setColor} />
 
+      {/* Preview */}
       <CreateSummary
         type="goal"
         title={title}
         description={description}
         priority={priority}
         color={color}
-        targetValue={targetValue}
-        unit={unit}
+        goalType={goalType}
+        targetValue={goalType !== "project" ? targetValue : undefined}
+        unit={goalType !== "project" ? unit : undefined}
         selectedDate={selectedDate}
         selectedTime={selectedTime ? formatDisplayTime(selectedTime) : ""}
       />

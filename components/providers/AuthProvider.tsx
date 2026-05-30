@@ -3,11 +3,12 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { setUserTimezone } from "@/lib/dateUtils";
 import { useTimezone } from "@/hooks/useTimezone";
+import { useGoalProgressSync } from "@/hooks/useGoalProgressSync";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { initialize, isInitialized, user } = useAuthStore();
   useTimezone();
-
+  useGoalProgressSync();
   useEffect(() => {
     if (!isInitialized) {
       initialize();

@@ -22,9 +22,8 @@ export function ProgressUpdate({ goal }: ProgressUpdateProps) {
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const timeUnits = ["hours", "minutes", "h", "m", "hrs", "mins"];
-  const isTimeBased = currentGoal.unit
-    ? timeUnits.includes(currentGoal.unit.toLowerCase())
-    : false;
+  const isTimeBased = goal.goalType === "time";
+  const isQuantity = goal.goalType === "quantity";
 
   // Re-fetch goal when timer stops
   const refreshGoal = useCallback(async () => {
