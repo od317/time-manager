@@ -34,13 +34,38 @@ export default async function TodayPage() {
   // Filter tasks - only show due today or urgent
   const activeTasks = (Array.isArray(allTasks) ? allTasks : []).filter(
     (task) => {
-      if (task.status === "COMPLETED") return false;
       if (task.priority === "URGENT") return true;
       if (task.dueDate) {
         const dueDate = new Date(task.dueDate).toLocaleDateString("en-CA");
         const todayStr = new Date().toLocaleDateString("en-CA");
         return dueDate === todayStr;
       }
+      return false;
+    },
+  );
+
+  const focusTasks = (Array.isArray(allTasks) ? allTasks : []).filter(
+    (task) => {
+      // Include if urgent (any status)
+      if (task.priority === "URGENT" && task.status !== "COMPLETED")
+        return true;
+
+      // Include if due today (any status)
+      if (task.dueDate) {
+        const dueDate = new Date(task.dueDate).toLocaleDateString("en-CA");
+        const todayStr = new Date().toLocaleDateString("en-CA");
+        if (dueDate === todayStr) return true;
+      }
+
+      // Include if completed today
+      if (task.status === "COMPLETED" && task.completedAt) {
+        const completedDate = new Date(task.completedAt).toLocaleDateString(
+          "en-CA",
+        );
+        const todayStr = new Date().toLocaleDateString("en-CA");
+        return completedDate === todayStr;
+      }
+
       return false;
     },
   );
@@ -62,9 +87,9 @@ export default async function TodayPage() {
         <DashboardLayout
           habitsSection={<TodayHabits habits={habitsDueToday} />}
           tasksSection={
-            activeTasks.length > 0 ? (
-              <TodayTasks tasks={activeTasks} goals={goals} />
-            ) : null
+            focusTasks.length > 0 && (
+              <TodayTasks tasks={focusTasks} goals={goals} />
+            )
           }
           goalsSection={
             <TodayGoals
