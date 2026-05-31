@@ -10,6 +10,7 @@ import { ProductivityPatterns } from "./_components/ProductivityPatterns";
 import { DailyBreakdown } from "./_components/DailyBreakdown";
 import { Comparisons } from "./_components/Comparisons";
 import { RecentActivity } from "./_components/RecentActivity";
+import { AIInsights } from "./_components/AIInsights";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export default async function AnalyticsPage() {
       <DailyBreakdown goals={goals} habits={habits} timeEntries={timeEntries} />
 
       <Comparisons goals={goals} habits={habits} />
-
+      <AIInsights goals={goals} habits={habits} timeEntries={timeEntries} />
       <RecentActivity timeEntries={timeEntries.slice(0, 10)} goals={goals} />
     </div>
   );
