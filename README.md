@@ -1,6 +1,6 @@
-# ⏱️ TimeFlow - Frontend
+# ⏱️ TimeFlow
 
-A time management application built with Next.js 16, React 19, and TypeScript. Track goals, habits, and time with a beautiful, responsive interface.
+A comprehensive time management application built with Next.js 16, React 19, and TypeScript. Track goals, habits, and time with a beautiful, responsive interface.
 
 ## 🚀 Tech Stack
 
@@ -11,15 +11,91 @@ A time management application built with Next.js 16, React 19, and TypeScript. T
 | **Language**         | TypeScript                         |
 | **Styling**          | Tailwind CSS v4                    |
 | **State Management** | Zustand                            |
-| **Server State**     | TanStack React Query               |
 | **HTTP Client**      | Axios (with request deduplication) |
-| **Forms**            | React Hook Form + Zod              |
-| **Charts**           | Recharts                           |
 | **Drag & Drop**      | @dnd-kit                           |
 | **Icons**            | Lucide React                       |
-| **Animations**       | Framer Motion                      |
+| **Charts**           | Recharts                           |
 | **Dates**            | date-fns                           |
 | **Sound**            | Web Audio API                      |
+
+## ✨ Features
+
+### ⏱️ Timer System
+
+- **Three modes**: Simple, Pomodoro, Quick Log
+- **Task context switching**: Change tasks mid-session without losing time
+- **Session history**: Track time per task with live updates and grouped display
+- **Pomodoro presets**: Classic, Short Focus, Deep Work, Meeting Style, Power Hour, Custom
+- **Customizable durations**: Work, short break, long break, sessions before long break
+- **Sound notifications**: Audio cues for phase changes
+- **Persistence**: Survives page reloads via localStorage with automatic pause on reload
+- **Browser tab timer**: See elapsed time in the tab title
+- **Goal progress auto-sync**: Time tracked on time-based goals updates progress automatically
+
+### 🎯 Goals
+
+- **Hierarchical goals**: Nest sub-goals infinitely with expand/collapse
+- **Three goal types**: Quantity, Time-based, Project
+- **Color coding**: 16 colors, sub-goals inherit parent color
+- **Progress tracking**: Manual updates + automatic timer sync for time-based goals
+- **Tasks**: Break goals into actionable items with priority, estimated time, and due dates
+- **Calendar-based creation**: Pick start/end dates with optional time selection
+- **Drag & drop reordering**: Reorder goals and sub-goals on the Today page
+- **Sub-goal management**: Create, edit, and nest sub-goals from the detail page
+
+### 🔄 Habits
+
+- **Flexible scheduling**: Daily, weekly, or custom frequency
+- **Day picker**: Select specific days for weekly habits
+- **Streak tracking**: Current streak, longest streak, total completions
+- **Amount tracking**: Log specific values, not just yes/no
+- **Heatmap view**: GitHub-style yearly activity visualization
+- **Log history**: Recent activity with Today/Yesterday labels
+- **Browser-based date handling**: All date logic uses browser's local time
+- **Edit habits**: Modal with title, description, and color
+- **Pause/Resume/Archive/Delete**: Full lifecycle management
+- **Time remaining**: Countdown until midnight for today's habits
+
+### 📊 Dashboard
+
+- **Customizable layout**: Single or double column mode
+- **Draggable sections**: Reorder Habits, Tasks, and Goals sections
+- **Collapsible sections**: Expand/collapse each section independently
+- **Today overview**: Compact stats strip showing active counts
+- **Focus tasks**: Shows only urgent or due-today tasks
+- **Goal hierarchy**: Expand goals to see sub-goals and tasks inline
+- **Quick timer start**: Start timer directly from any task
+- **Responsive**: Works on desktop and mobile
+
+### 📅 Calendar System
+
+- **Month navigation**: Browse months with arrow controls
+- **Event dots**: Colored dots for goals, tasks, and habits
+- **Past day handling**: View history, disable future selection
+- **Day details panel**: Shows all events grouped by type with status badges
+- **Time picker**: Quick presets + custom hour/minute selection in 12-hour format
+- **Date range selection**: Start and end dates for goals
+
+### 🎨 UI/UX
+
+- **Collapsible sidebar**: Toggle between full and icon-only modes
+- **Color-coded everything**: Goals, tasks, and habits share consistent colors
+- **Drag handles**: Appear on hover for reorderable items
+- **Smooth animations**: Slide, fade, and pulse effects
+- **Loading states**: Spinners and skeleton states
+- **Error handling**: Network errors, timeouts, validation with retry options
+- **Success feedback**: Green confirmation with auto-dismiss
+- **Empty states**: Helpful messages with CTAs
+- **Responsive design**: Mobile bottom nav, adaptive layouts
+
+### 💾 Data & State
+
+- **Request deduplication**: Automatic cancellation of duplicate API calls
+- **Race condition protection**: AbortController for stale requests
+- **localStorage persistence**: Timer state, layout preferences, goal order
+- **Cookie-based auth**: JWT stored in cookies for security
+- **Server Components**: SSR/SSG with revalidation for initial data
+- **Client Components**: Interactive elements with Zustand stores
 
 ## 📁 Project Structure
 
@@ -27,66 +103,29 @@ A time management application built with Next.js 16, React 19, and TypeScript. T
 frontend/
 ├── app/
 │   ├── (auth)/              # Login/Register pages
-│   │   ├── login/
-│   │   └── register/
 │   ├── (app)/               # Authenticated pages
-│   │   ├── today/           # Main dashboard
-│   │   ├── goals/           # Goals CRUD + hierarchy
-│   │   ├── habits/          # Habits tracking
-│   │   ├── analytics/       # Charts & insights
-│   │   └── settings/        # User preferences
-│   ├── layout.tsx           # Root layout
-│   └── globals.css          # Global styles + theme
-├── components/              # Shared UI components
+│   │   ├── today/           # Main dashboard with timer, habits, goals, tasks
+│   │   ├── goals/           # Goals CRUD + hierarchy + detail page
+│   │   ├── habits/          # Habits list + detail with heatmap
+│   │   └── create/          # Unified goal/habit creation with calendar
+├── components/
+│   ├── calendar/            # Calendar, TimePicker, DayDetails
+│   ├── tasks/               # Shared TaskItem component
 │   └── ui/                  # Button, Input, Modal, etc.
-├── hooks/                   # Custom hooks
+├── hooks/                   # useGoalProgressSync, useTimezone
 ├── lib/                     # Utilities
 │   ├── api.ts               # Axios client (race condition protection)
 │   ├── server-api.ts        # Server-side fetch wrapper
-│   ├── constants.ts         # Colors, config
+│   ├── constants.ts         # Colors, Pomodoro presets
 │   ├── sounds.ts            # Web Audio API sounds
-│   ├── timerPersistence.ts  # LocalStorage persistence
-│   └── services/            # API service modules
+│   ├── timerPersistence.ts  # LocalStorage helpers
+│   └── services/            # API service modules (client + server)
 ├── store/                   # Zustand stores
 │   ├── authStore.ts         # Authentication state
-│   ├── timerStore.ts        # Timer state machine
-│   └── uiStore.ts           # UI state (sidebar, etc.)
+│   ├── timerStore.ts        # Timer state machine (Simple/Pomodoro/Quick Log)
+│   └── uiStore.ts           # UI state (sidebar, layout, ordering)
 └── types/                   # TypeScript types
 ```
-
-## 🎨 Features
-
-### Timer
-
-- **Three modes**: Simple, Pomodoro, Quick Log
-- **Task context switching**: Change tasks mid-session without losing time
-- **Session history**: Track time per task with live updates
-- **Persistence**: Survives page reloads via localStorage
-- **Browser tab timer**: See elapsed time in the tab title
-
-### Goals
-
-- **Hierarchical goals**: Nest sub-goals infinitely
-- **Color coding**: 16 colors, sub-goals inherit parent color
-- **Progress tracking**: Manual updates + automatic timer sync
-- **Time-based goals**: Track hours/minutes from timer
-- **Quantity-based goals**: Track counts (words, pages, etc.)
-- **Tasks**: Break goals into actionable items
-
-### Habits
-
-- **Flexible scheduling**: Daily, weekly, custom frequency
-- **Streak tracking**: Current streak, longest streak
-- **Rollover support**: Complete missed habits next day
-- **Heatmap view**: GitHub-style consistency visualization
-- **Amount tracking**: Log values, not just yes/no
-
-### Dashboard
-
-- **Today view**: Habits, goals, tasks, and timer in one place
-- **Task grouping**: Tasks grouped by parent goal
-- **Collapsible sidebar**: More screen space when needed
-- **Responsive**: Works on desktop and mobile
 
 ## 🔧 Getting Started
 
@@ -105,7 +144,6 @@ npm install
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_DEV_MODE=true   # Shorter Pomodoro times for testing
 ```
 
 ### Development
@@ -116,59 +154,19 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### Production Build
-
-```bash
-npm run build
-npm start
-```
-
-## 🏗️ Architecture Decisions
-
-### Why Zustand over Redux?
-
-- Minimal boilerplate
-- No provider needed
-- Direct store access via `getState()` for non-reactive reads
-- Perfect for timer state that updates every second
-
-### Why Axios with AbortController?
-
-- Built-in request deduplication
-- Automatic cancellation of stale requests
-- Prevents race conditions on rapid interactions
-- Centralized error handling with user-friendly messages
-
-### Why Server Components + Client Components?
-
-- **Server Components**: Fetch initial data with Next.js caching
-- **Client Components**: Interactive timer, forms, drag-drop
-- **Best of both**: Fast initial load + rich interactivity
-
-### Why localStorage for Timer Persistence?
-
-- Instant recovery on page reload
-- No backend dependency for session state
-- 24-hour expiry prevents stale data
-- Automatically paused on reload to prevent runaway timers
-
 ## 🎯 Key Design Patterns
-
-### Request Deduplication
-
-Same requests cancel previous ones:
-
-```typescript
-api.post("/goals", data, CancelKeys.GOAL_CREATE);
-// Second call cancels the first
-```
 
 ### Timer State Machine
 
 ```
 IDLE → RUNNING → PAUSED → RUNNING → COMPLETED
-                    ↓
-                 STOPPED
+```
+
+### Request Deduplication
+
+```typescript
+api.post("/goals", data, CancelKeys.GOAL_CREATE);
+// Second call cancels the first
 ```
 
 ### Task Context Switching
@@ -178,24 +176,12 @@ When changing tasks during a running timer:
 1. Stop current time entry (saves time to current task)
 2. Start new time entry (time goes to new task)
 3. Display continues without resetting
+4. Session history groups time by task
 
-### Color Inheritance
+### Browser-Based Date Logic
 
-Sub-goals automatically inherit parent goal color:
+All habit and date calculations use the browser's local time:
 
-```
-Parent (Blue) → Child (Blue) → Grandchild (Blue)
-```
-
-## 📦 Available Scripts
-
-| Script          | Description              |
-| --------------- | ------------------------ |
-| `npm run dev`   | Start development server |
-| `npm run build` | Production build         |
-| `npm start`     | Start production server  |
-| `npm run lint`  | Run ESLint               |
-
----
-
-Want me to add specific sections like API documentation, component documentation, or deployment instructions?
+- `new Date().getDay()` for day of week
+- `toLocaleDateString('en-CA')` for YYYY-MM-DD format
+- No server timezone dependencies
