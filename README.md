@@ -17,6 +17,7 @@ A comprehensive time management application built with Next.js 16, React 19, and
 | **Charts**           | Recharts                           |
 | **Dates**            | date-fns                           |
 | **Sound**            | Web Audio API                      |
+| **AI**               | OpenRouter (Gemini 2.0 Flash)      |
 
 ## ✨ Features
 
@@ -96,6 +97,15 @@ A comprehensive time management application built with Next.js 16, React 19, and
 - **Cookie-based auth**: JWT stored in cookies for security
 - **Server Components**: SSR/SSG with revalidation for initial data
 - **Client Components**: Interactive elements with Zustand stores
+
+### 🤖 AI Insights
+
+- **Personalized analysis**: AI reviews your goals, habits, and time tracking data
+- **Smart suggestions**: Actionable tips based on your patterns
+- **Encouragement**: Motivational messages tailored to your progress
+- **Pattern detection**: Identifies trends in your productivity
+- **Powered by OpenRouter**: Uses Gemini 2.0 Flash (free tier)
+- **Fallback insights**: Works even when AI is unavailable
 
 ## 📁 Project Structure
 
