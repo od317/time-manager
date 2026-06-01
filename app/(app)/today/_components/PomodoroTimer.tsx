@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import { Play, Pause, Square, Brain, Coffee, Zap } from "lucide-react";
 import { resumeAudioContext } from "@/lib/sounds";
@@ -31,7 +32,6 @@ export function PomodoroTimer() {
     }
   }, []);
 
-  // Single countdown: uses store's sessionStartTime and elapsed
   useEffect(() => {
     if (pomodoroState && sessionStartTime) {
       const tick = () => {
@@ -85,14 +85,16 @@ export function PomodoroTimer() {
         label: "Ready",
         color: "text-primary",
         bg: "bg-primary-bg",
+        borderColor: "border-primary/20",
       };
     switch (phase) {
       case "WORK":
         return {
           icon: Brain,
-          label: "Focus",
+          label: "Focus Time",
           color: "text-danger",
           bg: "bg-danger-bg",
+          borderColor: "border-danger/20",
         };
       case "SHORT_BREAK":
         return {
@@ -100,6 +102,7 @@ export function PomodoroTimer() {
           label: "Short Break",
           color: "text-success",
           bg: "bg-success-bg",
+          borderColor: "border-success/20",
         };
       case "LONG_BREAK":
         return {
@@ -107,6 +110,7 @@ export function PomodoroTimer() {
           label: "Long Break",
           color: "text-warning",
           bg: "bg-warning-bg",
+          borderColor: "border-warning/20",
         };
     }
   };
@@ -121,25 +125,47 @@ export function PomodoroTimer() {
       : 0;
 
   return (
-    <div className="text-center">
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <div
-          className={`w-8 h-8 rounded-lg ${phaseInfo.bg} flex items-center justify-center`}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="max-w-md mx-auto"
+    >
+      {/* Phase Indicator */}
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <motion.div
+          className={`p-3 rounded-2xl ${phaseInfo.bg} border ${phaseInfo.borderColor}`}
+          animate={isRunning ? { scale: [1, 1.05, 1] } : {}}
+          transition={{ duration: 2, repeat: Infinity }}
         >
-          <PhaseIcon size={18} className={phaseInfo.color} />
+          <PhaseIcon size={24} className={phaseInfo.color} />
+        </motion.div>
+        <div>
+          <span className={`text-sm font-bold ${phaseInfo.color}`}>
+            {phaseInfo.label}
+          </span>
+          {isRunning && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xs text-text-muted"
+            >
+              In progress...
+            </motion.p>
+          )}
         </div>
-        <span className={`text-sm font-semibold ${phaseInfo.color}`}>
-          {phaseInfo.label}
-        </span>
         <PomodoroSettings />
       </div>
 
+      {/* Session Dots */}
       {pomodoroState && (
-        <div className="flex items-center justify-center gap-1 mb-4">
+        <div className="flex items-center justify-center gap-2 mb-6">
           {Array.from({ length: pomodoroConfig.sessionsBeforeLongBreak }).map(
             (_, i) => (
-              <div
+              <motion.div
                 key={i}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: i * 0.1 }}
                 className={`w-3 h-3 rounded-full transition-all ${
                   i < pomodoroState.sessionsCompleted
                     ? "bg-primary"
@@ -150,68 +176,99 @@ export function PomodoroTimer() {
               />
             ),
           )}
-          <span className="text-xs text-text-muted ml-2">
-            {pomodoroState.sessionsCompleted} sessions
+          <span className="text-xs font-medium text-text-muted ml-2 bg-bg px-2 py-0.5 rounded-full">
+            {pomodoroState.sessionsCompleted} done
           </span>
         </div>
       )}
 
-      <div className="mb-6">
+      {/* Timer Display */}
+      <motion.div
+        className="mb-6"
+        animate={isRunning ? { scale: [1, 1.02, 1] } : {}}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
         <span
-          className={`text-5xl font-mono font-bold tabular-nums ${isRunning ? phaseInfo.color : "text-text"}`}
+          className={`text-7xl font-mono font-bold tabular-nums tracking-tight ${
+            isRunning ? phaseInfo.color : "text-text"
+          }`}
         >
           {formatTime(elapsed)}
         </span>
-      </div>
+      </motion.div>
 
-      <div className="w-full h-2 bg-border rounded-full overflow-hidden mb-6">
-        <div
-          className={`h-full rounded-full transition-all ${phaseInfo.color.replace("text", "bg")}`}
-          style={{ width: `${Math.min(progress, 100)}%` }}
+      {/* Progress Bar */}
+      <div className="w-full h-3 bg-border rounded-full overflow-hidden mb-8">
+        <motion.div
+          className={`h-full rounded-full ${phaseInfo.color.replace("text", "bg")} bg-current`}
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.min(progress, 100)}%` }}
+          transition={{ duration: 0.5 }}
         />
       </div>
 
+      {/* Controls */}
       <div className="flex items-center justify-center gap-3">
-        {!isActive ? (
-          <button
-            onClick={handleStartPomodoro}
-            disabled={isLoading || !hasSelection}
-            className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 transition-all"
-          >
-            <Play size={18} />
-            {isLoading
-              ? "Starting..."
-              : pomodoroState
-                ? "Continue"
-                : "Start Pomodoro"}
-          </button>
-        ) : (
-          <>
-            {isRunning && (
-              <button
-                onClick={pause}
-                className="flex items-center gap-2 px-5 py-2.5 bg-warning-bg text-warning rounded-lg font-medium hover:bg-warning/10 transition-all"
-              >
-                <Pause size={18} /> Pause
-              </button>
-            )}
-            {isPaused && (
-              <button
-                onClick={resume}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-all"
-              >
-                <Play size={18} /> Resume
-              </button>
-            )}
-            <button
-              onClick={stop}
-              className="flex items-center gap-2 px-5 py-2.5 bg-danger-bg text-danger rounded-lg font-medium hover:bg-danger/10 transition-all"
+        <AnimatePresence mode="wait">
+          {!isActive ? (
+            <motion.button
+              key="start-pomodoro"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStartPomodoro}
+              disabled={isLoading || !hasSelection}
+              className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              <Square size={18} /> End Session
-            </button>
-          </>
-        )}
+              <Play size={20} className="fill-current" />
+              {isLoading
+                ? "Starting..."
+                : pomodoroState
+                  ? "Continue"
+                  : "Start Pomodoro"}
+            </motion.button>
+          ) : (
+            <motion.div
+              key="pomodoro-controls"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex items-center gap-3"
+            >
+              {isRunning && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={pause}
+                  className="flex items-center gap-2 px-6 py-3 bg-warning-bg text-warning rounded-2xl font-semibold hover:shadow-md transition-all"
+                >
+                  <Pause size={18} /> Pause
+                </motion.button>
+              )}
+              {isPaused && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={resume}
+                  className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                >
+                  <Play size={18} className="fill-current" /> Resume
+                </motion.button>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={stop}
+                className="flex items-center gap-2 px-6 py-3 bg-danger-bg text-danger rounded-2xl font-semibold hover:shadow-md transition-all"
+              >
+                <Square size={18} /> End
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Habit } from "@/types";
 import { habitService } from "@/lib/services";
 import { useUIStore } from "@/store/uiStore";
@@ -16,12 +17,11 @@ import {
   DragStartEvent,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { ChevronDown, ChevronRight, Repeat } from "lucide-react";
+import { ChevronDown, ChevronRight, Repeat, Sparkles } from "lucide-react";
 import { SortableHabitItem } from "./SortableHabitItem";
 
 interface TodayHabitsProps {
@@ -35,9 +35,7 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
-  const { goalOrder, setGoalOrder } = useUIStore();
 
-  // Check if habit is completed today
   const isCompleted = (habit: Habit): boolean => {
     if (completedIds.has(habit.id)) return true;
     const todayLog = habit.logs?.find((log) => {
@@ -47,26 +45,8 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
     return !!todayLog;
   };
 
-  // Split habits
   const uncompleted = habits.filter((h) => !isCompleted(h));
   const completed = habits.filter((h) => isCompleted(h));
-
-  // Sort by saved habit order (reuse goalOrder key or create separate)
-  const habitOrderKey = "habit-order";
-
-  const sortByIds = (items: Habit[], ids: string[]): Habit[] => {
-    if (ids.length === 0) return items;
-    const ordered = ids
-      .map((id) => items.find((h) => h.id === id))
-      .filter((h): h is Habit => !!h);
-    items.forEach((h) => {
-      if (!ids.includes(h.id)) ordered.push(h);
-    });
-    return ordered;
-  };
-
-  const sortedUncompleted = sortByIds(uncompleted, []);
-  const sortedCompleted = sortByIds(completed, []);
 
   const handleComplete = async (habit: Habit) => {
     if (isCompleted(habit) || loadingId) return;
@@ -97,129 +77,226 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
-    // Reordering disabled for habits (can add later if needed)
   };
+
+  const completionPercentage =
+    habits.length > 0
+      ? Math.round((completed.length / habits.length) * 100)
+      : 0;
 
   if (habits.length === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-surface rounded-2xl border border-border shadow-sm p-5"
+      >
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full flex items-center justify-between"
         >
-          <div className="flex items-center gap-2">
-            <Repeat size={18} className="text-purple-500" />
-            <h3 className="text-sm font-semibold text-text">
-              Today&apos;s Habits
-            </h3>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-secondary-bg">
+              <Repeat size={18} className="text-secondary" />
+            </div>
+            <h3 className="text-sm font-bold text-text">Today&apos;s Habits</h3>
           </div>
         </button>
-        {isExpanded && (
-          <p className="text-text-muted text-sm text-center py-6">
-            No habits scheduled for today.
-          </p>
-        )}
-      </div>
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="text-center py-8"
+            >
+              <Sparkles
+                size={32}
+                className="text-text-muted mx-auto mb-3 opacity-50"
+              />
+              <p className="text-sm text-text-muted font-medium">
+                No habits scheduled for today
+              </p>
+              <p className="text-xs text-text-muted mt-1">
+                Create daily habits to build consistency
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden"
+    >
+      {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between"
+        className="w-full flex items-center justify-between p-5 hover:bg-bg/50 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <Repeat size={18} className="text-purple-500" />
-          <h3 className="text-sm font-semibold text-text">
-            Today&apos;s Habits
-          </h3>
-          <span className="text-xs text-text-muted">
-            {completed.length}/{habits.length}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-secondary-bg">
+            <Repeat size={18} className="text-secondary" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-bold text-text">Today&apos;s Habits</h3>
+            <p className="text-xs text-text-muted">
+              {completed.length} of {habits.length} completed
+            </p>
+          </div>
         </div>
-        {isExpanded ? (
-          <ChevronDown size={18} className="text-text-muted" />
-        ) : (
-          <ChevronRight size={18} className="text-text-muted" />
-        )}
+        <div className="flex items-center gap-3">
+          {/* Progress ring */}
+          <div className="relative w-10 h-10">
+            <svg className="w-10 h-10 -rotate-90">
+              <circle
+                cx="20"
+                cy="20"
+                r="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="text-border"
+              />
+              <motion.circle
+                cx="20"
+                cy="20"
+                r="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                className="text-secondary"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: completionPercentage / 100 }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                strokeDasharray={`${2 * Math.PI * 16}`}
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-secondary">
+              {completionPercentage}%
+            </span>
+          </div>
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown size={18} className="text-text-muted" />
+          </motion.div>
+        </div>
       </button>
 
-      {isExpanded && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="mt-3 space-y-3">
-            {/* Uncompleted habits */}
-            <SortableContext
-              items={sortedUncompleted.map((h) => h.id)}
-              strategy={verticalListSortingStrategy}
+      {/* Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
             >
-              <div className="space-y-2">
-                {sortedUncompleted.map((habit) => (
-                  <SortableHabitItem
-                    key={habit.id}
-                    habit={habit}
-                    todayStr={todayStr}
-                    onComplete={handleComplete}
-                    isLoading={loadingId === habit.id}
-                    isCompleted={false}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-
-            {/* Completed habits */}
-            {completed.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowCompleted(!showCompleted)}
-                  className="flex items-center gap-2 text-xs text-text-muted hover:text-text transition-all py-1"
+              <div className="px-5 pb-5 space-y-3">
+                {/* Uncompleted habits */}
+                <SortableContext
+                  items={uncompleted.map((h) => h.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  {showCompleted ? (
-                    <ChevronDown size={14} />
-                  ) : (
-                    <ChevronRight size={14} />
-                  )}
-                  Completed ({completed.length})
-                </button>
-                {showCompleted && (
-                  <SortableContext
-                    items={sortedCompleted.map((h) => h.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-2 mt-2">
-                      {sortedCompleted.map((habit) => (
+                  <div className="space-y-2">
+                    <AnimatePresence mode="popLayout">
+                      {uncompleted.map((habit) => (
                         <SortableHabitItem
                           key={habit.id}
                           habit={habit}
                           todayStr={todayStr}
                           onComplete={handleComplete}
-                          isLoading={false}
-                          isCompleted={true}
+                          isLoading={loadingId === habit.id}
+                          isCompleted={false}
                         />
                       ))}
-                    </div>
-                  </SortableContext>
+                    </AnimatePresence>
+                  </div>
+                </SortableContext>
+
+                {/* Completed habits */}
+                {completed.length > 0 && (
+                  <div className="pt-2 border-t border-border">
+                    <motion.button
+                      whileHover={{ x: 4 }}
+                      onClick={() => setShowCompleted(!showCompleted)}
+                      className="flex items-center gap-2 text-xs font-medium text-text-muted hover:text-text transition-colors py-1"
+                    >
+                      <motion.div
+                        animate={{ rotate: showCompleted ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronRight size={14} />
+                      </motion.div>
+                      <span>Completed</span>
+                      <span className="bg-success-bg text-success px-2 py-0.5 rounded-full text-[10px] font-bold">
+                        {completed.length}
+                      </span>
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {showCompleted && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <SortableContext
+                            items={completed.map((h) => h.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            <div className="space-y-2 mt-3">
+                              {completed.map((habit) => (
+                                <SortableHabitItem
+                                  key={habit.id}
+                                  habit={habit}
+                                  todayStr={todayStr}
+                                  onComplete={handleComplete}
+                                  isLoading={false}
+                                  isCompleted={true}
+                                />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
-            )}
-          </div>
 
-          <DragOverlay>
-            {activeId ? (
-              <div className="opacity-90 scale-105 shadow-lg bg-surface rounded-lg border border-border p-3">
-                <span className="text-sm text-text">
-                  {habits.find((h) => h.id === activeId)?.title || ""}
-                </span>
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      )}
-    </div>
+              <DragOverlay>
+                {activeId ? (
+                  <motion.div
+                    initial={{ scale: 0.95 }}
+                    animate={{ scale: 1.05 }}
+                    className="shadow-xl bg-surface rounded-xl border-2 border-primary/30 p-3"
+                  >
+                    <span className="text-sm font-medium text-text">
+                      {habits.find((h) => h.id === activeId)?.title || ""}
+                    </span>
+                  </motion.div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

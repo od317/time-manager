@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { Goal, TimeEntry } from "@/types";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import { TaskSelector } from "./TaskSelector";
 import { TimerModeTabs } from "./TimerModeTabs";
@@ -33,12 +34,11 @@ export function TodayTimer({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = selectedTask !== null;
 
-  // Sync initial server timer to store ONCE
   useEffect(() => {
     if (initialTimer && !store.runningTimer) {
       store.setRunningTimer(initialTimer);
     }
-  }, []); // Empty deps - run once
+  }, []);
 
   const clearTimerInterval = useCallback(() => {
     if (intervalRef.current) {
@@ -89,72 +89,157 @@ export function TodayTimer({
   const isActive = isRunning || isPaused;
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Clock size={20} className="text-primary" />
-          <h3 className="text-lg font-semibold text-text">Focus Timer</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.1 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary-bg">
+            <Clock size={20} className="text-primary" />
+          </div>
+          <h3 className="text-lg font-bold text-text">Focus Timer</h3>
           <SessionHistory />
         </div>
         <TaskSelector goals={goals} />
       </div>
 
-      <div className="mb-6">
+      {/* Timer Modes */}
+      <div className="px-6 pb-4">
         <TimerModeTabs />
       </div>
 
-      {timerMode === "QUICK_LOG" && <QuickLogForm />}
-      {timerMode === "POMODORO" && <PomodoroTimer />}
+      {/* Timer Content */}
+      <div className="px-6 pb-6">
+        {timerMode === "QUICK_LOG" && <QuickLogForm />}
+        {timerMode === "POMODORO" && <PomodoroTimer />}
 
-      {timerMode === "SIMPLE" && (
-        <>
-          <div className="text-center mb-6">
-            <span
-              className={`text-5xl font-mono font-bold tabular-nums ${isRunning ? "text-primary" : "text-text"}`}
+        {timerMode === "SIMPLE" && (
+          <div className="text-center">
+            {/* Timer Display */}
+            <motion.div
+              className="mb-8"
+              animate={isRunning ? { scale: [1, 1.02, 1] } : {}}
+              transition={{ duration: 2, repeat: Infinity }}
             >
-              {formatTime(elapsed)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-center gap-3">
-            {!isActive ? (
-              <button
-                onClick={() => useTimerStore.getState().start()}
-                disabled={isLoading || !hasSelection}
-                className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 transition-all"
+              <span
+                className={`text-7xl font-mono font-bold tabular-nums tracking-tight ${
+                  isRunning
+                    ? "text-primary"
+                    : isPaused
+                      ? "text-warning"
+                      : "text-text"
+                }`}
               >
-                <Play size={18} />
-                {isLoading ? "Starting..." : "Start"}
-              </button>
-            ) : (
-              <>
-                {isRunning && (
-                  <button
-                    onClick={() => useTimerStore.getState().pause()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-warning-bg text-warning rounded-lg font-medium hover:bg-warning/10 transition-all"
-                  >
-                    <Pause size={18} /> Pause
-                  </button>
-                )}
-                {isPaused && (
-                  <button
-                    onClick={() => useTimerStore.getState().resume()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-all"
-                  >
-                    <Play size={18} /> Resume
-                  </button>
-                )}
-                <button
-                  onClick={() => useTimerStore.getState().stop()}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-danger-bg text-danger rounded-lg font-medium hover:bg-danger/10 transition-all"
+                {formatTime(elapsed)}
+              </span>
+              {isRunning && (
+                <motion.div
+                  className="mt-2 flex items-center justify-center gap-1.5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <Square size={18} /> Stop
-                </button>
-              </>
-            )}
+                  <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  <span className="text-xs font-medium text-success">
+                    Running
+                  </span>
+                </motion.div>
+              )}
+              {isPaused && (
+                <motion.div
+                  className="mt-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <span className="text-xs font-medium text-warning">
+                    Paused
+                  </span>
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-center gap-3">
+              <AnimatePresence mode="wait">
+                {!isActive ? (
+                  <motion.button
+                    key="start"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => useTimerStore.getState().start()}
+                    disabled={isLoading || !hasSelection}
+                    className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    <Play size={20} className="fill-current" />
+                    {isLoading ? "Starting..." : "Start Focus"}
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    key="controls"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="flex items-center gap-3"
+                  >
+                    {isRunning && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => useTimerStore.getState().pause()}
+                        className="flex items-center gap-2 px-6 py-3 bg-warning-bg text-warning rounded-2xl font-semibold hover:shadow-md transition-all"
+                      >
+                        <Pause size={18} /> Pause
+                      </motion.button>
+                    )}
+                    {isPaused && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => useTimerStore.getState().resume()}
+                        className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                      >
+                        <Play size={18} className="fill-current" /> Resume
+                      </motion.button>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => useTimerStore.getState().stop()}
+                      className="flex items-center gap-2 px-6 py-3 bg-danger-bg text-danger rounded-2xl font-semibold hover:shadow-md transition-all"
+                    >
+                      <Square size={18} /> Stop
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </>
+        )}
+      </div>
+
+      {/* Selected Task Indicator */}
+      {selectedTask && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-6 py-3 bg-bg border-t border-border flex items-center gap-3"
+        >
+          <div
+            className="w-3 h-3 rounded-full flex-shrink-0"
+            style={{ backgroundColor: selectedTask.color || "#9FA1FF" }}
+          />
+          <span className="text-sm text-text-secondary flex-1 truncate">
+            Focusing on:{" "}
+            <span className="font-medium text-text">{selectedTask.title}</span>
+          </span>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

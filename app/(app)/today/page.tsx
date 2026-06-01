@@ -23,7 +23,6 @@ export default async function TodayPage() {
 
   const today = new Date().getDay();
 
-  // Filter habits due today
   const habitsDueToday = habits.filter((habit) => {
     if (habit.frequencyType === "DAILY") return true;
     if (habit.frequencyType === "WEEKLY")
@@ -31,7 +30,6 @@ export default async function TodayPage() {
     return false;
   });
 
-  // Filter tasks - only show due today or urgent
   const activeTasks = (Array.isArray(allTasks) ? allTasks : []).filter(
     (task) => {
       if (task.priority === "URGENT") return true;
@@ -46,18 +44,13 @@ export default async function TodayPage() {
 
   const focusTasks = (Array.isArray(allTasks) ? allTasks : []).filter(
     (task) => {
-      // Include if urgent (any status)
       if (task.priority === "URGENT" && task.status !== "COMPLETED")
         return true;
-
-      // Include if due today (any status)
       if (task.dueDate) {
         const dueDate = new Date(task.dueDate).toLocaleDateString("en-CA");
         const todayStr = new Date().toLocaleDateString("en-CA");
         if (dueDate === todayStr) return true;
       }
-
-      // Include if completed today
       if (task.status === "COMPLETED" && task.completedAt) {
         const completedDate = new Date(task.completedAt).toLocaleDateString(
           "en-CA",
@@ -65,7 +58,6 @@ export default async function TodayPage() {
         const todayStr = new Date().toLocaleDateString("en-CA");
         return completedDate === todayStr;
       }
-
       return false;
     },
   );
@@ -73,15 +65,13 @@ export default async function TodayPage() {
   return (
     <>
       <TimerTitle />
-      <div className="space-y-4 pb-20 md:pb-6">
-        {/* Overview - compact strip above timer */}
+      <div className="space-y-6 pb-20 md:pb-6">
         <TodayOverview
           goals={goals}
           habitsDue={habitsDueToday.length}
           tasksCount={activeTasks.length}
         />
 
-        {/* Timer */}
         <TodayTimer runningTimer={runningTimer} goals={goals} />
 
         <DashboardLayout

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useUIStore } from "@/store/uiStore";
 import {
   DndContext,
@@ -21,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Columns, Rows } from "lucide-react";
+import { GripVertical, Columns, Rows, LayoutGrid } from "lucide-react";
 
 interface DashboardLayoutProps {
   habitsSection: React.ReactNode;
@@ -48,25 +49,33 @@ function SortableSection({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 1,
   };
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
+      layout
+      animate={{
+        opacity: isDragging ? 0.5 : 1,
+        scale: isDragging ? 0.98 : 1,
+        boxShadow: isDragging
+          ? "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+          : "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
+      }}
+      transition={{ duration: 0.2 }}
       className="relative group break-inside-avoid"
     >
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 right-2 z-10 p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-border-light opacity-0 group-hover:opacity-100 transition-all cursor-grab active:cursor-grabbing"
+        className="absolute top-3 right-3 z-10 p-2 rounded-xl text-text-muted hover:text-text hover:bg-border-light opacity-0 group-hover:opacity-100 transition-all cursor-grab active:cursor-grabbing bg-surface/80 backdrop-blur-sm"
         title="Drag to reorder"
       >
         <GripVertical size={16} />
       </div>
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -110,35 +119,46 @@ export function DashboardLayout({
     goals: goalsSection,
   };
 
-  // Filter out null sections
   const visibleSections = sectionOrder.filter((id) => sections[id] != null);
 
+  const layoutOptions = [
+    { mode: "single" as const, icon: Rows, label: "Single column" },
+    { mode: "double" as const, icon: Columns, label: "Two columns" },
+  ];
+
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+    >
       {/* Layout controls */}
-      <div className="flex items-center justify-end gap-1 mb-4">
-        <button
-          onClick={() => setLayoutMode("single")}
-          className={`p-2 rounded-lg transition-all ${
-            layoutMode === "single"
-              ? "bg-primary-bg text-primary"
-              : "text-text-muted hover:text-text hover:bg-border-light"
-          }`}
-          title="Single column"
-        >
-          <Rows size={16} />
-        </button>
-        <button
-          onClick={() => setLayoutMode("double")}
-          className={`p-2 rounded-lg transition-all ${
-            layoutMode === "double"
-              ? "bg-primary-bg text-primary"
-              : "text-text-muted hover:text-text hover:bg-border-light"
-          }`}
-          title="Two columns"
-        >
-          <Columns size={16} />
-        </button>
+      <div className="flex items-center justify-end gap-1.5 mb-4">
+        <div className="flex gap-1 p-1 bg-bg rounded-xl border border-border">
+          {layoutOptions.map((option) => (
+            <motion.button
+              key={option.mode}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setLayoutMode(option.mode)}
+              className={`p-2 rounded-lg transition-all relative ${
+                layoutMode === option.mode
+                  ? "text-primary"
+                  : "text-text-muted hover:text-text"
+              }`}
+              title={option.label}
+            >
+              {layoutMode === option.mode && (
+                <motion.div
+                  layoutId="layoutActive"
+                  className="absolute inset-0 bg-surface rounded-lg shadow-sm border border-border"
+                  transition={{ duration: 0.2 }}
+                />
+              )}
+              <option.icon size={16} className="relative z-10" />
+            </motion.button>
+          ))}
+        </div>
       </div>
 
       {/* Draggable sections */}
@@ -152,31 +172,38 @@ export function DashboardLayout({
           items={visibleSections}
           strategy={verticalListSortingStrategy}
         >
-          <div
+          <motion.div
+            layout
             className={
               layoutMode === "double"
                 ? "columns-1 lg:columns-2 gap-4 space-y-4"
                 : "space-y-4"
             }
           >
-            {visibleSections.map((sectionId) => (
-              <SortableSection key={sectionId} id={sectionId}>
-                <React.Fragment key={sectionId}>
-                  {sections[sectionId]}
-                </React.Fragment>
-              </SortableSection>
-            ))}
-          </div>
+            <AnimatePresence mode="popLayout">
+              {visibleSections.map((sectionId) => (
+                <SortableSection key={sectionId} id={sectionId}>
+                  <React.Fragment key={sectionId}>
+                    {sections[sectionId]}
+                  </React.Fragment>
+                </SortableSection>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         </SortableContext>
 
         <DragOverlay>
           {activeId && sections[activeId] ? (
-            <div className="opacity-90 scale-105 shadow-lg rotate-1">
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1.05, rotate: 1 }}
+              className="shadow-2xl opacity-95"
+            >
               {sections[activeId]}
-            </div>
+            </motion.div>
           ) : null}
         </DragOverlay>
       </DndContext>
-    </div>
+    </motion.div>
   );
 }

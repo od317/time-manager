@@ -1,10 +1,10 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Habit } from "@/types";
-import { habitService } from "@/lib/services";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Flame, GripVertical } from "lucide-react";
+import { Check, Flame, GripVertical, Target } from "lucide-react";
 
 interface SortableHabitItemProps {
   habit: Habit;
@@ -16,7 +16,6 @@ interface SortableHabitItemProps {
 
 export function SortableHabitItem({
   habit,
-  todayStr,
   onComplete,
   isLoading,
   isCompleted,
@@ -33,23 +32,30 @@ export function SortableHabitItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 1,
   };
 
-  const isDueToday =
-    habit.frequencyType === "DAILY" ||
-    (habit.frequencyType === "WEEKLY" &&
-      habit.frequencyDays.includes(new Date().getDay()));
-
   return (
-    <div ref={setNodeRef} style={style}>
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{
+        opacity: isDragging ? 0.5 : 1,
+        y: 0,
+        scale: isDragging ? 0.98 : 1,
+      }}
+      exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+      whileHover={{ scale: 1.01 }}
+      transition={{ duration: 0.2 }}
+    >
       <div
-        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all group ${
+        className={`w-full flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all group ${
           isCompleted
-            ? "bg-success-bg/20 border-success/10"
+            ? "bg-success-bg/30 border-success/20"
             : isDragging
-              ? "bg-primary-bg/20"
-              : "bg-bg border-border hover:border-primary/30"
+              ? "bg-primary-bg/30 border-primary/30 shadow-lg"
+              : "bg-bg border-border hover:border-secondary/30 hover:shadow-sm"
         }`}
       >
         {/* Drag handle */}
@@ -62,49 +68,77 @@ export function SortableHabitItem({
         </div>
 
         {/* Complete button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => onComplete(habit)}
           disabled={isLoading || isCompleted}
-          className="flex-shrink-0"
+          className="flex-shrink-0 relative"
         >
           {isLoading ? (
-            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-6 h-6 border-2 border-secondary border-t-transparent rounded-full"
+            />
           ) : (
-            <div
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+            <motion.div
+              animate={isCompleted ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ duration: 0.3 }}
+              className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                 isCompleted
-                  ? "bg-success border-success text-white"
-                  : "border-border"
+                  ? "bg-success border-success text-white shadow-sm"
+                  : "border-border hover:border-secondary/50"
               }`}
             >
-              {isCompleted && <Check size={12} />}
-            </div>
+              {isCompleted && <Check size={14} strokeWidth={3} />}
+            </motion.div>
           )}
-        </button>
+        </motion.button>
 
         {/* Content */}
         <div className="flex-1 text-left min-w-0">
           <p
-            className={`text-sm font-medium truncate ${
-              isCompleted ? "text-success line-through" : "text-text"
+            className={`text-sm font-semibold truncate transition-all ${
+              isCompleted ? "text-success line-through opacity-75" : "text-text"
             }`}
           >
             {habit.title}
           </p>
           {habit.trackAmount && habit.targetValue && (
-            <p className="text-xs text-text-muted mt-0.5">
-              Target: {habit.targetValue} {habit.unit || ""}
-            </p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Target size={12} className="text-text-muted" />
+              <p className="text-xs text-text-muted font-medium">
+                {habit.targetValue} {habit.unit || ""}
+              </p>
+            </div>
           )}
         </div>
 
         {/* Streak */}
         {habit.currentStreak > 0 && (
-          <span className="text-xs font-medium text-warning flex items-center gap-1 flex-shrink-0">
-            🔥 {habit.currentStreak}
-          </span>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
+              habit.currentStreak >= 7
+                ? "bg-warning-bg text-warning"
+                : "bg-secondary-bg text-secondary"
+            }`}
+            title={`${habit.currentStreak} day streak!`}
+          >
+            <motion.span
+              animate={
+                habit.currentStreak >= 7 ? { rotate: [0, -10, 10, 0] } : {}
+              }
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+            >
+              🔥
+            </motion.span>
+            {habit.currentStreak}
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

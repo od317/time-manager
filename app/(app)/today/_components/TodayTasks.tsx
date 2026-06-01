@@ -3,18 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Task, Goal } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { useTimerStore } from "@/store/timerStore";
 import {
   CheckCircle2,
-  Circle,
   Clock,
   Play,
   ChevronRight,
-  Pencil,
   CheckSquare,
   ChevronDown,
+  ListTodo,
 } from "lucide-react";
 import { TaskEditModal } from "./TaskEditModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
@@ -31,6 +31,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
+
   const handleToggle = async (task: Task) => {
     setCompletingId(task.id);
     try {
@@ -64,7 +65,6 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
     });
   };
 
-  // Group tasks by goal
   const tasksByGoal = new Map<
     string,
     { goal: Goal | undefined; tasks: Task[] }
@@ -83,7 +83,6 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
     }
   });
 
-  // Sort tasks within each goal: incomplete first, then completed
   tasksByGoal.forEach((group) => {
     group.tasks.sort((a, b) => {
       if (a.status === "COMPLETED" && b.status !== "COMPLETED") return 1;
@@ -97,114 +96,165 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
 
   if (tasks.length === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-6">
-        <h3 className="text-lg font-semibold text-text mb-4">Tasks</h3>
-        <p className="text-sm text-text-muted text-center py-8">
-          No tasks yet. Add tasks to your goals to see them here.
-        </p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-surface rounded-2xl border border-border shadow-sm p-5"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-success-bg">
+            <CheckSquare size={18} className="text-success" />
+          </div>
+          <h3 className="text-sm font-bold text-text">Focus Tasks</h3>
+        </div>
+        <div className="text-center py-8">
+          <ListTodo
+            size={32}
+            className="text-text-muted mx-auto mb-3 opacity-50"
+          />
+          <p className="text-sm text-text-muted font-medium">No tasks yet</p>
+          <p className="text-xs text-text-muted mt-1">
+            Add tasks to your goals to see them here
+          </p>
+        </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden"
+    >
+      {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between"
+        className="w-full flex items-center justify-between p-5 hover:bg-bg/50 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <CheckSquare size={18} className="text-success" />
-          <h3 className="text-sm font-semibold text-text">Focus Tasks</h3>
-          <span className="text-xs text-text-muted">
-            {completedTasks}/{totalTasks}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-success-bg">
+            <CheckSquare size={18} className="text-success" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-bold text-text">Focus Tasks</h3>
+            <p className="text-xs text-text-muted">
+              {completedTasks} of {totalTasks} completed
+            </p>
+          </div>
         </div>
-        {isExpanded ? (
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
           <ChevronDown size={18} className="text-text-muted" />
-        ) : (
-          <ChevronRight size={18} className="text-text-muted" />
-        )}
+        </motion.div>
       </button>
 
-      {isExpanded && (
-        <div className="mt-3 space-y-4">
-          {/* Unassigned tasks */}
-          {unassignedTasks.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-text-muted uppercase tracking-wider mb-2 px-1">
-                No Goal
-              </p>
-              <div className="space-y-1">
-                {unassignedTasks.map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    isCompleting={completingId === task.id}
-                    onToggle={handleToggle}
-                    onStartTimer={handleStartTimer}
-                    onEdit={setEditingTask}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Tasks grouped by goal */}
-          {Array.from(tasksByGoal.entries()).map(([goalId, group]) => {
-            const isCollapsed = collapsedGoals.has(goalId);
-            const completedInGroup = group.tasks.filter(
-              (t) => t.status === "COMPLETED",
-            ).length;
-
-            return (
-              <div key={goalId}>
-                {group.goal && (
-                  <button
-                    onClick={() => toggleGoalCollapse(goalId)}
-                    className="w-full flex items-center gap-2 px-1 py-1 mb-2 hover:bg-bg rounded-lg transition-all group"
-                  >
-                    <div
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: group.goal.color || "#6366F1" }}
-                    />
-                    <Link
-                      href={`/goals/${group.goal.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-sm font-medium text-text hover:text-primary transition-all truncate"
-                    >
-                      {group.goal.title}
-                    </Link>
-                    <span className="text-xs text-text-muted flex-shrink-0">
-                      {completedInGroup}/{group.tasks.length}
-                    </span>
-                    <ChevronRight
-                      size={14}
-                      className={`text-text-muted transition-transform flex-shrink-0 ${
-                        isCollapsed ? "" : "rotate-90"
-                      }`}
-                    />
-                  </button>
-                )}
-
-                {!isCollapsed && (
-                  <div className="space-y-1 ml-2">
-                    {group.tasks.map((task) => (
-                      <TaskItem
-                        key={task.id}
-                        task={task}
-                        isCompleting={completingId === task.id}
-                        onToggle={handleToggle}
-                        onStartTimer={handleStartTimer}
-                        onEdit={setEditingTask}
-                      />
-                    ))}
+      {/* Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 space-y-4">
+              {/* Unassigned tasks */}
+              {unassignedTasks.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-2">
+                    Unassigned
+                  </p>
+                  <div className="space-y-1.5">
+                    <AnimatePresence mode="popLayout">
+                      {unassignedTasks.map((task) => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          isCompleting={completingId === task.id}
+                          onToggle={handleToggle}
+                          onStartTimer={handleStartTimer}
+                          onEdit={setEditingTask}
+                        />
+                      ))}
+                    </AnimatePresence>
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                </div>
+              )}
+
+              {/* Tasks grouped by goal */}
+              {Array.from(tasksByGoal.entries()).map(([goalId, group]) => {
+                const isCollapsed = collapsedGoals.has(goalId);
+                const completedInGroup = group.tasks.filter(
+                  (t) => t.status === "COMPLETED",
+                ).length;
+
+                return (
+                  <div key={goalId}>
+                    {group.goal && (
+                      <motion.button
+                        whileHover={{ x: 2 }}
+                        onClick={() => toggleGoalCollapse(goalId)}
+                        className="w-full flex items-center gap-3 px-2 py-2 hover:bg-bg rounded-xl transition-all group mb-2"
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0 ring-2 ring-offset-2 ring-offset-surface"
+                          style={{
+                            backgroundColor: group.goal.color || "#9FA1FF",
+                          }}
+                        />
+                        <Link
+                          href={`/goals/${group.goal.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sm font-semibold text-text hover:text-primary transition-all truncate flex-1"
+                        >
+                          {group.goal.title}
+                        </Link>
+                        <span className="text-xs font-medium text-text-muted bg-bg px-2 py-0.5 rounded-full">
+                          {completedInGroup}/{group.tasks.length}
+                        </span>
+                        <motion.div
+                          animate={{ rotate: isCollapsed ? 0 : 90 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronRight size={16} className="text-text-muted" />
+                        </motion.div>
+                      </motion.button>
+                    )}
+
+                    <AnimatePresence>
+                      {!isCollapsed && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="space-y-1.5 ml-6 border-l-2 border-border/50 pl-4">
+                            {group.tasks.map((task) => (
+                              <TaskItem
+                                key={task.id}
+                                task={task}
+                                isCompleting={completingId === task.id}
+                                onToggle={handleToggle}
+                                onStartTimer={handleStartTimer}
+                                onEdit={setEditingTask}
+                              />
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {editingTask && (
         <TaskEditModal
@@ -212,6 +262,6 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
           onClose={() => setEditingTask(null)}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

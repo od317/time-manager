@@ -1,7 +1,9 @@
+// TodayGoals.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { Goal } from "@/types";
 import { useUIStore } from "@/store/uiStore";
 import {
@@ -21,7 +23,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Target, ChevronDown, ChevronRight, ArrowRight } from "lucide-react";
+import {
+  Target,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  Flag,
+} from "lucide-react";
 import { SortableGoalItem } from "./SortableGoalItem";
 
 interface TodayGoalsProps {
@@ -37,23 +45,16 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
 
   const topLevelGoals = goals.filter((g) => !g.parentId);
 
-  // Merge saved order with current goals
   const sortedGoals = (() => {
     if (goalOrder.length === 0) return topLevelGoals;
-
-    // Start with saved order, filter out deleted goals
     const savedIds = goalOrder.filter((id) =>
       topLevelGoals.some((g) => g.id === id),
     );
-
-    // Add new goals not in saved order at the end
     topLevelGoals.forEach((g) => {
       if (!savedIds.includes(g.id)) {
         savedIds.push(g.id);
       }
     });
-
-    // Map IDs to actual goals
     return savedIds.map((id) => topLevelGoals.find((g) => g.id === id)!);
   })();
 
@@ -75,7 +76,6 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
       const currentIds = sortedGoals.map((g) => g.id);
       const oldIndex = currentIds.indexOf(active.id as string);
       const newIndex = currentIds.indexOf(over.id as string);
-
       if (oldIndex !== -1 && newIndex !== -1) {
         const newOrder = arrayMove(currentIds, oldIndex, newIndex);
         setGoalOrder(newOrder);
@@ -86,77 +86,123 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
   if (goals.length === 0) return null;
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden"
+    >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between"
+        className="w-full flex items-center justify-between p-5 hover:bg-bg/50 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <Target size={18} className="text-primary" />
-          <h3 className="text-sm font-semibold text-text">
-            Active Goals ({totalCount})
-          </h3>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary-bg">
+            <Target size={18} className="text-primary" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-bold text-text">Active Goals</h3>
+            <p className="text-xs text-text-muted">{totalCount} total</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {!isExpanded && (
-            <span className="text-xs text-text-muted max-w-[200px] truncate">
-              {sortedGoals
-                .slice(0, 2)
-                .map((g) => g.title)
-                .join(", ")}
-              {sortedGoals.length > 2 && "..."}
-            </span>
+            <div className="hidden sm:flex items-center gap-1 text-xs text-text-muted">
+              {sortedGoals.slice(0, 2).map((g) => (
+                <span
+                  key={g.id}
+                  className="bg-bg px-2 py-0.5 rounded-full font-medium truncate max-w-[120px]"
+                >
+                  {g.title}
+                </span>
+              ))}
+              {sortedGoals.length > 2 && (
+                <span className="text-text-muted">
+                  +{sortedGoals.length - 2}
+                </span>
+              )}
+            </div>
           )}
-          {isExpanded ? (
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
             <ChevronDown size={18} className="text-text-muted" />
-          ) : (
-            <ChevronRight size={18} className="text-text-muted" />
-          )}
+          </motion.div>
         </div>
       </button>
 
-      {isExpanded && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={sortedGoals.map((g) => g.id)}
-            strategy={verticalListSortingStrategy}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
           >
-            <div className="mt-3 space-y-1">
-              {sortedGoals.map((goal) => (
-                <SortableGoalItem
-                  key={goal.id}
-                  goal={goal}
-                  allGoals={allGoals}
-                />
-              ))}
-              {totalCount > sortedGoals.length && (
-                <Link
-                  href="/goals"
-                  className="flex items-center justify-center gap-1 py-2 text-xs text-primary hover:text-primary-dark font-medium"
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="px-5 pb-5">
+                <SortableContext
+                  items={sortedGoals.map((g) => g.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  View all {totalCount} goals
-                  <ArrowRight size={12} />
-                </Link>
-              )}
-            </div>
-          </SortableContext>
+                  <div className="space-y-2">
+                    <AnimatePresence mode="popLayout">
+                      {sortedGoals.map((goal) => (
+                        <SortableGoalItem
+                          key={goal.id}
+                          goal={goal}
+                          allGoals={allGoals}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </SortableContext>
 
-          <DragOverlay>
-            {activeId ? (
-              <div className="opacity-90 scale-105 shadow-lg bg-surface rounded-lg border border-border p-2.5">
-                <span className="text-sm text-text">
-                  {sortedGoals.find((g) => g.id === activeId)?.title || ""}
-                </span>
+                {totalCount > sortedGoals.length && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Link
+                      href="/goals"
+                      className="flex items-center justify-center gap-2 mt-4 py-2.5 text-sm font-semibold text-primary hover:text-primary-dark bg-primary-bg hover:bg-primary-bg/80 rounded-xl transition-all group"
+                    >
+                      View all {totalCount} goals
+                      <motion.div
+                        animate={{ x: [0, 4, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        <ArrowRight size={14} />
+                      </motion.div>
+                    </Link>
+                  </motion.div>
+                )}
               </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      )}
-    </div>
+
+              <DragOverlay>
+                {activeId ? (
+                  <motion.div
+                    initial={{ scale: 0.95 }}
+                    animate={{ scale: 1.05 }}
+                    className="shadow-xl bg-surface rounded-xl border-2 border-primary/30 p-3"
+                  >
+                    <span className="text-sm font-medium text-text">
+                      {sortedGoals.find((g) => g.id === activeId)?.title || ""}
+                    </span>
+                  </motion.div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
