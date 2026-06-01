@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { Habit } from "@/types";
-import { ArrowLeft, Repeat, Pencil } from "lucide-react";
+import { ArrowLeft, Repeat, Pencil, Sparkles, Calendar } from "lucide-react";
 import { EditHabitModal } from "./EditHabitModal";
 
 interface HabitHeaderProps {
@@ -23,70 +24,99 @@ export function HabitHeader({ habit, todayStr }: HabitHeaderProps) {
     return "Custom";
   };
 
-  // Check if due today
   const today = new Date().getDay();
   const isDueToday =
     habit.frequencyType === "DAILY" ||
     (habit.frequencyType === "WEEKLY" && habit.frequencyDays.includes(today));
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="flex items-center justify-between mb-6">
         <Link
           href="/habits"
-          className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text transition-all"
+          className="inline-flex items-center gap-2 text-sm font-medium text-text-muted hover:text-text transition-all group"
         >
-          <ArrowLeft size={16} />
-          Back to habits
+          <motion.div whileHover={{ x: -4 }} transition={{ duration: 0.2 }}>
+            <ArrowLeft size={16} />
+          </motion.div>
+          <span className="group-hover:underline">Back to habits</span>
         </Link>
-        <button
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setShowEdit(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-muted hover:text-text bg-bg border border-border rounded-lg hover:border-primary/30 transition-all"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-text-muted hover:text-text bg-bg border-2 border-border rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
         >
           <Pencil size={14} />
           Edit
-        </button>
+        </motion.button>
       </div>
 
-      <div className="flex items-start gap-4">
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: `${habit.color || "#6366F1"}15` }}
+      <div className="flex items-start gap-5">
+        <motion.div
+          whileHover={{ scale: 1.05, rotate: 5 }}
+          transition={{ duration: 0.3 }}
+          className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
+          style={{
+            backgroundColor: `${habit.color || "#9FA1FF"}20`,
+            border: `2px solid ${habit.color || "#9FA1FF"}30`,
+          }}
         >
-          <Repeat size={28} style={{ color: habit.color || "#6366F1" }} />
-        </div>
+          <Repeat size={30} style={{ color: habit.color || "#9FA1FF" }} />
+        </motion.div>
 
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold text-text">{habit.title}</h1>
           {habit.description && (
-            <p className="text-text-secondary mt-1">{habit.description}</p>
+            <p className="text-text-secondary mt-2 leading-relaxed">
+              {habit.description}
+            </p>
           )}
-          <div className="flex items-center gap-2 mt-3">
-            <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-primary-bg text-primary">
-              {getFrequencyLabel()}
+
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary-bg text-primary border border-primary/20">
+              <span className="flex items-center gap-1.5">
+                <Calendar size={12} />
+                {getFrequencyLabel()}
+              </span>
             </span>
+
             {habit.timesPerDay > 1 && (
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-border text-text-secondary">
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-bg text-text-secondary border border-border">
                 {habit.timesPerDay}x per day
               </span>
             )}
+
             {habit.trackAmount && habit.targetValue && (
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-border text-text-secondary">
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-bg text-text-secondary border border-border">
                 {habit.targetValue} {habit.unit}
               </span>
             )}
+
             {isDueToday && (
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-success-bg text-success">
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className="text-xs font-bold px-3 py-1.5 rounded-full bg-success-bg text-success border border-success/20 flex items-center gap-1.5"
+              >
+                <Sparkles size={12} />
                 Due today
-              </span>
+              </motion.span>
             )}
+
             <span
-              className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
                 habit.status === "ACTIVE"
-                  ? "bg-success-bg text-success"
+                  ? "bg-success-bg text-success border-success/20"
                   : habit.status === "PAUSED"
-                    ? "bg-warning-bg text-warning"
-                    : "bg-border text-text-muted"
+                    ? "bg-warning-bg text-warning border-warning/20"
+                    : "bg-bg text-text-muted border-border"
               }`}
             >
               {habit.status}
@@ -95,9 +125,11 @@ export function HabitHeader({ habit, todayStr }: HabitHeaderProps) {
         </div>
       </div>
 
-      {showEdit && (
-        <EditHabitModal habit={habit} onClose={() => setShowEdit(false)} />
-      )}
-    </div>
+      <AnimatePresence>
+        {showEdit && (
+          <EditHabitModal habit={habit} onClose={() => setShowEdit(false)} />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

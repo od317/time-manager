@@ -20,7 +20,6 @@ export default async function HabitDetailPage({
 
   if (!habit) notFound();
 
-  // Pass today's date for client components to use
   const todayStr = new Date().toLocaleDateString("en-CA");
 
   return (

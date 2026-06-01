@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { habitService } from "@/lib/services";
 import { HabitHeatmapEntry } from "@/types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
 interface HabitHeatmapProps {
   habitId: string;
@@ -19,7 +20,6 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
       setIsLoading(true);
       try {
         const heatmapData = await habitService.getHeatmap(habitId, year);
-        console.log(heatmapData);
         setData(Array.isArray(heatmapData) ? heatmapData : []);
       } catch {
         setData([]);
@@ -31,12 +31,11 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
   }, [habitId, year]);
 
   const getColor = (entry: HabitHeatmapEntry | undefined): string => {
-    if (!entry || entry.status !== "COMPLETED") return "bg-border";
+    if (!entry || entry.status !== "COMPLETED") return "bg-border/50";
     if (entry.value && entry.value >= 2) return "bg-success";
     return "bg-success/60";
   };
 
-  // Build calendar grid
   const months = [
     "Jan",
     "Feb",
@@ -56,7 +55,6 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
   const endDate = new Date(year, 11, 31);
   const days: (Date | null)[] = [];
 
-  // Fill in days from start of week of Jan 1
   const firstDay = startDate.getDay();
   for (let i = 0; i < firstDay; i++) {
     days.push(null);
@@ -66,7 +64,6 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
     days.push(new Date(d));
   }
 
-  // Group by weeks
   const weeks: (Date | null)[][] = [];
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7));
@@ -79,97 +76,151 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
     return `${year}-${month}-${day}`;
   };
 
+  const totalCompletions = data.filter((e) => e.status === "COMPLETED").length;
+  const daysInYear = 365 + (year % 4 === 0 ? 1 : 0);
+  const completionRate = Math.round((totalCompletions / daysInYear) * 100);
+
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text">Activity</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+    >
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button
+          <div className="p-2 rounded-xl bg-info-bg">
+            <Calendar size={18} className="text-info" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-text">Activity Heatmap</h3>
+            <p className="text-xs text-text-muted">
+              {totalCompletions} completions · {completionRate}% of year
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setYear(year - 1)}
-            className="p-1 text-text-muted hover:text-text transition-all"
+            className="p-2 text-text-muted hover:text-text rounded-xl hover:bg-border-light transition-colors"
           >
             <ChevronLeft size={16} />
-          </button>
-          <span className="text-sm font-medium text-text">{year}</span>
-          <button
+          </motion.button>
+          <span className="text-sm font-bold text-text min-w-[4rem] text-center">
+            {year}
+          </span>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setYear(year + 1)}
-            className="p-1 text-text-muted hover:text-text transition-all"
+            className="p-2 text-text-muted hover:text-text rounded-xl hover:bg-border-light transition-colors"
           >
             <ChevronRight size={16} />
-          </button>
+          </motion.button>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <div className="inline-flex gap-3">
-            {/* Month labels */}
-            <div className="flex flex-col gap-1">
-              <div className="h-3" /> {/* spacer for day labels */}
-              {months.map((month) => (
-                <div key={month} className="h-3 text-[10px] text-text-muted">
-                  {month}
-                </div>
-              ))}
-            </div>
-
-            {/* Grid */}
-            <div>
-              {/* Day labels */}
-              <div className="flex gap-0.5 mb-1">
-                {["", "M", "", "W", "", "F", ""].map((day, i) => (
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center justify-center py-12"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="overflow-x-auto"
+          >
+            <div className="inline-flex gap-3 min-w-fit">
+              {/* Month labels */}
+              <div className="flex flex-col gap-1 pt-7">
+                {months.map((month) => (
                   <div
-                    key={i}
-                    className="w-3 h-3 text-[8px] text-text-muted text-center"
+                    key={month}
+                    className="h-3 text-[10px] font-semibold text-text-muted"
                   >
-                    {day}
+                    {month}
                   </div>
                 ))}
               </div>
 
-              {/* Weeks */}
-              <div className="flex gap-0.5">
-                {weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-col gap-0.5">
-                    {week.map((day, di) => {
-                      if (!day) return <div key={di} className="w-3 h-3" />;
-                      const dateStr = formatDate(day);
-                      const entry = data.find((e) => {
-                        const entryDate = new Date(e.date).toLocaleDateString(
-                          "en-CA",
-                        );
+              {/* Grid */}
+              <div>
+                {/* Day labels */}
+                <div className="flex gap-0.5 mb-1.5">
+                  {["", "Mon", "", "Wed", "", "Fri", ""].map((day, i) => (
+                    <div
+                      key={i}
+                      className="w-3.5 h-3 text-[9px] font-semibold text-text-muted text-center"
+                    >
+                      {day}
+                    </div>
+                  ))}
+                </div>
 
-                        return entryDate === dateStr;
-                      });
-                      const isCompleted = entry?.status === "COMPLETED";
-                      return (
-                        <div
-                          key={di}
-                          className={`w-3 h-3 rounded-sm ${getColor(entry)}`}
-                          title={`${dateStr}${isCompleted ? " ✓" : ""}${entry?.value ? ` (${entry.value})` : ""}`}
-                        />
-                      );
-                    })}
-                  </div>
-                ))}
+                {/* Weeks */}
+                <div className="flex gap-0.5">
+                  {weeks.map((week, wi) => (
+                    <div key={wi} className="flex flex-col gap-0.5">
+                      {week.map((day, di) => {
+                        if (!day)
+                          return <div key={di} className="w-3.5 h-3.5" />;
+                        const dateStr = formatDate(day);
+                        const entry = data.find((e) => {
+                          const entryDate = new Date(e.date).toLocaleDateString(
+                            "en-CA",
+                          );
+                          return entryDate === dateStr;
+                        });
+                        const isCompleted = entry?.status === "COMPLETED";
+                        return (
+                          <motion.div
+                            key={di}
+                            whileHover={{ scale: 1.5 }}
+                            className={`w-3.5 h-3.5 rounded-sm cursor-pointer transition-colors ${getColor(
+                              entry,
+                            )} ${isCompleted ? "ring-1 ring-success/20" : ""}`}
+                            title={`${dateStr}${isCompleted ? " ✓" : ""}${entry?.value ? ` (${entry.value})` : ""}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-2 mt-4 text-xs text-text-muted">
-            <span>Less</span>
-            <div className="w-3 h-3 rounded-sm bg-border" />
-            <div className="w-3 h-3 rounded-sm bg-success/60" />
-            <div className="w-3 h-3 rounded-sm bg-success" />
-            <span>More</span>
-          </div>
-        </div>
-      )}
-    </div>
+            {/* Legend */}
+            <div className="flex items-center gap-2 mt-6 text-xs font-medium text-text-muted">
+              <span>Less</span>
+              {[
+                "bg-border/50",
+                "bg-success/40",
+                "bg-success/70",
+                "bg-success",
+              ].map((color, i) => (
+                <div key={i} className={`w-3.5 h-3.5 rounded-sm ${color}`} />
+              ))}
+              <span>More</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

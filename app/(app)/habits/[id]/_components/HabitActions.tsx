@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Habit } from "@/types";
 import { habitService } from "@/lib/services";
-import { Pause, Play, Archive, Trash2 } from "lucide-react";
+import {
+  Pause,
+  Play,
+  Archive,
+  Trash2,
+  AlertTriangle,
+  Settings,
+} from "lucide-react";
 
 interface HabitActionsProps {
   habit: Habit;
@@ -45,80 +53,152 @@ export function HabitActions({ habit }: HabitActionsProps) {
   const isActive = habit.status === "ACTIVE";
   const isPaused = habit.status === "PAUSED";
 
+  const actions = [
+    ...(isActive
+      ? [
+          {
+            label: "Pause Habit",
+            icon: Pause,
+            onClick: () => handleStatusChange("PAUSED"),
+            color: "text-warning",
+            bg: "bg-warning-bg",
+            border: "border-warning/20",
+          },
+        ]
+      : []),
+    ...(isPaused
+      ? [
+          {
+            label: "Resume Habit",
+            icon: Play,
+            onClick: () => handleStatusChange("ACTIVE"),
+            color: "text-success",
+            bg: "bg-success-bg",
+            border: "border-success/20",
+          },
+        ]
+      : []),
+    {
+      label: "Archive",
+      icon: Archive,
+      onClick: () => handleStatusChange("ARCHIVED"),
+      color: "text-text-secondary",
+      bg: "bg-bg",
+      border: "border-border",
+    },
+  ];
+
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-text mb-4">Actions</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.4 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-xl bg-bg">
+          <Settings size={18} className="text-text-muted" />
+        </div>
+        <h3 className="text-lg font-bold text-text">Actions</h3>
+      </div>
 
       <div className="flex flex-wrap gap-3">
-        {isActive && (
-          <button
-            onClick={() => handleStatusChange("PAUSED")}
+        {actions.map((action) => (
+          <motion.button
+            key={action.label}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={action.onClick}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2.5 bg-warning-bg text-warning rounded-lg font-medium hover:bg-warning/10 disabled:opacity-50 transition-all"
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm border-2 transition-all disabled:opacity-50 ${action.bg} ${action.color} ${action.border} hover:shadow-md`}
           >
-            <Pause size={18} />
-            Pause Habit
-          </button>
-        )}
+            <action.icon size={18} />
+            {action.label}
+          </motion.button>
+        ))}
 
-        {isPaused && (
-          <button
-            onClick={() => handleStatusChange("ACTIVE")}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2.5 bg-success-bg text-success rounded-lg font-medium hover:bg-success/10 disabled:opacity-50 transition-all"
-          >
-            <Play size={18} />
-            Resume Habit
-          </button>
-        )}
-
-        <button
-          onClick={() => handleStatusChange("ARCHIVED")}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-border text-text-secondary rounded-lg font-medium hover:bg-border/50 disabled:opacity-50 transition-all"
-        >
-          <Archive size={18} />
-          Archive
-        </button>
-
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setShowDeleteConfirm(true)}
           disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2.5 border border-danger/30 text-danger rounded-lg font-medium hover:bg-danger-bg disabled:opacity-50 transition-all ml-auto"
+          className="flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm border-2 border-danger/30 text-danger hover:bg-danger-bg transition-all disabled:opacity-50 ml-auto hover:shadow-md"
         >
           <Trash2 size={18} />
           Delete
-        </button>
+        </motion.button>
       </div>
 
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-surface rounded-2xl shadow-xl border border-border w-full max-w-sm p-6 animate-slide-up">
-            <h4 className="text-lg font-semibold text-text mb-2">
-              Delete Habit?
-            </h4>
-            <p className="text-sm text-text-secondary mb-6">
-              This will permanently delete &quot;{habit.title}&quot; and all its
-              history. This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2.5 px-4 border border-border text-text-secondary rounded-lg font-medium hover:bg-border-light transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isLoading}
-                className="flex-1 py-2.5 px-4 bg-danger text-white rounded-lg font-medium hover:bg-danger/90 disabled:opacity-50 transition-all"
-              >
-                {isLoading ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-surface rounded-2xl shadow-2xl border-2 border-danger/20 w-full max-w-sm p-6"
+            >
+              <div className="flex items-start gap-4 mb-6">
+                <div className="p-3 rounded-xl bg-danger-bg">
+                  <AlertTriangle size={24} className="text-danger" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-text mb-1">
+                    Delete Habit?
+                  </h4>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    This will permanently delete &quot;{habit.title}&quot; and
+                    all its history. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 px-4 border-2 border-border text-text-secondary rounded-xl font-semibold hover:bg-border-light transition-all"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="flex-1 py-3 px-4 bg-danger text-white rounded-xl font-semibold hover:bg-danger/90 disabled:opacity-50 transition-all shadow-lg shadow-danger/25"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                      />
+                      Deleting...
+                    </span>
+                  ) : (
+                    "Delete"
+                  )}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

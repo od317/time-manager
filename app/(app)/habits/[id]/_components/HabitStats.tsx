@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Habit } from "@/types";
 import { Flame, Trophy, CheckCircle2, TrendingUp } from "lucide-react";
 
@@ -8,7 +9,7 @@ interface HabitStatsProps {
   todayStr: string;
 }
 
-export function HabitStats({ habit, todayStr }: HabitStatsProps) {
+export function HabitStats({ habit }: HabitStatsProps) {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -18,10 +19,7 @@ export function HabitStats({ habit, todayStr }: HabitStatsProps) {
     return logDate >= thirtyDaysAgo;
   }).length;
 
-  // Calculate expected completions this month based on frequency
-  const today = new Date().getDay();
   let expectedThisMonth = 0;
-
   if (habit.frequencyType === "DAILY") {
     expectedThisMonth = 30;
   } else if (habit.frequencyType === "WEEKLY") {
@@ -41,6 +39,7 @@ export function HabitStats({ habit, todayStr }: HabitStatsProps) {
       icon: Flame,
       color: "text-warning",
       bg: "bg-warning-bg",
+      borderColor: "border-warning/20",
     },
     {
       label: "Longest Streak",
@@ -49,6 +48,7 @@ export function HabitStats({ habit, todayStr }: HabitStatsProps) {
       icon: Trophy,
       color: "text-primary",
       bg: "bg-primary-bg",
+      borderColor: "border-primary/20",
     },
     {
       label: "Total Done",
@@ -57,6 +57,7 @@ export function HabitStats({ habit, todayStr }: HabitStatsProps) {
       icon: CheckCircle2,
       color: "text-success",
       bg: "bg-success-bg",
+      borderColor: "border-success/20",
     },
     {
       label: "This Month",
@@ -65,31 +66,64 @@ export function HabitStats({ habit, todayStr }: HabitStatsProps) {
       icon: TrendingUp,
       color: "text-info",
       bg: "bg-info-bg",
+      borderColor: "border-info/20",
     },
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 md:grid-cols-4 gap-4"
+    >
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
-          <div
+          <motion.div
             key={stat.label}
-            className="bg-surface rounded-xl border border-border p-4"
+            variants={item}
+            whileHover={{ y: -2, scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+            className="bg-surface rounded-2xl border-2 border-border p-5 hover:shadow-lg hover:border-primary/20 transition-all group"
           >
             <div
-              className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center mb-3`}
+              className={`w-10 h-10 rounded-xl ${stat.bg} border ${stat.borderColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
             >
               <Icon size={20} className={stat.color} />
             </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-2xl font-bold text-text">{stat.value}</p>
-              <p className="text-sm text-text-muted">{stat.unit}</p>
+            <div className="flex items-baseline gap-1.5">
+              <motion.p
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                className="text-2xl font-bold text-text"
+              >
+                {stat.value}
+              </motion.p>
+              <p className="text-sm font-medium text-text-muted">{stat.unit}</p>
             </div>
-            <p className="text-xs text-text-muted mt-1">{stat.label}</p>
-          </div>
+            <p className="text-xs font-semibold text-text-muted mt-2">
+              {stat.label}
+            </p>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }
