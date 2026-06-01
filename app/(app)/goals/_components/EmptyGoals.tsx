@@ -1,16 +1,59 @@
-import { Target } from "lucide-react";
+"use client";
+
+import { motion } from "framer-motion";
+import { Target, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export function EmptyGoals() {
   return (
-    <div className="text-center py-16">
-      <div className="w-16 h-16 bg-primary-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Target size={32} className="text-primary" />
-      </div>
-      <h3 className="text-lg font-semibold text-text mb-2">No goals yet</h3>
-      <p className="text-text-muted text-sm max-w-sm mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-center py-20"
+    >
+      <motion.div
+        animate={{
+          scale: [1, 1.1, 1],
+          rotate: [0, 5, -5, 0],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="w-20 h-20 bg-gradient-to-br from-primary-bg to-secondary-bg rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg"
+      >
+        <Target size={36} className="text-primary" />
+      </motion.div>
+
+      <h3 className="text-xl font-bold text-text mb-2">No goals yet</h3>
+      <p className="text-text-muted text-sm max-w-md mx-auto mb-8 leading-relaxed">
         Create your first goal to start tracking your progress and achieving
         what matters most.
       </p>
-    </div>
+
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="inline-block"
+      >
+        <Link
+          href="/create?tab=goal"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all group"
+        >
+          <Sparkles size={18} className="group-hover:animate-pulse" />
+          Create your first goal
+        </Link>
+      </motion.div>
+
+      {/* Decorative suggestions */}
+      <div className="mt-12 flex items-center justify-center gap-2 text-text-muted text-xs">
+        <span>💪 Fitness</span>
+        <span className="w-1 h-1 rounded-full bg-border" />
+        <span>📚 Learning</span>
+        <span className="w-1 h-1 rounded-full bg-border" />
+        <span>💰 Finance</span>
+      </div>
+    </motion.div>
   );
 }

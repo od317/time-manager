@@ -1,7 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { GOAL_COLORS } from "@/lib/constants";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 
 interface ColorPickerProps {
   value: string;
@@ -11,20 +12,26 @@ interface ColorPickerProps {
 
 export function ColorPicker({ value, onChange, disabled }: ColorPickerProps) {
   if (disabled) {
-    // Show the locked color without interaction
     return (
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">
-          Color (inherited from parent)
+        <label className="block text-sm font-semibold text-text mb-2">
+          Color
         </label>
-        <div className="flex items-center gap-2 p-2 bg-bg rounded-lg border border-border">
-          <div
-            className="w-6 h-6 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-border"
+        <div className="flex items-center gap-3 p-3 bg-bg rounded-xl border-2 border-border">
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            className="w-8 h-8 rounded-full flex-shrink-0 ring-2 ring-offset-2 ring-border"
             style={{ backgroundColor: value }}
           />
-          <span className="text-sm text-text-muted">
-            {getColorLabel(value)}
-          </span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-text">
+              {getColorLabel(value)}
+            </p>
+            <p className="text-xs text-text-muted flex items-center gap-1">
+              <Lock size={10} />
+              Inherited from parent
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -32,26 +39,38 @@ export function ColorPicker({ value, onChange, disabled }: ColorPickerProps) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-text-secondary mb-2">
+      <label className="block text-sm font-semibold text-text mb-3">
         Color
       </label>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2.5">
         {GOAL_COLORS.map((color) => {
           const isSelected = value === color.value;
           return (
-            <button
+            <motion.button
               key={color.value}
               type="button"
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => onChange(color.value)}
               disabled={disabled}
               title={color.label}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
-                isSelected ? "ring-2 ring-offset-2 ring-text scale-110" : ""
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                isSelected
+                  ? "ring-2 ring-offset-2 ring-text scale-110 shadow-lg"
+                  : "hover:shadow-md"
               }`}
               style={{ backgroundColor: color.value }}
             >
-              {isSelected && <Check size={14} className="text-white" />}
-            </button>
+              {isSelected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <Check size={16} className="text-white" strokeWidth={3} />
+                </motion.div>
+              )}
+            </motion.button>
           );
         })}
       </div>
