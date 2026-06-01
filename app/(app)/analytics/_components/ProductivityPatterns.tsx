@@ -1,7 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Goal, Habit } from "@/types";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
 interface ProductivityPatternsProps {
@@ -15,7 +16,6 @@ export function ProductivityPatterns({
   goals,
   habits,
 }: ProductivityPatternsProps) {
-  // Most active days based on habit completion
   const [now] = useState(() => Date.now());
 
   const dayActivity = DAYS.map((day, index) => {
@@ -47,90 +47,130 @@ export function ProductivityPatterns({
     return new Date(g.completedAt).getTime() > weekAgo;
   }).length;
 
+  const priorityConfig = {
+    URGENT: {
+      color: "bg-danger",
+      textColor: "text-danger",
+      bg: "bg-danger-bg",
+    },
+    HIGH: {
+      color: "bg-warning",
+      textColor: "text-warning",
+      bg: "bg-warning-bg",
+    },
+    MEDIUM: {
+      color: "bg-primary",
+      textColor: "text-primary",
+      bg: "bg-primary-bg",
+    },
+    LOW: { color: "bg-border", textColor: "text-text-muted", bg: "bg-bg" },
+  };
+
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-        <TrendingUp size={20} className="text-warning" />
-        Productivity Patterns
-      </h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.25 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-xl bg-warning-bg">
+          <TrendingUp size={20} className="text-warning" />
+        </div>
+        <h3 className="text-lg font-bold text-text">Productivity Patterns</h3>
+      </div>
 
       <div className="space-y-6">
         {/* Most Active Days */}
         <div>
-          <p className="text-sm font-medium text-text-secondary mb-3">
+          <p className="text-sm font-semibold text-text-secondary mb-4">
             Habit Load by Day
           </p>
-          <div className="flex items-end gap-1 h-24">
-            {dayActivity.map(({ day, count }) => (
-              <div
-                key={day}
-                className="flex-1 flex flex-col items-center gap-1"
-              >
+          <div className="flex items-end gap-1.5 h-28">
+            {dayActivity.map(({ day, count }) => {
+              const heightPercent = (count / maxCount) * 100;
+              const isHighest = count === maxCount && count > 0;
+              return (
                 <div
-                  className="w-full bg-primary rounded-t-md transition-all"
-                  style={{
-                    height: `${(count / maxCount) * 100}%`,
-                    minHeight: count > 0 ? "4px" : "0",
-                  }}
-                />
-                <span className="text-xs text-text-muted">{day}</span>
-              </div>
-            ))}
+                  key={day}
+                  className="flex-1 flex flex-col items-center gap-2"
+                >
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${heightPercent}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className={`w-full rounded-t-lg transition-all ${
+                      isHighest ? "bg-primary" : "bg-primary/40"
+                    }`}
+                    style={{ minHeight: count > 0 ? "4px" : "0" }}
+                  />
+                  <span
+                    className={`text-xs font-semibold ${
+                      isHighest ? "text-primary" : "text-text-muted"
+                    }`}
+                  >
+                    {day}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Priority Distribution */}
         <div>
-          <p className="text-sm font-medium text-text-secondary mb-3">
+          <p className="text-sm font-semibold text-text-secondary mb-4">
             Priority Distribution
           </p>
-          <div className="space-y-2">
-            {Object.entries(priorityDist).map(([priority, count]) => (
-              <div key={priority} className="flex items-center gap-2">
-                <span
-                  className={`text-xs w-16 font-medium ${
-                    priority === "URGENT"
-                      ? "text-danger"
-                      : priority === "HIGH"
-                        ? "text-warning"
-                        : priority === "MEDIUM"
-                          ? "text-primary"
-                          : "text-text-muted"
-                  }`}
-                >
-                  {priority}
-                </span>
-                <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      priority === "URGENT"
-                        ? "bg-danger"
-                        : priority === "HIGH"
-                          ? "bg-warning"
-                          : priority === "MEDIUM"
-                            ? "bg-primary"
-                            : "bg-border"
-                    }`}
-                    style={{
-                      width: `${goals.length > 0 ? (count / goals.length) * 100 : 0}%`,
-                    }}
-                  />
+          <div className="space-y-3">
+            {(
+              Object.entries(priorityDist) as [
+                keyof typeof priorityConfig,
+                number,
+              ][]
+            ).map(([priority, count]) => {
+              const config = priorityConfig[priority];
+              const percent =
+                goals.length > 0 ? (count / goals.length) * 100 : 0;
+              return (
+                <div key={priority} className="flex items-center gap-3">
+                  <span
+                    className={`text-xs font-bold w-16 ${config.textColor}`}
+                  >
+                    {priority}
+                  </span>
+                  <div className="flex-1 h-2.5 bg-border rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percent}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className={`h-full rounded-full ${config.color}`}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-text-muted w-8 text-right">
+                    {count}
+                  </span>
                 </div>
-                <span className="text-xs text-text-muted w-6 text-right">
-                  {count}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         {/* Weekly Wins */}
-        <div className="bg-success-bg/20 rounded-lg p-4">
-          <p className="text-sm font-medium text-success mb-1">This Week</p>
-          <p className="text-2xl font-bold text-success">{completedThisWeek}</p>
-          <p className="text-xs text-text-muted">goals completed</p>
-        </div>
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="bg-gradient-to-br from-success-bg to-success-bg/50 rounded-xl p-5 border border-success/20"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Target size={18} className="text-success" />
+            <p className="text-sm font-bold text-success">This Week</p>
+          </div>
+          <p className="text-3xl font-bold text-success">{completedThisWeek}</p>
+          <p className="text-xs text-success/70 mt-1 font-medium">
+            goals completed
+          </p>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { TimeSummary } from "@/types";
 import {
   PieChart,
@@ -16,28 +17,44 @@ interface TimeDistributionProps {
 }
 
 const COLORS = [
-  "#6366F1",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#06B6D4",
-  "#EC4899",
-  "#84CC16",
+  "#9FA1FF",
+  "#B5BAFF",
+  "#AEE2FF",
+  "#D9F9DF",
+  "#FFD4C2",
+  "#FFE0C5",
+  "#C5ECFF",
+  "#E8FCEB",
 ];
 
 export function TimeDistribution({ timeSummary }: TimeDistributionProps) {
   if (!timeSummary || timeSummary.totalTime === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-6">
-        <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-          <Clock size={20} className="text-success" />
-          Time Distribution
-        </h3>
-        <p className="text-sm text-text-muted text-center py-8">
-          No time tracked yet.
-        </p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-success-bg">
+            <Clock size={20} className="text-success" />
+          </div>
+          <h3 className="text-lg font-bold text-text">Time Distribution</h3>
+        </div>
+        <div className="text-center py-10">
+          <Clock
+            size={32}
+            className="text-text-muted mx-auto mb-3 opacity-50"
+          />
+          <p className="text-sm text-text-muted font-medium">
+            No time tracked yet
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Start tracking time to see distribution
+          </p>
+        </div>
+      </motion.div>
     );
   }
 
@@ -56,24 +73,42 @@ export function TimeDistribution({ timeSummary }: TimeDistributionProps) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-6">
-        <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-          <Clock size={20} className="text-success" />
-          Time Distribution
-        </h3>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-success-bg">
+            <Clock size={20} className="text-success" />
+          </div>
+          <h3 className="text-lg font-bold text-text">Time Distribution</h3>
+        </div>
         <p className="text-sm text-text-muted text-center py-8">
           No categorized time yet.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-        <Clock size={20} className="text-success" />
-        Time Distribution
-      </h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-xl bg-success-bg">
+          <Clock size={20} className="text-success" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-text">Time Distribution</h3>
+          <p className="text-xs text-text-muted">
+            {Math.round((timeSummary.totalTime / 3600) * 10) / 10}h total
+          </p>
+        </div>
+      </div>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
@@ -94,19 +129,22 @@ export function TimeDistribution({ timeSummary }: TimeDistributionProps) {
           </Pie>
           <Tooltip
             contentStyle={{
-              background: "#fff",
-              border: "1px solid #E2E8F0",
-              borderRadius: "8px",
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "12px",
+              boxShadow: "var(--shadow-lg)",
             }}
             formatter={(value: any) => [`${value}h`, "Time"]}
           />
           <Legend
             formatter={(value: string) => (
-              <span className="text-xs text-text-secondary">{value}</span>
+              <span className="text-xs font-medium text-text-secondary">
+                {value}
+              </span>
             )}
           />
         </PieChart>
       </ResponsiveContainer>
-    </div>
+    </motion.div>
   );
 }

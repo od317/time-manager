@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Goal, Habit, TimeEntry } from "@/types";
 import {
   LineChart,
@@ -21,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeftRight,
+  TrendingUp,
 } from "lucide-react";
 import {
   format,
@@ -46,15 +48,6 @@ interface DailyBreakdownProps {
 type DateRange = "week" | "month" | "year";
 type ComparisonMode = "none" | "previous";
 
-const COLORS = [
-  "#6366F1",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#06B6D4",
-];
-
 export function DailyBreakdown({
   goals,
   habits,
@@ -62,10 +55,8 @@ export function DailyBreakdown({
 }: DailyBreakdownProps) {
   const [dateRange, setDateRange] = useState<DateRange>("week");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
   const [comparisonMode, setComparisonMode] = useState<ComparisonMode>("none");
 
-  // Calculate date range
   const { start, end, previousStart, previousEnd } = useMemo(() => {
     let start: Date, end: Date, previousStart: Date, previousEnd: Date;
 
@@ -192,7 +183,6 @@ export function DailyBreakdown({
         )
       : [];
 
-  // Merge comparison data
   const mergedData =
     comparisonMode === "previous"
       ? chartData.map((current, i) => ({
@@ -216,94 +206,162 @@ export function DailyBreakdown({
 
   const isCurrent = end >= new Date();
 
+  const stats = [
+    {
+      label: "Total Hours",
+      value: `${Math.round(chartData.reduce((s, d) => s + d.hours, 0) * 10) / 10}h`,
+      icon: Clock,
+      color: "text-primary",
+      bg: "bg-primary-bg",
+    },
+    {
+      label: "Tasks Done",
+      value: chartData.reduce((s, d) => s + d.tasks, 0),
+      icon: CheckCircle2,
+      color: "text-success",
+      bg: "bg-success-bg",
+    },
+    {
+      label: "Habits Done",
+      value: chartData.reduce((s, d) => s + d.habits, 0),
+      icon: Repeat,
+      color: "text-secondary",
+      bg: "bg-secondary-bg",
+    },
+    {
+      label: "Active Days",
+      value: chartData.filter((d) => d.hours > 0 || d.tasks > 0 || d.habits > 0)
+        .length,
+      icon: Target,
+      color: "text-warning",
+      bg: "bg-warning-bg",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.3 }}
+      className="space-y-6"
+    >
       {/* Controls & Chart */}
-      <div className="bg-surface rounded-xl border border-border p-6">
+      <div className="bg-surface rounded-2xl border border-border shadow-sm p-6">
         {/* Header Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <h3 className="text-lg font-semibold text-text flex items-center gap-2">
-            <Calendar size={20} className="text-primary" />
-            Daily Breakdown
-          </h3>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary-bg">
+              <Calendar size={20} className="text-primary" />
+            </div>
+            <h3 className="text-lg font-bold text-text">Daily Breakdown</h3>
+          </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Range selector */}
-            <div className="flex bg-bg rounded-lg p-1">
+            <div className="flex gap-1 p-1 bg-bg rounded-xl border border-border">
               {(["week", "month", "year"] as DateRange[]).map((range) => (
-                <button
+                <motion.button
                   key={range}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setDateRange(range)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all capitalize ${
+                  className={`relative px-4 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${
                     dateRange === range
-                      ? "bg-surface text-text shadow-sm"
+                      ? "text-text"
                       : "text-text-muted hover:text-text"
                   }`}
                 >
-                  {range}
-                </button>
+                  {dateRange === range && (
+                    <motion.div
+                      layoutId="activeRange"
+                      className="absolute inset-0 bg-surface rounded-lg shadow-sm border border-border"
+                      transition={{ duration: 0.2 }}
+                    />
+                  )}
+                  <span className="relative z-10">{range}</span>
+                </motion.button>
               ))}
             </div>
 
             {/* Comparison toggle */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() =>
                 setComparisonMode(
                   comparisonMode === "none" ? "previous" : "none",
                 )
               }
-              className={`p-2 rounded-lg transition-all ${
+              className={`p-2.5 rounded-xl transition-all ${
                 comparisonMode === "previous"
-                  ? "bg-primary-bg text-primary"
-                  : "text-text-muted hover:text-text hover:bg-border-light"
+                  ? "bg-primary-bg text-primary border border-primary/20"
+                  : "text-text-muted hover:text-text hover:bg-border-light border border-transparent"
               }`}
               title="Compare with previous period"
             >
               <ArrowLeftRight size={16} />
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <button
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={previousPeriod}
-            className="p-1 text-text-muted hover:text-text transition-all"
+            className="p-2 text-text-muted hover:text-text rounded-xl hover:bg-border-light transition-all"
           >
             <ChevronLeft size={18} />
-          </button>
-          <span className="text-sm font-medium text-text">{getTitle()}</span>
-          <button
+          </motion.button>
+
+          <span className="text-sm font-bold text-text min-w-[200px] text-center">
+            {getTitle()}
+          </span>
+
+          <motion.button
+            whileHover={
+              !isCurrent || dateRange === "year" ? { scale: 1.1 } : {}
+            }
+            whileTap={!isCurrent || dateRange === "year" ? { scale: 0.9 } : {}}
             onClick={nextPeriod}
             disabled={isCurrent && dateRange !== "year"}
-            className={`p-1 transition-all ${isCurrent && dateRange !== "year" ? "text-text-muted cursor-not-allowed" : "text-text-muted hover:text-text"}`}
+            className={`p-2 rounded-xl transition-all ${
+              isCurrent && dateRange !== "year"
+                ? "text-text-muted cursor-not-allowed opacity-40"
+                : "text-text-muted hover:text-text hover:bg-border-light"
+            }`}
           >
             <ChevronRight size={18} />
-          </button>
+          </motion.button>
         </div>
 
         {/* Chart */}
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={mergedData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 11, fill: "#94A3B8" }}
+              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
               interval={
                 dateRange === "year" ? 30 : dateRange === "month" ? 6 : 0
               }
             />
-            <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "#94A3B8" }} />
+            <YAxis
+              yAxisId="left"
+              tick={{ fontSize: 12, fill: "var(--color-text-muted)" }}
+            />
             <YAxis
               yAxisId="right"
               orientation="right"
-              tick={{ fontSize: 12, fill: "#94A3B8" }}
+              tick={{ fontSize: 12, fill: "var(--color-text-muted)" }}
             />
             <Tooltip
               contentStyle={{
-                background: "#fff",
-                border: "1px solid #E2E8F0",
-                borderRadius: "8px",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "12px",
+                boxShadow: "var(--shadow-lg)",
               }}
             />
             <Legend />
@@ -312,30 +370,42 @@ export function DailyBreakdown({
               type="monotone"
               dataKey="hours"
               name="Hours"
-              stroke="#6366F1"
-              strokeWidth={2}
-              dot={dateRange === "year" ? false : { r: 3 }}
-              isAnimationActive={false}
+              stroke="var(--color-primary)"
+              strokeWidth={3}
+              dot={
+                dateRange === "year"
+                  ? false
+                  : { r: 4, fill: "var(--color-surface)", strokeWidth: 2 }
+              }
+              activeDot={{ r: 6, fill: "var(--color-primary)" }}
             />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="habits"
               name="Habits"
-              stroke="#8B5CF6"
-              strokeWidth={2}
-              dot={dateRange === "year" ? false : { r: 3 }}
-              isAnimationActive={false}
+              stroke="var(--color-secondary)"
+              strokeWidth={3}
+              dot={
+                dateRange === "year"
+                  ? false
+                  : { r: 4, fill: "var(--color-surface)", strokeWidth: 2 }
+              }
+              activeDot={{ r: 6, fill: "var(--color-secondary)" }}
             />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="tasks"
               name="Tasks"
-              stroke="#10B981"
-              strokeWidth={2}
-              dot={dateRange === "year" ? false : { r: 3 }}
-              isAnimationActive={false}
+              stroke="var(--color-success)"
+              strokeWidth={3}
+              dot={
+                dateRange === "year"
+                  ? false
+                  : { r: 4, fill: "var(--color-surface)", strokeWidth: 2 }
+              }
+              activeDot={{ r: 6, fill: "var(--color-success)" }}
             />
             {comparisonMode === "previous" && (
               <>
@@ -344,36 +414,33 @@ export function DailyBreakdown({
                   type="monotone"
                   dataKey="prevHours"
                   name="Prev Hours"
-                  stroke="#6366F1"
+                  stroke="var(--color-primary)"
                   strokeWidth={1.5}
                   strokeDasharray="5 5"
                   dot={false}
-                  opacity={0.4}
-                  isAnimationActive={false}
+                  opacity={0.3}
                 />
                 <Line
                   yAxisId="right"
                   type="monotone"
                   dataKey="prevHabits"
                   name="Prev Habits"
-                  stroke="#8B5CF6"
+                  stroke="var(--color-secondary)"
                   strokeWidth={1.5}
                   strokeDasharray="5 5"
                   dot={false}
-                  opacity={0.4}
-                  isAnimationActive={false}
+                  opacity={0.3}
                 />
                 <Line
                   yAxisId="right"
                   type="monotone"
                   dataKey="prevTasks"
                   name="Prev Tasks"
-                  stroke="#10B981"
+                  stroke="var(--color-success)"
                   strokeWidth={1.5}
                   strokeDasharray="5 5"
                   dot={false}
-                  opacity={0.4}
-                  isAnimationActive={false}
+                  opacity={0.3}
                 />
               </>
             )}
@@ -381,51 +448,41 @@ export function DailyBreakdown({
         </ResponsiveContainer>
       </div>
 
-      {/* Summary Stats for Period */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          {
-            label: "Total Hours",
-            value: `${Math.round(chartData.reduce((s, d) => s + d.hours, 0) * 10) / 10}h`,
-            icon: Clock,
-            color: "text-primary",
-          },
-          {
-            label: "Tasks Done",
-            value: chartData.reduce((s, d) => s + d.tasks, 0),
-            icon: CheckCircle2,
-            color: "text-success",
-          },
-          {
-            label: "Habits Done",
-            value: chartData.reduce((s, d) => s + d.habits, 0),
-            icon: Repeat,
-            color: "text-purple-500",
-          },
-          {
-            label: "Active Days",
-            value: chartData.filter(
-              (d) => d.hours > 0 || d.tasks > 0 || d.habits > 0,
-            ).length,
-            icon: Target,
-            color: "text-warning",
-          },
-        ].map((stat) => {
+        {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div
+            <motion.div
               key={stat.label}
-              className="bg-surface rounded-xl border border-border p-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 * index }}
+              whileHover={{ y: -2, scale: 1.02 }}
+              className="bg-surface rounded-2xl border-2 border-border p-5 hover:shadow-lg hover:border-primary/20 transition-all group"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <Icon size={16} className={stat.color} />
-                <span className="text-xs text-text-muted">{stat.label}</span>
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className={`p-2 rounded-xl ${stat.bg} group-hover:scale-110 transition-transform`}
+                >
+                  <Icon size={16} className={stat.color} />
+                </div>
+                <span className="text-xs font-semibold text-text-muted">
+                  {stat.label}
+                </span>
               </div>
-              <p className="text-2xl font-bold text-text">{stat.value}</p>
-            </div>
+              <motion.p
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                className="text-2xl font-bold text-text"
+              >
+                {stat.value}
+              </motion.p>
+            </motion.div>
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 }

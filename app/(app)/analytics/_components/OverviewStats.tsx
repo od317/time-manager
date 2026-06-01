@@ -1,12 +1,13 @@
+"use client";
+
+import { motion } from "framer-motion";
 import {
   Target,
   Trophy,
   Flame,
   Clock,
   CheckCircle2,
-  XCircle,
   Repeat,
-  Zap,
 } from "lucide-react";
 
 interface OverviewStatsProps {
@@ -40,6 +41,7 @@ export function OverviewStats({
       icon: Trophy,
       color: "text-warning",
       bg: "bg-warning-bg",
+      border: "border-warning/20",
     },
     {
       label: "Active Goals",
@@ -48,14 +50,16 @@ export function OverviewStats({
       icon: Target,
       color: "text-primary",
       bg: "bg-primary-bg",
+      border: "border-primary/20",
     },
     {
       label: "Active Habits",
       value: activeHabits,
       sub: `of ${totalHabits} total`,
       icon: Repeat,
-      color: "text-purple-500",
-      bg: "bg-purple-100",
+      color: "text-secondary",
+      bg: "bg-secondary-bg",
+      border: "border-secondary/20",
     },
     {
       label: "Avg Streak",
@@ -63,7 +67,8 @@ export function OverviewStats({
       sub: `best: ${bestStreak}`,
       icon: Flame,
       color: "text-orange-500",
-      bg: "bg-orange-100",
+      bg: "bg-orange-50",
+      border: "border-orange-200",
     },
     {
       label: "Time Tracked",
@@ -72,6 +77,7 @@ export function OverviewStats({
       icon: Clock,
       color: "text-success",
       bg: "bg-success-bg",
+      border: "border-success/20",
     },
     {
       label: "Success Rate",
@@ -83,29 +89,62 @@ export function OverviewStats({
       icon: CheckCircle2,
       color: "text-info",
       bg: "bg-info-bg",
+      border: "border-info/20",
     },
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+    >
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
-          <div
+          <motion.div
             key={stat.label}
-            className="bg-surface rounded-xl border border-border p-4"
+            variants={item}
+            whileHover={{ y: -2, scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+            className="bg-surface rounded-2xl border-2 border-border p-5 hover:shadow-lg hover:border-primary/20 transition-all group"
           >
             <div
-              className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center mb-3`}
+              className={`w-10 h-10 rounded-xl ${stat.bg} border ${stat.border} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
             >
               <Icon size={20} className={stat.color} />
             </div>
-            <p className="text-2xl font-bold text-text">{stat.value}</p>
-            <p className="text-xs text-text-muted mt-1">{stat.label}</p>
-            <p className="text-xs text-text-muted">{stat.sub}</p>
-          </div>
+            <motion.p
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="text-xl font-bold text-text"
+            >
+              {stat.value}
+            </motion.p>
+            <p className="text-xs font-semibold text-text-muted mt-1">
+              {stat.label}
+            </p>
+            <p className="text-[10px] text-text-muted">{stat.sub}</p>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

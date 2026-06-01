@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Habit } from "@/types";
 import {
   BarChart,
@@ -25,71 +26,95 @@ export function HabitConsistency({ habits }: HabitConsistencyProps) {
       streak: h.currentStreak,
       longest: h.longestStreak,
       total: h.totalCompletions,
-      color: h.color || "#8B5CF6",
+      color: h.color || "#B5BAFF",
     }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 8);
 
   if (data.length === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-6">
-        <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-          <Repeat size={20} className="text-purple-500" />
-          Habit Consistency
-        </h3>
-        <p className="text-sm text-text-muted text-center py-8">
-          No active habits yet.
-        </p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-secondary-bg">
+            <Repeat size={20} className="text-secondary" />
+          </div>
+          <h3 className="text-lg font-bold text-text">Habit Consistency</h3>
+        </div>
+        <div className="text-center py-10">
+          <Repeat
+            size={32}
+            className="text-text-muted mx-auto mb-3 opacity-50"
+          />
+          <p className="text-sm text-text-muted font-medium">
+            No active habits yet
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Build habits to see consistency data
+          </p>
+        </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-        <Repeat size={20} className="text-purple-500" />
-        Habit Consistency
-      </h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.15 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-xl bg-secondary-bg">
+          <Repeat size={20} className="text-secondary" />
+        </div>
+        <h3 className="text-lg font-bold text-text">Habit Consistency</h3>
+      </div>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data} margin={{ top: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 11, fill: "#94A3B8" }}
+            tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
             angle={-45}
             textAnchor="end"
             height={60}
           />
-          <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} />
+          <YAxis tick={{ fontSize: 12, fill: "var(--color-text-muted)" }} />
           <Tooltip
             contentStyle={{
-              background: "#fff",
-              border: "1px solid #E2E8F0",
-              borderRadius: "8px",
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "12px",
+              boxShadow: "var(--shadow-lg)",
             }}
           />
           <Bar
             dataKey="streak"
             name="Current Streak"
-            fill="#8B5CF6"
-            radius={[4, 4, 0, 0]}
+            fill="var(--color-secondary)"
+            radius={[6, 6, 0, 0]}
           />
           <Bar
             dataKey="longest"
             name="Longest Streak"
-            fill="#C4B5FD"
-            radius={[4, 4, 0, 0]}
+            fill="var(--color-secondary-light)"
+            radius={[6, 6, 0, 0]}
           />
         </BarChart>
       </ResponsiveContainer>
-      <div className="flex items-center justify-center gap-6 mt-4 text-xs text-text-muted">
+      <div className="flex items-center justify-center gap-6 mt-4 text-xs font-medium text-text-muted">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-purple-500" /> Current Streak
+          <div className="w-3 h-3 rounded bg-secondary" /> Current Streak
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-purple-300" /> Longest Streak
+          <div className="w-3 h-3 rounded bg-secondary/40" /> Longest Streak
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
