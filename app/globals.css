@@ -123,6 +123,34 @@
 }
 
 /* ============================================================================
+   DARK MODE
+   ============================================================================ */
+
+.dark {
+  --color-bg: #0F172A;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-text-inverse: #0F172A;
+
+  --color-primary-bg: #1E1B4B;
+  --color-success-bg: #052E16;
+  --color-warning-bg: #451A03;
+  --color-danger-bg: #450A0A;
+  --color-info-bg: #172554;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================================
    BASE STYLES
    ============================================================================ */
 

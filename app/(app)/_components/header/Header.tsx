@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { UserMenu } from "./UserMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const pageTitles: Record<string, string> = {
   "/today": "Today",
@@ -32,7 +33,7 @@ export function Header() {
       <div>
         <h1 className="text-lg font-semibold text-text">{title}</h1>
       </div>
-
+      <ThemeToggle />
       <div className="flex items-center gap-3">
         {/* Mobile user menu */}
         <div className="md:hidden">

@@ -2,30 +2,44 @@ import { create } from "zustand";
 
 type LayoutMode = "single" | "double";
 type SectionOrder = string[];
+type Theme = "light" | "dark";
 
 interface UIState {
   isSidebarOpen: boolean;
   layoutMode: LayoutMode;
   sectionOrder: SectionOrder;
   goalOrder: string[];
+  theme: Theme;
 
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setLayoutMode: (mode: LayoutMode) => void;
   setSectionOrder: (order: SectionOrder) => void;
   setGoalOrder: (order: string[]) => void;
+  toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
+}
+
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+  const cookieTheme = document.cookie.match(/(?:^|;\s*)theme=([^;]*)/)?.[1];
+  if (cookieTheme === "dark") return "dark";
+  if (cookieTheme === "light") return "light";
+  return "light";
 }
 
 function loadLayoutPrefs(): {
   layoutMode: LayoutMode;
   sectionOrder: SectionOrder;
   goalOrder: string[];
+  theme: Theme;
 } {
   if (typeof window === "undefined") {
     return {
       layoutMode: "single",
       sectionOrder: ["habits", "tasks", "goals"],
       goalOrder: [],
+      theme: "light",
     };
   }
 
@@ -37,6 +51,7 @@ function loadLayoutPrefs(): {
         layoutMode: parsed.layoutMode || "single",
         sectionOrder: parsed.sectionOrder || ["habits", "tasks", "goals"],
         goalOrder: parsed.goalOrder || [],
+        theme: parsed.theme || "light",
       };
     }
   } catch {
@@ -47,6 +62,7 @@ function loadLayoutPrefs(): {
     layoutMode: "single",
     sectionOrder: ["habits", "tasks", "goals"],
     goalOrder: [],
+    theme: "light",
   };
 }
 
@@ -58,6 +74,7 @@ function saveLayoutPrefs(state: UIState) {
         layoutMode: state.layoutMode,
         sectionOrder: state.sectionOrder,
         goalOrder: state.goalOrder,
+        theme: state.theme,
       }),
     );
   } catch {
@@ -72,6 +89,7 @@ export const useUIStore = create<UIState>((set) => ({
   layoutMode: savedPrefs.layoutMode,
   sectionOrder: savedPrefs.sectionOrder,
   goalOrder: savedPrefs.goalOrder,
+  theme: getInitialTheme() || savedPrefs.theme,
 
   toggleSidebar: () =>
     set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -99,6 +117,23 @@ export const useUIStore = create<UIState>((set) => ({
       const newState = { ...state, goalOrder: order };
       saveLayoutPrefs(newState);
       return { goalOrder: order };
+    });
+  },
+
+  toggleTheme: () => {
+    set((state) => {
+      const newTheme: Theme = state.theme === "light" ? "dark" : "light";
+      const newState = { ...state, theme: newTheme };
+      saveLayoutPrefs(newState);
+      return { theme: newTheme };
+    });
+  },
+
+  setTheme: (theme) => {
+    set((state) => {
+      const newState = { ...state, theme };
+      saveLayoutPrefs(newState);
+      return { theme };
     });
   },
 }));
