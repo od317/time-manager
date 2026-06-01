@@ -1,7 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Goal } from "@/types";
-import { Calendar, Target } from "lucide-react";
+import { Calendar, Target, TrendingUp, Clock } from "lucide-react";
 
 interface GoalProgressProps {
   goal: Goal;
@@ -16,7 +17,6 @@ export function GoalProgress({ goal }: GoalProgressProps) {
   const isQuantity = goal.goalType === "quantity";
   const isProject = goal.goalType === "project";
 
-  // Calculate current value from tracked time + manual updates
   let currentValue = goal.currentValue || 0;
   if (isTimeBased) {
     const trackedSeconds = (goal.timeEntries || []).reduce(
@@ -53,45 +53,75 @@ export function GoalProgress({ goal }: GoalProgressProps) {
     return `${Math.round(val)}`;
   };
 
-  // Project goals - no progress bar
   if (isProject) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-6">
-        <h3 className="text-lg font-semibold text-text mb-4">Progress</h3>
-        <div className="p-4 bg-bg rounded-lg border border-border text-center">
-          <p className="text-sm text-text-muted">
-            Track progress by completing tasks and sub-goals.
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-primary-bg">
+            <TrendingUp size={18} className="text-primary" />
+          </div>
+          <h3 className="text-lg font-bold text-text">Progress</h3>
+        </div>
+        <div className="p-6 bg-bg rounded-xl border-2 border-dashed border-border text-center">
+          <Target
+            size={32}
+            className="text-text-muted mx-auto mb-3 opacity-50"
+          />
+          <p className="text-sm text-text-muted font-medium">
+            Track progress by completing tasks and sub-goals
           </p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-text mb-4">Progress</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.1 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-xl bg-primary-bg">
+          <TrendingUp size={18} className="text-primary" />
+        </div>
+        <h3 className="text-lg font-bold text-text">Progress</h3>
+      </div>
 
       {goal.targetValue && goal.targetValue > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-text-secondary">Goal Completion</span>
-            <span className="text-sm font-semibold text-text">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-text-secondary">
+              Goal Completion
+            </span>
+            <span className="text-sm font-bold text-text">
               {Math.round(goalProgress)}%
             </span>
           </div>
           <div className="w-full h-3 bg-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all"
-              style={{ width: `${Math.min(goalProgress, 100)}%` }}
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(goalProgress, 100)}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="h-full rounded-full"
+              style={{
+                background: `linear-gradient(90deg, ${goal.color || "#9FA1FF"}80, ${goal.color || "#9FA1FF"})`,
+              }}
             />
           </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-text-muted">
-            <span>
-              <Target size={12} className="inline mr-1" />
+          <div className="flex items-center justify-between mt-2 text-xs font-medium">
+            <span className="text-text-muted flex items-center gap-1.5">
+              <Target size={12} />
               {formatValue(currentValue)} / {formatValue(goal.targetValue)}{" "}
               {goal.unit || ""}
             </span>
-            <span>
+            <span className="text-text-secondary">
               {formatValue(goal.targetValue - currentValue)} remaining
             </span>
           </div>
@@ -100,27 +130,71 @@ export function GoalProgress({ goal }: GoalProgressProps) {
 
       {endDate && (
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-text-secondary">Time Elapsed</span>
-            <span className="text-sm font-semibold text-text">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-text-secondary">
+              Time Elapsed
+            </span>
+            <span className="text-sm font-bold text-text">
               {Math.round(timeProgress)}%
             </span>
           </div>
           <div className="w-full h-3 bg-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-warning rounded-full transition-all"
-              style={{ width: `${timeProgress}%` }}
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${timeProgress}%` }}
+              transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+              className="h-full rounded-full bg-gradient-to-r from-warning/60 to-warning"
             />
           </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-text-muted">
-            <span>
-              <Calendar size={12} className="inline mr-1" />
+          <div className="flex items-center justify-between mt-2 text-xs font-medium">
+            <span className="text-text-muted flex items-center gap-1.5">
+              <Calendar size={12} />
               {startDate.toLocaleDateString()}
             </span>
-            <span>{endDate.toLocaleDateString()}</span>
+            <span className="text-text-secondary">
+              {endDate.toLocaleDateString()}
+            </span>
           </div>
+
+          {/* Timeline comparison */}
+          {goal.targetValue && goal.targetValue > 0 && (
+            <div className="mt-4 p-4 bg-bg rounded-xl border border-border">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock size={14} className="text-text-muted" />
+                <span className="text-xs font-semibold text-text-muted">
+                  Timeline Analysis
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-text-secondary">
+                  Progress:{" "}
+                  <span className="font-bold text-text">
+                    {Math.round(goalProgress)}%
+                  </span>
+                </span>
+                <span className="text-text-muted">vs</span>
+                <span className="text-text-secondary">
+                  Time:{" "}
+                  <span className="font-bold text-text">
+                    {Math.round(timeProgress)}%
+                  </span>
+                </span>
+                <span
+                  className={`ml-auto font-bold ${
+                    goalProgress >= timeProgress
+                      ? "text-success"
+                      : "text-warning"
+                  }`}
+                >
+                  {goalProgress >= timeProgress
+                    ? "On track"
+                    : "Behind schedule"}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

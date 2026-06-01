@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Goal } from "@/types";
 import { goalService } from "@/lib/services";
 import { useTimerStore } from "@/store/timerStore";
-import { Plus } from "lucide-react";
+import { Plus, TrendingUp, Clock, AlertCircle } from "lucide-react";
 
 interface ProgressUpdateProps {
   goal: Goal;
@@ -21,11 +22,9 @@ export function ProgressUpdate({ goal }: ProgressUpdateProps) {
   const isAutoSyncing = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const timeUnits = ["hours", "minutes", "h", "m", "hrs", "mins"];
   const isTimeBased = goal.goalType === "time";
   const isQuantity = goal.goalType === "quantity";
 
-  // Re-fetch goal when timer stops
   const refreshGoal = useCallback(async () => {
     try {
       const updated = await goalService.getById(currentGoal.id);
@@ -43,7 +42,6 @@ export function ProgressUpdate({ goal }: ProgressUpdateProps) {
     }
   }, [lastStoppedId, refreshGoal, clearLastStopped, router]);
 
-  // Auto-sync tracked time for time-based goals (debounced)
   useEffect(() => {
     if (!isTimeBased || !currentGoal.targetValue) return;
 
@@ -56,12 +54,9 @@ export function ProgressUpdate({ goal }: ProgressUpdateProps) {
         ? trackedSeconds / 60
         : trackedSeconds / 3600;
 
-    // Only sync if tracked time is greater than current value
     if (trackedInUnit <= (currentGoal.currentValue || 0)) return;
-    // Don't sync if already syncing
     if (isAutoSyncing.current) return;
 
-    // Debounce: wait 2 seconds after last time entry change
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current);
     }
@@ -200,56 +195,101 @@ export function ProgressUpdate({ goal }: ProgressUpdateProps) {
   const trackedHours = trackedSeconds / 3600;
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-text mb-4">Update Progress</h3>
-
-      {error && (
-        <div className="bg-danger-bg text-danger border border-danger/20 rounded-lg p-3 mb-4 text-sm">
-          {error}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.15 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-xl bg-primary-bg">
+          <TrendingUp size={18} className="text-primary" />
         </div>
-      )}
+        <div>
+          <h3 className="text-lg font-bold text-text">Update Progress</h3>
+          <p className="text-xs text-text-muted">
+            {isTimeBased ? "Track time spent" : "Log your progress"}
+          </p>
+        </div>
+      </div>
 
-      <div className="flex items-center justify-between mb-4 text-sm">
-        <span className="text-text-secondary">
-          {isTimeBased
-            ? `${formatValue(currentGoal.currentValue || 0)} / ${formatValue(currentGoal.targetValue)}`
-            : `${currentGoal.currentValue || 0} / ${currentGoal.targetValue} ${currentGoal.unit || ""}`}
-        </span>
-        <span className="text-text-muted">
-          {isTimeBased
-            ? `${formatValue(remaining)} remaining`
-            : `${remaining} ${currentGoal.unit || ""} remaining`}
-        </span>
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-3 mb-4 text-sm font-medium flex items-center gap-2"
+          >
+            <AlertCircle size={16} />
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex items-center justify-between mb-6 p-4 bg-bg rounded-xl">
+        <div>
+          <p className="text-xs font-semibold text-text-muted mb-1">
+            Current Progress
+          </p>
+          <p className="text-lg font-bold text-text">
+            {isTimeBased
+              ? formatValue(currentGoal.currentValue || 0)
+              : `${currentGoal.currentValue || 0} ${currentGoal.unit || ""}`}
+            <span className="text-sm text-text-muted font-normal ml-1">
+              /{" "}
+              {isTimeBased
+                ? formatValue(currentGoal.targetValue)
+                : `${currentGoal.targetValue} ${currentGoal.unit || ""}`}
+            </span>
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs font-semibold text-text-muted mb-1">
+            Remaining
+          </p>
+          <p className="text-lg font-bold text-primary">
+            {formatValue(remaining)}
+          </p>
+        </div>
       </div>
 
       {isTimeBased && trackedSeconds > 0 && (
-        <div className="mb-4 p-3 bg-bg rounded-lg border border-border">
-          <p className="text-xs text-text-muted">
-            Time tracked via timer:{" "}
-            <span className="text-text font-medium">
-              {formatValue(trackedHours)}
-            </span>
-          </p>
-          <button
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-4 bg-info-bg border border-info/20 rounded-xl"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={14} className="text-info" />
+            <p className="text-xs font-semibold text-info">
+              Tracked time: {formatValue(trackedHours)}
+            </p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => handleQuickAdd(trackedHours)}
             disabled={isSubmitting}
-            className="mt-2 text-xs text-primary hover:text-primary-dark font-medium transition-all"
+            className="text-xs font-bold text-primary hover:text-primary-dark transition-colors"
           >
             + Apply tracked time to progress
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
       <div className="flex gap-2 mb-4">
         {quickAdds.map((value) => (
-          <button
+          <motion.button
             key={value}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => handleQuickAdd(value)}
             disabled={isSubmitting}
-            className="flex-1 py-2 px-3 bg-bg border border-border rounded-lg text-sm font-medium text-text-secondary hover:border-primary/30 hover:text-primary disabled:opacity-50 transition-all"
+            className="flex-1 py-2.5 px-3 bg-bg border-2 border-border rounded-xl text-sm font-bold text-text-secondary hover:border-primary/30 hover:text-primary disabled:opacity-50 transition-all"
           >
             +{isTimeBased ? formatValue(value) : value}
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -270,22 +310,24 @@ export function ProgressUpdate({ goal }: ProgressUpdateProps) {
             min="0.01"
             step={isTimeBased ? "0.25" : "1"}
             max={remaining}
-            className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
           />
           {currentGoal.unit && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-text-muted">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-text-muted">
               {isTimeBased ? "hours" : currentGoal.unit}
             </span>
           )}
         </div>
-        <button
+        <motion.button
           type="submit"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           disabled={isSubmitting || !amount}
-          className="px-4 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 transition-all"
+          className="px-5 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 transition-all"
         >
-          <Plus size={18} />
-        </button>
+          <Plus size={20} />
+        </motion.button>
       </form>
-    </div>
+    </motion.div>
   );
 }

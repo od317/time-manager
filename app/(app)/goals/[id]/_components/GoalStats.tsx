@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Goal } from "@/types";
 import { goalService } from "@/lib/services";
 import { useTimerStore } from "@/store/timerStore";
@@ -25,7 +26,6 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
     }
   }, [goal.id]);
 
-  // Re-fetch when timer stops
   useEffect(() => {
     if (lastStoppedId) {
       fetchGoal();
@@ -34,7 +34,6 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
     }
   }, [lastStoppedId, fetchGoal, clearLastStopped, router]);
 
-  // Re-fetch when page becomes visible
   useEffect(() => {
     const handleFocus = () => {
       fetchGoal();
@@ -62,16 +61,23 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
     {
       label: "Tasks",
       value: `${completedTasks}/${tasks.length}`,
+      subtext:
+        tasks.length > 0
+          ? `${Math.round((completedTasks / tasks.length) * 100)}% done`
+          : "No tasks",
       icon: ListTodo,
       color: "text-primary",
       bg: "bg-primary-bg",
+      border: "border-primary/20",
     },
     {
       label: "Time Spent",
       value: formatDuration(totalTimeSpent),
+      subtext: "Tracked time",
       icon: Timer,
       color: "text-success",
       bg: "bg-success-bg",
+      border: "border-success/20",
     },
     {
       label: "Completion",
@@ -79,38 +85,75 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
         tasks.length > 0
           ? `${Math.round((completedTasks / tasks.length) * 100)}%`
           : "N/A",
+      subtext: "Task completion rate",
       icon: CheckCircle2,
       color: "text-warning",
       bg: "bg-warning-bg",
+      border: "border-warning/20",
     },
     {
       label: "Sub-goals",
       value: `${goal.children?.filter((c) => c.status === "COMPLETED").length || 0}/${goal.children?.length || 0}`,
+      subtext: "Completed sub-goals",
       icon: Target,
       color: "text-info",
       bg: "bg-info-bg",
+      border: "border-info/20",
     },
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 md:grid-cols-4 gap-4"
+    >
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
-          <div
+          <motion.div
             key={stat.label}
-            className="bg-surface rounded-xl border border-border p-4"
+            variants={item}
+            whileHover={{ y: -2, scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+            className="bg-surface rounded-2xl border-2 border-border p-5 hover:shadow-lg hover:border-primary/20 transition-all group"
           >
             <div
-              className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center mb-3`}
+              className={`w-10 h-10 rounded-xl ${stat.bg} border ${stat.border} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
             >
               <Icon size={20} className={stat.color} />
             </div>
-            <p className="text-lg font-bold text-text">{stat.value}</p>
-            <p className="text-xs text-text-muted mt-1">{stat.label}</p>
-          </div>
+            <motion.p
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+              className="text-xl font-bold text-text mb-1"
+            >
+              {stat.value}
+            </motion.p>
+            <p className="text-xs font-semibold text-text-muted">
+              {stat.label}
+            </p>
+            <p className="text-[10px] text-text-muted mt-0.5">{stat.subtext}</p>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

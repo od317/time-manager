@@ -1,63 +1,116 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Goal } from "@/types";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Target, TrendingUp } from "lucide-react";
 
 interface GoalSubgoalsProps {
   subGoals: Goal[];
 }
 
 export function GoalSubgoals({ subGoals }: GoalSubgoalsProps) {
-  return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      <h3 className="text-lg font-semibold text-text mb-4">
-        Sub-goals ({subGoals.length})
-      </h3>
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  };
 
-      <div className="space-y-2">
-        {subGoals.map((subGoal) => (
-          <Link
-            key={subGoal.id}
-            href={`/goals/${subGoal.id}`}
-            className="flex items-center gap-3 p-3 rounded-lg bg-bg border border-border hover:border-primary/30 transition-all group"
-          >
-            <div
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: subGoal.color || "#6366F1" }}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                {subGoal.icon && <span>{subGoal.icon}</span>}
-                <span className="text-sm font-medium text-text truncate">
-                  {subGoal.title}
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                    subGoal.status === "COMPLETED"
-                      ? "bg-success-bg text-success"
-                      : subGoal.status === "FAILED"
-                        ? "bg-danger-bg text-danger"
-                        : "bg-primary-bg text-primary"
-                  }`}
-                >
-                  {subGoal.status}
-                </span>
-              </div>
+  const item = {
+    hidden: { opacity: 0, x: -20 },
+    show: { opacity: 1, x: 0 },
+  };
 
-              <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: `${Math.min(subGoal.progress, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            <ChevronRight
-              size={16}
-              className="text-text-muted group-hover:text-text transition-all flex-shrink-0"
-            />
-          </Link>
-        ))}
+  if (subGoals.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <Target size={32} className="text-text-muted mx-auto mb-3 opacity-50" />
+        <p className="text-sm text-text-muted font-medium">No sub-goals yet</p>
+        <p className="text-xs text-text-muted mt-1">
+          Break down your goal into smaller milestones
+        </p>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-2"
+    >
+      {subGoals.map((subGoal) => (
+        <motion.div key={subGoal.id} variants={item} layout>
+          <Link href={`/goals/${subGoal.id}`} className="block group">
+            <motion.div
+              whileHover={{ x: 4 }}
+              className="flex items-center gap-4 p-4 rounded-xl bg-bg border-2 border-border hover:border-primary/20 hover:shadow-md transition-all"
+            >
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0 ring-2 ring-offset-2 ring-offset-bg"
+                style={{ backgroundColor: subGoal.color || "#9FA1FF" }}
+              />
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  {subGoal.icon && <span>{subGoal.icon}</span>}
+                  <span className="text-sm font-semibold text-text truncate group-hover:text-primary transition-colors">
+                    {subGoal.title}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                      subGoal.status === "COMPLETED"
+                        ? "bg-success-bg text-success border border-success/20"
+                        : subGoal.status === "FAILED"
+                          ? "bg-danger-bg text-danger border border-danger/20"
+                          : "bg-primary-bg text-primary border border-primary/20"
+                    }`}
+                  >
+                    {subGoal.status}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-text-muted flex items-center gap-1.5">
+                      <TrendingUp size={12} />
+                      Progress
+                    </span>
+                    <span className="font-bold text-text">
+                      {Math.round(subGoal.progress || 0)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: `${Math.min(subGoal.progress || 0, 100)}%`,
+                      }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full rounded-full"
+                      style={{
+                        backgroundColor: subGoal.color || "#9FA1FF",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <motion.div
+                whileHover={{ x: 4 }}
+                className="text-text-muted group-hover:text-text transition-colors"
+              >
+                <ChevronRight size={18} />
+              </motion.div>
+            </motion.div>
+          </Link>
+        </motion.div>
+      ))}
+    </motion.div>
   );
 }
