@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Target,
@@ -25,8 +26,13 @@ export function MobileNav() {
     pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-10 bg-surface border-t border-border">
-      <div className="flex items-center justify-around h-[60px]">
+    <motion.nav
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-10 glass border-t border-border safe-area-bottom"
+    >
+      <div className="flex items-center justify-around h-[60px] px-2">
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -35,16 +41,32 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all ${
-                active ? "text-primary" : "text-text-muted"
-              }`}
+              className="relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors"
             >
-              <Icon size={20} />
-              <span className="text-[10px] font-medium">{item.name}</span>
+              {active && (
+                <motion.div
+                  layoutId="mobileActiveTab"
+                  className="absolute inset-0 bg-primary-bg rounded-xl"
+                  transition={{ duration: 0.2 }}
+                />
+              )}
+              <motion.div whileTap={{ scale: 0.8 }} className="relative z-10">
+                <Icon
+                  size={20}
+                  className={active ? "text-primary" : "text-text-muted"}
+                />
+              </motion.div>
+              <span
+                className={`relative z-10 text-[10px] font-medium ${
+                  active ? "text-primary" : "text-text-muted"
+                }`}
+              >
+                {item.name}
+              </span>
             </Link>
           );
         })}
       </div>
-    </nav>
+    </motion.nav>
   );
 }
