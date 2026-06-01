@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Goal, Habit, CalendarEvent } from "@/types";
 import { Calendar } from "@/components/calendar/Calendar";
 import { GoalFormSection } from "./GoalFormSection";
 import { HabitFormSection } from "./HabitFormSection";
 import { ContextPanel } from "./ContextPanel";
-import { Target, Repeat, Calendar as CalendarIcon, Clock } from "lucide-react";
+import {
+  Target,
+  Repeat,
+  Calendar as CalendarIcon,
+  Clock,
+  Sparkles,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useSearchParams } from "next/navigation";
 
@@ -24,12 +31,14 @@ const tabs = [
     label: "Goal",
     icon: Target,
     description: "Track progress toward a target",
+    gradient: "from-primary to-secondary",
   },
   {
     value: "habit" as CreateType,
     label: "Habit",
     icon: Repeat,
     description: "Build consistent routines",
+    gradient: "from-secondary to-accent",
   },
 ];
 
@@ -56,15 +65,13 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
     if (dateMode === "start") {
       setSelectedDate(date);
       setSelectedTime("");
-      // If end date is before new start date, clear end date
       if (endDate && date > endDate) {
         setEndDate(null);
         setEndTime("");
       }
     } else if (dateMode === "end") {
       if (selectedDate && date < selectedDate) {
-        // End is before start - don't allow
-        return; // Or show a message
+        return;
       }
       setEndDate(date);
       setEndTime("");
@@ -107,163 +114,239 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
       {/* Main Form Area */}
       <div className="lg:col-span-2 space-y-6">
         {/* Tab Selector */}
-        <div className="bg-surface rounded-xl border border-border p-2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="bg-surface rounded-2xl border border-border shadow-sm p-2"
+        >
           <div className="grid grid-cols-2 gap-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.value;
               return (
-                <button
+                <motion.button
                   key={tab.value}
+                  whileHover={!isActive ? { scale: 1.02 } : {}}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setActiveTab(tab.value)}
-                  className={`flex flex-col items-center gap-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
+                  className={`relative flex flex-col items-center gap-2 py-4 px-4 rounded-xl text-sm font-semibold transition-all overflow-hidden ${
                     isActive
-                      ? "bg-primary text-white shadow-sm"
+                      ? "text-white shadow-lg"
                       : "text-text-secondary hover:bg-border-light hover:text-text"
                   }`}
                 >
-                  <Icon size={20} />
-                  <span>{tab.label}</span>
-                </button>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabBg"
+                      className={`absolute inset-0 bg-gradient-to-r ${tab.gradient}`}
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
+                  <Icon size={24} className="relative z-10" />
+                  <span className="relative z-10">{tab.label}</span>
+                  {isActive && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="relative z-10"
+                    >
+                      <Sparkles size={12} className="text-white/80" />
+                    </motion.div>
+                  )}
+                </motion.button>
               );
             })}
           </div>
-          <p className="text-xs text-text-muted text-center mt-2 px-2">
+          <p className="text-xs text-text-muted text-center mt-3 px-2 font-medium">
             {tabs.find((t) => t.value === activeTab)?.description}
           </p>
-        </div>
+        </motion.div>
 
-        {activeTab === "goal" && (
-          <GoalFormSection
-            selectedDate={selectedDate}
-            selectedTime={selectedTime}
-            endDate={endDate}
-            endTime={endTime}
-            onSuccess={handleReset}
-          />
-        )}
-        {activeTab === "habit" && <HabitFormSection onSuccess={handleReset} />}
+        <AnimatePresence mode="wait">
+          {activeTab === "goal" && (
+            <motion.div
+              key="goal"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <GoalFormSection
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                endDate={endDate}
+                endTime={endTime}
+                onSuccess={handleReset}
+              />
+            </motion.div>
+          )}
+          {activeTab === "habit" && (
+            <motion.div
+              key="habit"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <HabitFormSection onSuccess={handleReset} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Right Sidebar */}
       {activeTab === "goal" && (
-        <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="space-y-6"
+        >
           {/* Date Picker Card */}
-          <div className="bg-surface rounded-xl border border-border p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-text flex items-center gap-2">
-              <CalendarIcon size={16} className="text-primary" />
+          <div className="bg-surface rounded-2xl border border-border shadow-sm p-5 space-y-4">
+            <h3 className="text-sm font-bold text-text flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-primary-bg">
+                <CalendarIcon size={16} className="text-primary" />
+              </div>
               Dates
             </h3>
 
             {/* Start Date */}
-            <div className="relative">
+            <motion.div whileHover={{ scale: 1.01 }} className="relative">
               <button
                 onClick={() =>
                   setDateMode(dateMode === "start" ? null : "start")
                 }
-                className={`w-full flex items-center gap-3 p-3 pr-10 rounded-lg border-2 transition-all text-left ${
+                className={`w-full flex items-center gap-4 p-4 pr-12 rounded-xl border-2 transition-all text-left ${
                   dateMode === "start"
-                    ? "border-primary bg-primary-bg/30"
+                    ? "border-primary bg-primary-bg/50 shadow-sm"
                     : selectedDate
-                      ? "border-primary/30 bg-primary-bg/10"
-                      : "border-border border-dashed bg-bg hover:border-primary/30"
+                      ? "border-primary/30 bg-primary-bg/20"
+                      : "border-dashed border-border bg-bg hover:border-primary/30 hover:shadow-sm"
                 }`}
               >
                 <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    selectedDate
-                      ? "bg-primary text-white"
-                      : "bg-border text-text-muted"
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+                    selectedDate || dateMode === "start"
+                      ? "bg-primary text-white shadow-md"
+                      : "bg-border/50 text-text-muted"
                   }`}
                 >
-                  <CalendarIcon size={18} />
+                  <CalendarIcon size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text">
+                  <p className="text-sm font-bold text-text">
                     {dateMode === "start" ? "Selecting start..." : "Start Date"}
                   </p>
                   {selectedDate ? (
-                    <p className="text-xs text-primary mt-0.5">
+                    <p className="text-xs text-primary font-medium mt-1">
                       {format(selectedDate, "MMM d, yyyy")}
                       {selectedTime
                         ? ` · ${formatDisplayTime(selectedTime)}`
                         : ""}
                     </p>
                   ) : (
-                    <p className="text-xs text-text-muted mt-0.5">Required</p>
+                    <p className="text-xs text-text-muted mt-1">Required</p>
                   )}
                 </div>
+                {dateMode === "start" && (
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                  >
+                    <Sparkles size={16} className="text-primary" />
+                  </motion.div>
+                )}
               </button>
               {selectedDate && dateMode !== "start" && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.8 }}
                   onClick={() => {
                     setSelectedDate(null);
                     setSelectedTime("");
                   }}
-                  className="absolute top-2 right-2 text-xs text-text-muted hover:text-danger p-1 rounded"
+                  className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
                 >
                   ✕
-                </button>
+                </motion.button>
               )}
-            </div>
+            </motion.div>
 
             {/* End Date */}
-            <div className="relative">
+            <motion.div whileHover={{ scale: 1.01 }} className="relative">
               <button
                 onClick={() => setDateMode(dateMode === "end" ? null : "end")}
-                className={`w-full flex items-center gap-3 p-3 pr-10 rounded-lg border-2 transition-all text-left ${
+                className={`w-full flex items-center gap-4 p-4 pr-12 rounded-xl border-2 transition-all text-left ${
                   dateMode === "end"
-                    ? "border-primary bg-primary-bg/30"
+                    ? "border-primary bg-primary-bg/50 shadow-sm"
                     : endDate
-                      ? "border-primary/30 bg-primary-bg/10"
-                      : "border-border border-dashed bg-bg hover:border-primary/30"
+                      ? "border-primary/30 bg-primary-bg/20"
+                      : "border-dashed border-border bg-bg hover:border-primary/30 hover:shadow-sm"
                 }`}
               >
                 <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    endDate
-                      ? "bg-primary text-white"
-                      : "bg-border text-text-muted"
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+                    endDate || dateMode === "end"
+                      ? "bg-primary text-white shadow-md"
+                      : "bg-border/50 text-text-muted"
                   }`}
                 >
-                  <CalendarIcon size={18} />
+                  <CalendarIcon size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text">
+                  <p className="text-sm font-bold text-text">
                     {dateMode === "end" ? "Selecting end..." : "End Date"}
                   </p>
                   {endDate ? (
-                    <p className="text-xs text-primary mt-0.5">
+                    <p className="text-xs text-primary font-medium mt-1">
                       {format(endDate, "MMM d, yyyy")}
                       {endTime ? ` · ${formatDisplayTime(endTime)}` : ""}
                     </p>
                   ) : (
-                    <p className="text-xs text-text-muted mt-0.5">
+                    <p className="text-xs text-text-muted mt-1">
                       Optional deadline
                     </p>
                   )}
                 </div>
+                {dateMode === "end" && (
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                  >
+                    <Sparkles size={16} className="text-primary" />
+                  </motion.div>
+                )}
               </button>
               {endDate && dateMode !== "end" && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.8 }}
                   onClick={() => {
                     setEndDate(null);
                     setEndTime("");
                   }}
-                  className="absolute top-2 right-2 text-xs text-text-muted hover:text-danger p-1 rounded"
+                  className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
                 >
                   ✕
-                </button>
+                </motion.button>
               )}
-            </div>
+            </motion.div>
 
             {dateMode && (
-              <div className="flex items-center gap-2 p-2 bg-warning-bg/30 rounded-lg">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 p-3 bg-warning-bg/50 border border-warning/20 rounded-xl"
+              >
                 <Clock size={14} className="text-warning" />
-                <p className="text-xs text-warning font-medium">
+                <p className="text-xs text-warning font-semibold">
                   Click a day for {dateMode === "start" ? "start" : "end"} date
                 </p>
-              </div>
+              </motion.div>
             )}
           </div>
 
@@ -282,7 +365,7 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
             upcomingDeadlines={upcomingDeadlines}
             activeTab={activeTab}
           />
-        </div>
+        </motion.div>
       )}
     </div>
   );

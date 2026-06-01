@@ -1,6 +1,7 @@
 import { serverGoalService } from "@/lib/services/server/goalService";
 import { serverHabitService } from "@/lib/services/server/habitService";
 import { CreateForm } from "./_components/CreateForm";
+import { PageHeader } from "./_components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function CreatePage() {
       id: g.id,
       type: "goal" as const,
       title: g.title,
-      color: g.color || "#6366F1",
+      color: g.color || "#9FA1FF",
       date: g.endDate || g.startDate,
       status: g.status,
     })),
@@ -31,13 +32,7 @@ export default async function CreatePage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 md:pb-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text">Create New</h1>
-        <p className="text-text-muted text-sm mt-1">
-          Set up goals, habits, and tasks to track your progress
-        </p>
-      </div>
-
+      <PageHeader />
       <CreateForm
         existingEvents={calendarEvents}
         goals={goals}

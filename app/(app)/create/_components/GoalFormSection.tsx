@@ -2,13 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { goalService } from "@/lib/services";
 import { CreateGoalPayload, Priority, GoalType } from "@/types";
 import { ColorPicker } from "../../goals/_components/ColorPicker";
 import { DEFAULT_GOAL_COLOR } from "@/lib/constants";
 import { CreateSummary } from "./CreateSummary";
 import { format } from "date-fns";
-import { Calendar, Clock } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  Save,
+} from "lucide-react";
 
 interface GoalFormSectionProps {
   selectedDate: Date | null;
@@ -18,11 +25,11 @@ interface GoalFormSectionProps {
   onSuccess: () => void;
 }
 
-const priorities: { value: Priority; label: string; color: string }[] = [
-  { value: "LOW", label: "Low", color: "bg-priority-low" },
-  { value: "MEDIUM", label: "Medium", color: "bg-priority-medium" },
-  { value: "HIGH", label: "High", color: "bg-priority-high" },
-  { value: "URGENT", label: "Urgent", color: "bg-priority-urgent" },
+const priorities: { value: Priority; label: string; className: string }[] = [
+  { value: "LOW", label: "Low", className: "bg-blue-500 text-white" },
+  { value: "MEDIUM", label: "Medium", className: "bg-indigo-500 text-white" },
+  { value: "HIGH", label: "High", className: "bg-amber-500 text-white" },
+  { value: "URGENT", label: "Urgent", className: "bg-red-500 text-white" },
 ];
 
 export function GoalFormSection({
@@ -123,33 +130,53 @@ export function GoalFormSection({
     }
   };
 
+  const goalTypes = [
+    { type: "quantity" as GoalType, label: "Quantity", icon: "📏" },
+    { type: "time" as GoalType, label: "Time", icon: "⏱️" },
+    { type: "project" as GoalType, label: "Project", icon: "📂" },
+  ];
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="lg:col-span-3 bg-surface rounded-xl border border-border p-6 space-y-5"
+      className="bg-surface rounded-2xl border border-border shadow-sm p-6 space-y-6"
     >
-      {error && (
-        <div className="bg-danger-bg text-danger border border-danger/20 rounded-lg p-3 text-sm animate-slide-down">
-          {error}
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
+          >
+            <AlertTriangle size={16} />
+            {error}
+          </motion.div>
+        )}
 
-      {success && (
-        <div className="bg-success-bg text-success border border-success/20 rounded-lg p-3 text-sm animate-slide-down">
-          Goal created successfully!
-        </div>
-      )}
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-success-bg text-success border border-success/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
+          >
+            <CheckCircle size={16} />
+            Goal created successfully!
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Title */}
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+        <label className="block text-sm font-bold text-text mb-2">
           Title *
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
           placeholder="e.g., Learn 100 Spanish words"
           autoFocus
         />
@@ -157,74 +184,52 @@ export function GoalFormSection({
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+        <label className="block text-sm font-bold text-text mb-2">
           Description
         </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+          className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all resize-none"
           placeholder="What do you want to achieve? (optional)"
         />
       </div>
 
       {/* Goal Type */}
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+        <label className="block text-sm font-bold text-text mb-2">
           Goal Type
         </label>
         <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setGoalType("quantity");
-              setUnit("");
-            }}
-            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
-              goalType === "quantity"
-                ? "bg-primary text-white border-primary"
-                : "bg-bg text-text-secondary border-border hover:border-primary/30"
-            }`}
-          >
-            📏 Quantity
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setGoalType("time");
-              setUnit("hours");
-            }}
-            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
-              goalType === "time"
-                ? "bg-primary text-white border-primary"
-                : "bg-bg text-text-secondary border-border hover:border-primary/30"
-            }`}
-          >
-            ⏱️ Time
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setGoalType("project");
-              setUnit("");
-              setTargetValue("");
-            }}
-            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
-              goalType === "project"
-                ? "bg-primary text-white border-primary"
-                : "bg-bg text-text-secondary border-border hover:border-primary/30"
-            }`}
-          >
-            📂 Project
-          </button>
+          {goalTypes.map(({ type, label, icon }) => (
+            <motion.button
+              key={type}
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setGoalType(type);
+                setUnit(type === "time" ? "hours" : "");
+                if (type === "project") setTargetValue("");
+              }}
+              className={`py-3 px-4 rounded-xl text-sm font-semibold transition-all border-2 ${
+                goalType === type
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "bg-bg text-text-secondary border-border hover:border-primary/30"
+              }`}
+            >
+              <span className="mr-1.5">{icon}</span>
+              {label}
+            </motion.button>
+          ))}
         </div>
       </div>
 
-      {/* Target Value & Unit - Only for quantity and time */}
+      {/* Target Value & Unit */}
       {goalType !== "project" && (
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          <label className="block text-sm font-bold text-text mb-2">
             Target Value & Unit
           </label>
           <div className="grid grid-cols-5 gap-3">
@@ -233,7 +238,7 @@ export function GoalFormSection({
                 type="number"
                 value={targetValue}
                 onChange={(e) => setTargetValue(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                 placeholder={goalType === "time" ? "e.g., 10" : "e.g., 100"}
                 min="0"
                 step={goalType === "time" ? "0.5" : "1"}
@@ -244,7 +249,7 @@ export function GoalFormSection({
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
                 >
                   <option value="hours">Hours</option>
                   <option value="minutes">Minutes</option>
@@ -254,8 +259,8 @@ export function GoalFormSection({
                   type="text"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  placeholder="e.g., words, km"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                  placeholder="e.g., words"
                 />
               )}
             </div>
@@ -265,28 +270,32 @@ export function GoalFormSection({
 
       {/* Start Date Display */}
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+        <label className="block text-sm font-bold text-text mb-2">
           Start Date *
         </label>
         {selectedDate ? (
-          <div className="flex items-center gap-3 p-3 bg-primary-bg/30 rounded-lg border border-primary/20">
-            <Calendar size={18} className="text-primary" />
-            <span className="text-sm font-medium text-primary flex-1">
+          <div className="flex items-center gap-3 p-4 bg-primary-bg/30 rounded-xl border-2 border-primary/20">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Calendar size={18} className="text-primary" />
+            </div>
+            <span className="text-sm font-semibold text-primary flex-1">
               {format(selectedDate, "EEEE, MMMM d, yyyy")}
             </span>
             {selectedTime && (
               <>
-                <Clock size={18} className="text-primary" />
-                <span className="text-sm font-medium text-primary">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Clock size={18} className="text-primary" />
+                </div>
+                <span className="text-sm font-semibold text-primary">
                   {formatDisplayTime(selectedTime)}
                 </span>
               </>
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-3 p-3 bg-bg rounded-lg border border-border border-dashed">
+          <div className="flex items-center gap-3 p-4 bg-bg rounded-xl border-2 border-dashed border-border">
             <Calendar size={18} className="text-text-muted" />
-            <span className="text-sm text-text-muted">
+            <span className="text-sm text-text-muted font-medium">
               Pick a date from the calendar →
             </span>
           </div>
@@ -295,46 +304,55 @@ export function GoalFormSection({
 
       {/* End Date Display */}
       {endDate && (
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+        >
+          <label className="block text-sm font-bold text-text mb-2">
             End Date
           </label>
-          <div className="flex items-center gap-3 p-3 bg-primary-bg/30 rounded-lg border border-primary/20">
-            <Calendar size={18} className="text-primary" />
-            <span className="text-sm font-medium text-primary flex-1">
+          <div className="flex items-center gap-3 p-4 bg-primary-bg/30 rounded-xl border-2 border-primary/20">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Calendar size={18} className="text-primary" />
+            </div>
+            <span className="text-sm font-semibold text-primary flex-1">
               {format(endDate, "EEEE, MMMM d, yyyy")}
             </span>
             {endTime && (
               <>
-                <Clock size={18} className="text-primary" />
-                <span className="text-sm font-medium text-primary">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Clock size={18} className="text-primary" />
+                </div>
+                <span className="text-sm font-semibold text-primary">
                   {formatDisplayTime(endTime)}
                 </span>
               </>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Priority */}
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+        <label className="block text-sm font-bold text-text mb-3">
           Priority
         </label>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {priorities.map((p) => (
-            <button
+            <motion.button
               key={p.value}
               type="button"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setPriority(p.value)}
-              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+              className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                 priority === p.value
-                  ? `${p.color} text-white`
-                  : "bg-bg text-text-secondary border border-border hover:border-primary/30"
+                  ? `${p.className} shadow-lg`
+                  : "bg-bg text-text-secondary border-2 border-border hover:border-primary/30"
               }`}
             >
               {p.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -357,21 +375,39 @@ export function GoalFormSection({
       />
 
       {/* Buttons */}
-      <div className="flex gap-3 pt-2">
-        <button
+      <div className="flex gap-3 pt-4 border-t-2 border-border">
+        <motion.button
           type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => router.back()}
-          className="flex-1 py-2.5 px-4 border border-border text-text-secondary rounded-lg font-medium hover:bg-border-light transition-all"
+          className="flex-1 py-3 px-4 border-2 border-border text-text-secondary rounded-xl font-semibold hover:bg-border-light transition-all"
         >
           Cancel
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="submit"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           disabled={isSubmitting || !title.trim() || !selectedDate}
-          className="flex-1 py-2.5 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="flex-1 py-3 px-4 bg-primary text-white rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
         >
-          {isSubmitting ? "Creating..." : "Create Goal"}
-        </button>
+          {isSubmitting ? (
+            <>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+              />
+              Creating...
+            </>
+          ) : (
+            <>
+              <Save size={18} />
+              Create Goal
+            </>
+          )}
+        </motion.button>
       </div>
     </form>
   );
