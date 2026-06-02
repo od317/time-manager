@@ -145,68 +145,100 @@
    ============================================================================ */
 
 .dark {
+  /* Primary - Purple: Main brand, buttons, active states */
   --color-primary: #B983FF;
   --color-primary-light: #C9A5FF;
   --color-primary-dark: #9965E8;
   --color-primary-bg: #1E1830;
 
+  /* Secondary - Periwinkle Blue: Cards, secondary elements */
   --color-secondary: #94B3FD;
   --color-secondary-light: #B0C8FE;
   --color-secondary-dark: #6B8FE8;
   --color-secondary-bg: #151E30;
 
+  /* Accent - Cyan: Highlights, accents, success */
   --color-accent: #99FEFF;
   --color-accent-light: #B8FEFF;
   --color-accent-dark: #70E0E3;
 
-  --color-bg: #0F0E17;
-  --color-surface: #181627;
-  --color-border: #242036;
-  --color-border-light: #1C1A2E;
+  /* Background & Surfaces - Dark navy base */
+  --color-bg: #0A0B14;
+  --color-surface: #12131F;
+  --color-border: #1C1D2E;
+  --color-border-light: #161725;
 
-  --color-text: #F0EEF8;
-  --color-text-secondary: #C4C0D8;
-  --color-text-muted: #8A85A8;
-  --color-text-inverse: #0F0E17;
+  /* Text */
+  --color-text: #EEEDF6;
+  --color-text-secondary: #B8B7CC;
+  --color-text-muted: #7A7899;
+  --color-text-inverse: #0A0B14;
 
-  --color-primary-bg: #1E1830;
-  --color-success-bg: #0F2D2D;
-  --color-warning-bg: #2D2818;
-  --color-danger-bg: #2D1820;
-  --color-info-bg: #182030;
-
+  /* Semantic Colors - Using the palette properly */
   --color-success: #99FEFF;
-  --color-warning: #94B3FD;
+  /* Cyan mint */
+  --color-success-light: #B8FEFF;
+  --color-success-bg: #0F2D2D;
+
+  --color-warning: #94DAFF;
+  /* Sky blue for warnings */
+  --color-warning-light: #B0E6FF;
+  --color-warning-bg: #182530;
+
   --color-danger: #B983FF;
-  --color-info: #94DAFF;
+  /* Purple for danger */
+  --color-danger-light: #C9A5FF;
+  --color-danger-bg: #201830;
 
-  --shadow-xs: 0 1px 2px rgba(185, 131, 255, 0.15);
-  --shadow-sm: 0 1px 3px rgba(185, 131, 255, 0.2), 0 1px 2px rgba(148, 179, 253, 0.1);
-  --shadow-md: 0 4px 6px rgba(185, 131, 255, 0.2), 0 2px 4px rgba(148, 179, 253, 0.1);
-  --shadow-lg: 0 10px 15px rgba(185, 131, 255, 0.2), 0 4px 6px rgba(148, 179, 253, 0.1);
-  --shadow-xl: 0 20px 25px rgba(185, 131, 255, 0.2), 0 10px 10px rgba(148, 179, 253, 0.1);
+  --color-info: #94B3FD;
+  /* Periwinkle for info */
+  --color-info-light: #B0C8FE;
+  --color-info-bg: #151E30;
 
-  /* Priority Colors - Dark Mode */
+  /* Shadows with purple tint */
+  --shadow-xs: 0 1px 2px rgba(185, 131, 255, 0.08);
+  --shadow-sm: 0 1px 3px rgba(185, 131, 255, 0.1), 0 1px 2px rgba(148, 179, 253, 0.06);
+  --shadow-md: 0 4px 6px rgba(185, 131, 255, 0.1), 0 2px 4px rgba(148, 218, 255, 0.06);
+  --shadow-lg: 0 10px 15px rgba(185, 131, 255, 0.1), 0 4px 6px rgba(148, 179, 253, 0.05);
+  --shadow-xl: 0 20px 25px rgba(185, 131, 255, 0.1), 0 10px 10px rgba(148, 218, 255, 0.04);
+
+  /* Priority Colors - Each uses a different color */
   --priority-urgent: #B983FF;
-  --priority-high: #94B3FD;
-  --priority-medium: #94DAFF;
+  /* Purple */
+  --priority-high: #94DAFF;
+  /* Sky Blue */
+  --priority-medium: #94B3FD;
+  /* Periwinkle */
   --priority-low: #99FEFF;
+  /* Cyan */
 
-  /* Category Colors - Dark Mode */
+  /* Category Colors - All four colors distributed */
   --category-health: #99FEFF;
+  /* Cyan */
   --category-learning: #B983FF;
+  /* Purple */
   --category-career: #94DAFF;
+  /* Sky Blue */
   --category-personal: #94B3FD;
+  /* Periwinkle */
   --category-finance: #C9A5FF;
-  --category-other: #C4C0D8;
+  /* Light Purple */
+  --category-other: #B8B7CC;
+  /* Muted Text */
 
-  /* Chart Colors - Dark Mode */
+  /* Chart Colors - Distinct colors for visibility */
   --chart-1: #B983FF;
+  /* Purple */
   --chart-2: #94B3FD;
+  /* Periwinkle */
   --chart-3: #94DAFF;
+  /* Sky Blue */
   --chart-4: #99FEFF;
+  /* Cyan */
   --chart-5: #C9A5FF;
+  /* Light Purple */
   --chart-6: #B0C8FE;
+  /* Light Periwinkle */
 }
 
 /* ============================================================================
@@ -258,10 +290,10 @@ body {
 }
 
 .dark .glass {
-  background: rgba(24, 22, 39, 0.7);
+  background: rgba(18, 19, 31, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(36, 32, 54, 0.6);
+  border: 1px solid rgba(28, 29, 46, 0.6);
 }
 
 /* Card styles */
@@ -349,13 +381,13 @@ body {
 /* Dark mode category overrides */
 
 .dark .category-health {
-  background: linear-gradient(135deg, #99FEFF, #94DAFF);
-  color: #0F0E17;
+  background: linear-gradient(135deg, #99FEFF, #70E0E3);
+  color: #0A0B14;
 }
 
 .dark .category-career {
   background: linear-gradient(135deg, #94DAFF, #94B3FD);
-  color: #0F0E17;
+  color: #0A0B14;
 }
 
 .dark .category-personal {
@@ -399,7 +431,7 @@ body {
 }
 
 .dark .gradient-text {
-  background: linear-gradient(135deg, #B983FF, #94DAFF);
+  background: linear-gradient(135deg, #B983FF, #99FEFF);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -483,11 +515,11 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(185, 131, 255, 0.4);
+    box-shadow: 0 0 0 0 rgba(153, 254, 255, 0.4);
   }
 
   50% {
-    box-shadow: 0 0 0 12px rgba(185, 131, 255, 0);
+    box-shadow: 0 0 0 12px rgba(153, 254, 255, 0);
   }
 }
 
