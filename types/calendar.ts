@@ -10,3 +10,30 @@ export interface CalendarEvent {
   estimatedMinutes?: number;
   description?: string;
 }
+
+export interface CalendarDataResponse {
+  goals: CalendarGoal[];
+  habits: CalendarHabit[];
+  activeGoals: number;
+  upcomingDeadlines: number;
+  activeHabits: number;
+}
+
+export interface CalendarGoal {
+  id: string;
+  title: string;
+  color: string | null;
+  startDate: string;
+  endDate: string | null;
+  status: string;
+  type: string;
+}
+
+export interface CalendarHabit {
+  id: string;
+  title: string;
+  color: string | null;
+  status: string;
+  type: string;
+  date: string;
+}

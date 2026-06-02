@@ -7,6 +7,7 @@ import { Calendar } from "@/components/calendar/Calendar";
 import { GoalFormSection } from "./GoalFormSection";
 import { HabitFormSection } from "./HabitFormSection";
 import { ContextPanel } from "./ContextPanel";
+import { useCalendarData } from "@/hooks/useCalendarData";
 import {
   Target,
   Repeat,
@@ -20,9 +21,11 @@ import { useSearchParams } from "next/navigation";
 type CreateType = "goal" | "habit";
 
 interface CreateFormProps {
-  existingEvents: CalendarEvent[];
   goals: Goal[];
   habits: Habit[];
+  activeGoals?: number;
+  activeHabits?: number;
+  upcomingDeadlines?: number;
 }
 
 const tabs = [
@@ -44,7 +47,13 @@ const tabs = [
 
 type DateMode = "start" | "end" | null;
 
-export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
+export function CreateForm({
+  goals,
+  habits,
+  activeGoals = 0,
+  activeHabits = 0,
+  upcomingDeadlines = 0,
+}: CreateFormProps) {
   const params = useSearchParams();
   const tab = params.get("tab") as CreateType;
   const [activeTab, setActiveTab] = useState<CreateType>(tab || "goal");
@@ -54,12 +63,31 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
   const [endTime, setEndTime] = useState("");
   const [dateMode, setDateMode] = useState<DateMode>(null);
 
-  const activeGoals = goals.filter((g) => g.status === "ACTIVE");
-  const activeHabits = habits.filter((h) => h.status === "ACTIVE");
-  const upcomingDeadlines = goals.filter(
-    (g) =>
-      g.endDate && new Date(g.endDate) > new Date() && g.status === "ACTIVE",
-  ).length;
+  // Fetch calendar data via hook
+  const { data: calendarData } = useCalendarData();
+
+  const calendarEvents: CalendarEvent[] = calendarData
+    ? [
+        ...(calendarData.goals || []).map((g) => ({
+          id: g.id,
+          type: "goal" as const,
+          title: g.title,
+          color: g.color || "#9FA1FF",
+          date: g.endDate || g.startDate,
+          status: g.status,
+          time: undefined as string | undefined,
+        })),
+        ...(calendarData.habits || []).map((h) => ({
+          id: h.id,
+          type: "habit" as const,
+          title: h.title,
+          color: h.color || "#8B5CF6",
+          date: new Date().toISOString(),
+          status: h.status,
+          time: undefined as string | undefined,
+        })),
+      ]
+    : [];
 
   const handleDateSelect = (date: Date) => {
     if (dateMode === "start") {
@@ -70,9 +98,7 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
         setEndTime("");
       }
     } else if (dateMode === "end") {
-      if (selectedDate && date < selectedDate) {
-        return;
-      }
+      if (selectedDate && date < selectedDate) return;
       setEndDate(date);
       setEndTime("");
     }
@@ -80,11 +106,8 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
   };
 
   const handleTimeSelect = (time: string) => {
-    if (dateMode === "start") {
-      setSelectedTime(time);
-    } else if (dateMode === "end") {
-      setEndTime(time);
-    }
+    if (dateMode === "start") setSelectedTime(time);
+    else if (dateMode === "end") setEndTime(time);
   };
 
   const getActiveDate = () => {
@@ -145,15 +168,6 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
                   )}
                   <Icon size={24} className="relative z-10" />
                   <span className="relative z-10">{tab.label}</span>
-                  {isActive && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="relative z-10"
-                    >
-                      <Sparkles size={12} className="text-white/80" />
-                    </motion.div>
-                  )}
                 </motion.button>
               );
             })}
@@ -195,7 +209,7 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
         </AnimatePresence>
       </div>
 
-      {/* Right Sidebar */}
+      {/* Right Sidebar - Only for goals */}
       {activeTab === "goal" && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -250,20 +264,9 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
                     <p className="text-xs text-text-muted mt-1">Required</p>
                   )}
                 </div>
-                {dateMode === "start" && (
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                  >
-                    <Sparkles size={16} className="text-primary" />
-                  </motion.div>
-                )}
               </button>
               {selectedDate && dateMode !== "start" && (
-                <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.8 }}
+                <button
                   onClick={() => {
                     setSelectedDate(null);
                     setSelectedTime("");
@@ -271,7 +274,7 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
                   className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
                 >
                   ✕
-                </motion.button>
+                </button>
               )}
             </motion.div>
 
@@ -311,20 +314,9 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
                     </p>
                   )}
                 </div>
-                {dateMode === "end" && (
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                  >
-                    <Sparkles size={16} className="text-primary" />
-                  </motion.div>
-                )}
               </button>
               {endDate && dateMode !== "end" && (
-                <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.8 }}
+                <button
                   onClick={() => {
                     setEndDate(null);
                     setEndTime("");
@@ -332,7 +324,7 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
                   className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
                 >
                   ✕
-                </motion.button>
+                </button>
               )}
             </motion.div>
 
@@ -350,9 +342,10 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
             )}
           </div>
 
-          {/* Calendar */}
+          {/* Calendar with conflict detection */}
           <Calendar
-            events={existingEvents}
+            events={calendarEvents}
+            existingEvents={calendarEvents}
             selectedDate={getActiveDate()}
             onDateSelect={handleDateSelect}
             showTimePicker={!!dateMode && !!getActiveDate()}
@@ -360,8 +353,8 @@ export function CreateForm({ existingEvents, goals, habits }: CreateFormProps) {
           />
 
           <ContextPanel
-            activeGoals={activeGoals.length}
-            activeHabits={activeHabits.length}
+            activeGoals={activeGoals}
+            activeHabits={activeHabits}
             upcomingDeadlines={upcomingDeadlines}
             activeTab={activeTab}
           />

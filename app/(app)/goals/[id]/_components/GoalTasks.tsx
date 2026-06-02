@@ -6,8 +6,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Goal, Task, Priority } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { TaskEditModal } from "@/app/(app)/today/_components/TaskEditModal";
-import { Plus, ListTodo, X, Calendar, Clock } from "lucide-react";
+import { Calendar } from "@/components/calendar/Calendar";
+import { useCalendarData } from "@/hooks/useCalendarData";
+import { CalendarEvent } from "@/types/calendar";
+import {
+  Plus,
+  ListTodo,
+  X,
+  Calendar as CalendarIcon,
+  Clock,
+} from "lucide-react";
 import { TaskItem } from "@/components/tasks/TaskItem";
+import { format } from "date-fns";
 
 interface GoalTasksProps {
   goal: Goal;
@@ -19,9 +29,46 @@ export function GoalTasks({ goal }: GoalTasksProps) {
   const [title, setTitle] = useState("");
   const [estimatedMinutes, setEstimatedMinutes] = useState("");
   const [priority, setPriority] = useState<Priority>("MEDIUM");
-  const [dueDate, setDueDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  const { data: calendarData } = useCalendarData();
+
+  const calendarEvents: CalendarEvent[] = calendarData
+    ? [
+        ...(calendarData.goals || []).map((g) => ({
+          id: g.id,
+          type: "goal" as const,
+          title: g.title,
+          color: g.color || "#9FA1FF",
+          date: g.endDate || g.startDate,
+          status: g.status,
+          time: undefined,
+        })),
+        ...(calendarData.habits || []).map((h) => ({
+          id: h.id,
+          type: "habit" as const,
+          title: h.title,
+          color: h.color || "#8B5CF6",
+          date: new Date().toISOString(),
+          status: h.status,
+          time: undefined,
+        })),
+        // Include existing tasks for this goal
+        ...(goal.tasks || []).map((t) => ({
+          id: t.id,
+          type: "task" as const,
+          title: t.title,
+          color: goal.color || "#9FA1FF",
+          date: t.dueDate || new Date().toISOString(),
+          status: t.status,
+          time: undefined,
+        })),
+      ]
+    : [];
 
   const tasks = goal.tasks || [];
   const activeTasks = tasks.filter(
@@ -35,6 +82,14 @@ export function GoalTasks({ goal }: GoalTasksProps) {
 
     setIsSubmitting(true);
     try {
+      const dueDate = selectedDate
+        ? selectedTime
+          ? new Date(
+              `${format(selectedDate, "yyyy-MM-dd")}T${selectedTime}:00`,
+            ).toISOString()
+          : selectedDate.toISOString()
+        : undefined;
+
       await taskService.create({
         title: title.trim(),
         goalId: goal.id,
@@ -42,11 +97,12 @@ export function GoalTasks({ goal }: GoalTasksProps) {
         estimatedMinutes: estimatedMinutes
           ? parseInt(estimatedMinutes)
           : undefined,
-        dueDate: dueDate || undefined,
+        dueDate,
       });
       setTitle("");
       setEstimatedMinutes("");
-      setDueDate("");
+      setSelectedDate(null);
+      setSelectedTime("");
       setShowForm(false);
       router.refresh();
     } catch {
@@ -73,6 +129,14 @@ export function GoalTasks({ goal }: GoalTasksProps) {
     } catch {
       // Handle error
     }
+  };
+
+  const formatDisplayTime = (time: string): string => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(":").map(Number);
+    const period = hours >= 12 ? "PM" : "AM";
+    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${displayHour}:${minutes.toString().padStart(2, "0")} ${period}`;
   };
 
   return (
@@ -103,7 +167,6 @@ export function GoalTasks({ goal }: GoalTasksProps) {
         </motion.button>
       </div>
 
-      {/* Create task form */}
       <AnimatePresence>
         {showForm && (
           <motion.form
@@ -174,23 +237,66 @@ export function GoalTasks({ goal }: GoalTasksProps) {
                 </div>
               </div>
 
+              {/* Due Date with Calendar */}
               <div>
                 <label className="block text-xs font-semibold text-text-muted mb-1.5">
                   Due Date
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2.5 pl-9 rounded-xl border-2 border-border bg-surface text-sm text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-                  />
-                  <Calendar
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                </div>
+                {selectedDate ? (
+                  <div className="flex items-center gap-3 p-3 bg-primary-bg/20 rounded-xl border border-primary/20">
+                    <CalendarIcon size={16} className="text-primary" />
+                    <span className="text-sm font-medium text-primary flex-1">
+                      {format(selectedDate, "EEE, MMM d, yyyy")}
+                      {selectedTime
+                        ? ` at ${formatDisplayTime(selectedTime)}`
+                        : ""}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDate(null);
+                        setSelectedTime("");
+                      }}
+                      className="p-1 text-text-muted hover:text-danger"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendar(!showCalendar)}
+                    className="w-full flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border text-text-muted hover:border-primary/30 hover:text-text transition-all text-sm"
+                  >
+                    <CalendarIcon size={16} />
+                    Pick a due date (optional)
+                  </button>
+                )}
               </div>
+
+              {/* Calendar */}
+              <AnimatePresence>
+                {showCalendar && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <Calendar
+                      events={calendarEvents}
+                      existingEvents={calendarEvents}
+                      selectedDate={selectedDate}
+                      onDateSelect={(date) => {
+                        setSelectedDate(date);
+                        setShowCalendar(false);
+                      }}
+                      showTimePicker={!!selectedDate}
+                      onTimeSelect={setSelectedTime}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="flex gap-3">
                 <motion.button
@@ -239,19 +345,17 @@ export function GoalTasks({ goal }: GoalTasksProps) {
       <div className="px-6 pb-6">
         {activeTasks.length > 0 && (
           <div className="space-y-1.5 mb-4">
-            <AnimatePresence mode="popLayout">
-              {activeTasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  onToggle={handleToggleTask}
-                  onEdit={setEditingTask}
-                  onDelete={(t) => handleDeleteTask(t.id)}
-                  showGoalColor
-                  goalColor={goal.color || "#9FA1FF"}
-                />
-              ))}
-            </AnimatePresence>
+            {activeTasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onToggle={handleToggleTask}
+                onEdit={setEditingTask}
+                onDelete={(t) => handleDeleteTask(t.id)}
+                showGoalColor
+                goalColor={goal.color || "#9FA1FF"}
+              />
+            ))}
           </div>
         )}
 
@@ -291,7 +395,6 @@ export function GoalTasks({ goal }: GoalTasksProps) {
         )}
       </div>
 
-      {/* Edit Modal */}
       <AnimatePresence>
         {editingTask && (
           <TaskEditModal

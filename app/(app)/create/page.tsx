@@ -1,18 +1,18 @@
-import { serverGoalService } from "@/lib/services/server/goalService";
-import { serverHabitService } from "@/lib/services/server/habitService";
+import { serverApi } from "@/lib/server-api";
 import { CreateForm } from "./_components/CreateForm";
 import { PageHeader } from "./_components/PageHeader";
+import { CalendarDataResponse, CalendarEvent } from "@/types/calendar";
 
 export const dynamic = "force-dynamic";
 
 export default async function CreatePage() {
-  const [goals, habits] = await Promise.all([
-    serverGoalService.getAll({}, false),
-    serverHabitService.getAll({}, false),
-  ]);
+  const data = await serverApi.get<CalendarDataResponse>(
+    "/create/calendar-data",
+    { revalidate: false },
+  );
 
-  const calendarEvents = [
-    ...goals.map((g) => ({
+  const calendarEvents: CalendarEvent[] = [
+    ...(data?.goals || []).map((g) => ({
       id: g.id,
       type: "goal" as const,
       title: g.title,
@@ -20,7 +20,7 @@ export default async function CreatePage() {
       date: g.endDate || g.startDate,
       status: g.status,
     })),
-    ...habits.map((h) => ({
+    ...(data?.habits || []).map((h) => ({
       id: h.id,
       type: "habit" as const,
       title: h.title,
@@ -35,8 +35,11 @@ export default async function CreatePage() {
       <PageHeader />
       <CreateForm
         existingEvents={calendarEvents}
-        goals={goals}
-        habits={habits}
+        goals={(data?.goals || []) as any}
+        habits={(data?.habits || []) as any}
+        activeGoals={data?.activeGoals || 0}
+        activeHabits={data?.activeHabits || 0}
+        upcomingDeadlines={data?.upcomingDeadlines || 0}
       />
     </div>
   );
