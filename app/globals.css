@@ -145,68 +145,68 @@
    ============================================================================ */
 
 .dark {
-  --color-primary: #088395;
-  --color-primary-light: #7AB2B2;
-  --color-primary-dark: #09637E;
-  --color-primary-bg: #0A1E26;
+  --color-primary: #6D67E4;
+  --color-primary-light: #8A85EC;
+  --color-primary-dark: #453C67;
+  --color-primary-bg: #1E1A2E;
 
-  --color-secondary: #7AB2B2;
-  --color-secondary-light: #A8D0D0;
-  --color-secondary-dark: #088395;
-  --color-secondary-bg: #0F2933;
+  --color-secondary: #46C2CB;
+  --color-secondary-light: #6FD5DC;
+  --color-secondary-dark: #359BA3;
+  --color-secondary-bg: #0F2A2D;
 
-  --color-accent: #EBF4F6;
-  --color-accent-light: #F5FAFB;
-  --color-accent-dark: #7AB2B2;
+  --color-accent: #F2F7A1;
+  --color-accent-light: #F7FABF;
+  --color-accent-dark: #D9DF7A;
 
-  --color-bg: #06161C;
-  --color-surface: #0A1E26;
-  --color-border: #0F2933;
-  --color-border-light: #0C222B;
+  --color-bg: #1A1625;
+  --color-surface: #231F32;
+  --color-border: #2E2940;
+  --color-border-light: #262236;
 
-  --color-text: #E6F0F3;
-  --color-text-secondary: #B8D4D8;
-  --color-text-muted: #7AB2B2;
-  --color-text-inverse: #06161C;
+  --color-text: #EEECF5;
+  --color-text-secondary: #BCB8CC;
+  --color-text-muted: #8A83A3;
+  --color-text-inverse: #1A1625;
 
-  --color-primary-bg: #0A1E26;
-  --color-success-bg: #0A2619;
-  --color-warning-bg: #26200A;
-  --color-danger-bg: #260A0A;
-  --color-info-bg: #0A1E26;
+  --color-primary-bg: #1E1A2E;
+  --color-success-bg: #0F2A2D;
+  --color-warning-bg: #2D2A1A;
+  --color-danger-bg: #2D1A1E;
+  --color-info-bg: #1A232D;
 
-  --color-success: #7AB2B2;
-  --color-warning: #EBF4F6;
-  --color-danger: #088395;
-  --color-info: #09637E;
+  --color-success: #46C2CB;
+  --color-warning: #F2F7A1;
+  --color-danger: #6D67E4;
+  --color-info: #453C67;
 
-  --shadow-xs: 0 1px 2px rgba(8, 131, 149, 0.15);
-  --shadow-sm: 0 1px 3px rgba(8, 131, 149, 0.2), 0 1px 2px rgba(9, 99, 126, 0.1);
-  --shadow-md: 0 4px 6px rgba(8, 131, 149, 0.2), 0 2px 4px rgba(9, 99, 126, 0.1);
-  --shadow-lg: 0 10px 15px rgba(8, 131, 149, 0.2), 0 4px 6px rgba(9, 99, 126, 0.1);
-  --shadow-xl: 0 20px 25px rgba(8, 131, 149, 0.2), 0 10px 10px rgba(9, 99, 126, 0.1);
+  --shadow-xs: 0 1px 2px rgba(109, 103, 228, 0.15);
+  --shadow-sm: 0 1px 3px rgba(109, 103, 228, 0.2), 0 1px 2px rgba(69, 60, 103, 0.1);
+  --shadow-md: 0 4px 6px rgba(109, 103, 228, 0.2), 0 2px 4px rgba(69, 60, 103, 0.1);
+  --shadow-lg: 0 10px 15px rgba(109, 103, 228, 0.2), 0 4px 6px rgba(69, 60, 103, 0.1);
+  --shadow-xl: 0 20px 25px rgba(109, 103, 228, 0.2), 0 10px 10px rgba(69, 60, 103, 0.1);
 
   /* Priority Colors - Dark Mode */
-  --priority-urgent: #088395;
-  --priority-high: #09637E;
-  --priority-medium: #7AB2B2;
-  --priority-low: #EBF4F6;
+  --priority-urgent: #6D67E4;
+  --priority-high: #453C67;
+  --priority-medium: #46C2CB;
+  --priority-low: #F2F7A1;
 
   /* Category Colors - Dark Mode */
-  --category-health: #088395;
-  --category-learning: #09637E;
-  --category-career: #7AB2B2;
-  --category-personal: #EBF4F6;
-  --category-finance: #A8D0D0;
-  --category-other: #B8D4D8;
+  --category-health: #46C2CB;
+  --category-learning: #6D67E4;
+  --category-career: #453C67;
+  --category-personal: #F2F7A1;
+  --category-finance: #8A85EC;
+  --category-other: #BCB8CC;
 
   /* Chart Colors - Dark Mode */
-  --chart-1: #088395;
-  --chart-2: #09637E;
-  --chart-3: #7AB2B2;
-  --chart-4: #EBF4F6;
-  --chart-5: #A8D0D0;
-  --chart-6: #B8D4D8;
+  --chart-1: #6D67E4;
+  --chart-2: #46C2CB;
+  --chart-3: #453C67;
+  --chart-4: #F2F7A1;
+  --chart-5: #8A85EC;
+  --chart-6: #6FD5DC;
 }
 
 /* ============================================================================
@@ -258,10 +258,10 @@ body {
 }
 
 .dark .glass {
-  background: rgba(10, 30, 38, 0.7);
+  background: rgba(35, 31, 50, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(15, 41, 51, 0.6);
+  border: 1px solid rgba(46, 41, 64, 0.6);
 }
 
 /* Card styles */
@@ -347,24 +347,25 @@ body {
 }
 
 /* Dark mode category overrides */
+/* Dark mode category overrides */
 .dark .category-health {
-  background: linear-gradient(135deg, #088395, #09637E);
+  background: linear-gradient(135deg, #46C2CB, #359BA3);
   color: white;
 }
 
 .dark .category-career {
-  background: linear-gradient(135deg, #7AB2B2, #088395);
+  background: linear-gradient(135deg, #453C67, #6D67E4);
   color: white;
 }
 
 .dark .category-personal {
-  background: linear-gradient(135deg, #EBF4F6, #7AB2B2);
-  color: #06161C;
+  background: linear-gradient(135deg, #F2F7A1, #D9DF7A);
+  color: #1A1625;
 }
 
 .dark .category-finance {
-  background: linear-gradient(135deg, #A8D0D0, #7AB2B2);
-  color: #06161C;
+  background: linear-gradient(135deg, #8A85EC, #6D67E4);
+  color: white;
 }
 
 /* Line clamp utility */
@@ -398,7 +399,7 @@ body {
 }
 
 .dark .gradient-text {
-  background: linear-gradient(135deg, #088395, #7AB2B2);
+  background: linear-gradient(135deg, #6D67E4, #46C2CB);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -482,11 +483,11 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(8, 131, 149, 0.4);
+    box-shadow: 0 0 0 0 rgba(109, 103, 228, 0.4);
   }
 
   50% {
-    box-shadow: 0 0 0 12px rgba(8, 131, 149, 0);
+    box-shadow: 0 0 0 12px rgba(109, 103, 228, 0);
   }
 }
 
@@ -664,6 +665,6 @@ body {
 }
 
 .dark ::selection {
-  background-color: #24B1B1;
+  background-color: #6D67E4;
   color: white;
 }
