@@ -1,4 +1,4 @@
-const API_URL = "https://timeflow-api.onrender.com/api";
+const API_URL = "https://time-manager-api-3r7i.onrender.com/api";
 
 interface FetchOptions<TParams = Record<string, unknown>> {
   params?: TParams;
