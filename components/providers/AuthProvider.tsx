@@ -1,21 +1,40 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { setUserTimezone } from "@/lib/dateUtils";
 import { useTimezone } from "@/hooks/useTimezone";
 import { useGoalProgressSync } from "@/hooks/useGoalProgressSync";
 
+const publicPaths = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+];
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { initialize, isInitialized, user } = useAuthStore();
+  const [skipped, setSkipped] = useState(false);
   useTimezone();
   useGoalProgressSync();
+
+  const isPublicPath = pathname
+    ? publicPaths.some((p) => pathname.startsWith(p))
+    : false;
+
   useEffect(() => {
+    if (isPublicPath) {
+      setSkipped(true);
+      return;
+    }
     if (!isInitialized) {
       initialize();
     }
-  }, [initialize, isInitialized]);
+  }, [isPublicPath, isInitialized, initialize]);
 
-  // Set timezone from user data or browser
   useEffect(() => {
     if (user) {
       const tz =
@@ -26,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  if (!isInitialized) {
+  if (!isInitialized && !skipped) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
         <div className="animate-pulse text-text-muted">Loading...</div>

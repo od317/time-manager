@@ -175,6 +175,15 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
+
+      <div className="text-right">
+        <Link
+          href="/forgot-password"
+          className="text-xs text-text-muted hover:text-primary"
+        >
+          Forgot password?
+        </Link>
+      </div>
     </motion.div>
   );
 }

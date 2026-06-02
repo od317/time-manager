@@ -17,6 +17,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { authService } from "@/lib/services";
 
 interface FormErrors {
   name?: string;
@@ -37,6 +38,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -97,9 +99,15 @@ export default function RegisterPage() {
     try {
       await register(email, password, name.trim());
       router.push("/today");
-    } catch (err) {
-      const apiError = err as ApiError;
-      setServerError(getErrorMessage(apiError));
+    } catch (err: any) {
+      if (err?.code === "UNVERIFIED") {
+        setUnverifiedEmail(email);
+        setServerError("An unverified account with this email exists.");
+      } else if (err?.message) {
+        setServerError(err.message);
+      } else {
+        setServerError("Registration failed. Please try again.");
+      }
     }
   };
 
@@ -141,7 +149,23 @@ export default function RegisterPage() {
             className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-4 mb-6 text-sm font-medium flex items-start gap-3"
           >
             <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
-            <span>{serverError}</span>
+            <div>
+              <span>{serverError}</span>
+              {unverifiedEmail && (
+                <button
+                  onClick={async () => {
+                    await authService.resendVerification(unverifiedEmail);
+                    setServerError(
+                      "Verification email resent! Check your inbox.",
+                    );
+                    setUnverifiedEmail("");
+                  }}
+                  className="block text-primary underline font-medium mt-1"
+                >
+                  Resend verification email
+                </button>
+              )}
+            </div>{" "}
           </motion.div>
         )}
       </AnimatePresence>
