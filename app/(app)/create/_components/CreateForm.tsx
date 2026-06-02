@@ -20,14 +20,6 @@ import { useSearchParams } from "next/navigation";
 
 type CreateType = "goal" | "habit";
 
-interface CreateFormProps {
-  goals: Goal[];
-  habits: Habit[];
-  activeGoals?: number;
-  activeHabits?: number;
-  upcomingDeadlines?: number;
-}
-
 const tabs = [
   {
     value: "goal" as CreateType,
@@ -47,13 +39,7 @@ const tabs = [
 
 type DateMode = "start" | "end" | null;
 
-export function CreateForm({
-  goals,
-  habits,
-  activeGoals = 0,
-  activeHabits = 0,
-  upcomingDeadlines = 0,
-}: CreateFormProps) {
+export function CreateForm({}) {
   const params = useSearchParams();
   const tab = params.get("tab") as CreateType;
   const [activeTab, setActiveTab] = useState<CreateType>(tab || "goal");
@@ -353,9 +339,9 @@ export function CreateForm({
           />
 
           <ContextPanel
-            activeGoals={activeGoals}
-            activeHabits={activeHabits}
-            upcomingDeadlines={upcomingDeadlines}
+            activeGoals={calendarData?.activeGoals || 0}
+            activeHabits={calendarData?.activeHabits || 0}
+            upcomingDeadlines={calendarData?.upcomingDeadlines || 0}
             activeTab={activeTab}
           />
         </motion.div>
