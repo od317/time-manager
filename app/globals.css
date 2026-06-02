@@ -145,72 +145,76 @@
    ============================================================================ */
 
 .dark {
-  /* Primary - Purple: Main brand, buttons, active states */
+  /* Primary - Purple: Limited use (brand, logo, key CTAs) */
   --color-primary: #B983FF;
   --color-primary-light: #C9A5FF;
   --color-primary-dark: #9965E8;
   --color-primary-bg: #1E1830;
 
-  /* Secondary - Periwinkle Blue: Cards, secondary elements */
+  /* Secondary - Periwinkle Blue: Main UI elements, cards, secondary buttons */
   --color-secondary: #94B3FD;
   --color-secondary-light: #B0C8FE;
   --color-secondary-dark: #6B8FE8;
   --color-secondary-bg: #151E30;
 
-  /* Accent - Cyan: Highlights, accents, success */
+  /* Accent - Cyan: Highlights, accents, active indicators */
   --color-accent: #99FEFF;
   --color-accent-light: #B8FEFF;
   --color-accent-dark: #70E0E3;
 
-  /* Background & Surfaces - Dark navy base */
-  --color-bg: #0A0B14;
-  --color-surface: #12131F;
-  --color-border: #1C1D2E;
-  --color-border-light: #161725;
+  /* Background & Surfaces - Better contrast! */
+  --color-bg: #06070F;
+  /* Darker - page background */
+  --color-surface: #141524;
+  /* Lighter - cards, containers */
+  --color-border: #1E1F33;
+  /* Visible borders */
+  --color-border-light: #181927;
+  /* Subtle borders */
 
   /* Text */
   --color-text: #EEEDF6;
   --color-text-secondary: #B8B7CC;
   --color-text-muted: #7A7899;
-  --color-text-inverse: #0A0B14;
+  --color-text-inverse: #06070F;
 
-  /* Semantic Colors - Using the palette properly */
+  /* Semantic Colors - Distributed across all four colors */
   --color-success: #99FEFF;
-  /* Cyan mint */
+  /* Cyan mint - success */
   --color-success-light: #B8FEFF;
   --color-success-bg: #0F2D2D;
 
   --color-warning: #94DAFF;
-  /* Sky blue for warnings */
+  /* Sky blue - warnings */
   --color-warning-light: #B0E6FF;
-  --color-warning-bg: #182530;
+  --color-warning-bg: #152530;
 
   --color-danger: #B983FF;
-  /* Purple for danger */
+  /* Purple - danger/delete */
   --color-danger-light: #C9A5FF;
   --color-danger-bg: #201830;
 
   --color-info: #94B3FD;
-  /* Periwinkle for info */
+  /* Periwinkle - info */
   --color-info-light: #B0C8FE;
   --color-info-bg: #151E30;
 
-  /* Shadows with purple tint */
-  --shadow-xs: 0 1px 2px rgba(185, 131, 255, 0.08);
-  --shadow-sm: 0 1px 3px rgba(185, 131, 255, 0.1), 0 1px 2px rgba(148, 179, 253, 0.06);
-  --shadow-md: 0 4px 6px rgba(185, 131, 255, 0.1), 0 2px 4px rgba(148, 218, 255, 0.06);
-  --shadow-lg: 0 10px 15px rgba(185, 131, 255, 0.1), 0 4px 6px rgba(148, 179, 253, 0.05);
-  --shadow-xl: 0 20px 25px rgba(185, 131, 255, 0.1), 0 10px 10px rgba(148, 218, 255, 0.04);
+  /* Shadows - Mixed periwinkle and cyan tones */
+  --shadow-xs: 0 1px 2px rgba(148, 179, 253, 0.08);
+  --shadow-sm: 0 1px 3px rgba(148, 179, 253, 0.1), 0 1px 2px rgba(153, 254, 255, 0.06);
+  --shadow-md: 0 4px 6px rgba(148, 179, 253, 0.1), 0 2px 4px rgba(148, 218, 255, 0.06);
+  --shadow-lg: 0 10px 15px rgba(148, 179, 253, 0.1), 0 4px 6px rgba(153, 254, 255, 0.05);
+  --shadow-xl: 0 20px 25px rgba(148, 179, 253, 0.1), 0 10px 10px rgba(148, 218, 255, 0.04);
 
-  /* Priority Colors - Each uses a different color */
+  /* Priority Colors - Each uses a different color from the palette */
   --priority-urgent: #B983FF;
-  /* Purple */
+  /* Purple - urgent */
   --priority-high: #94DAFF;
-  /* Sky Blue */
+  /* Sky Blue - high */
   --priority-medium: #94B3FD;
-  /* Periwinkle */
+  /* Periwinkle - medium */
   --priority-low: #99FEFF;
-  /* Cyan */
+  /* Cyan - low */
 
   /* Category Colors - All four colors distributed */
   --category-health: #99FEFF;
@@ -226,7 +230,7 @@
   --category-other: #B8B7CC;
   /* Muted Text */
 
-  /* Chart Colors - Distinct colors for visibility */
+  /* Chart Colors - Six distinct colors for visibility */
   --chart-1: #B983FF;
   /* Purple */
   --chart-2: #94B3FD;
@@ -237,8 +241,8 @@
   /* Cyan */
   --chart-5: #C9A5FF;
   /* Light Purple */
-  --chart-6: #B0C8FE;
-  /* Light Periwinkle */
+  --chart-6: #B0E6FF;
+  /* Light Sky Blue */
 }
 
 /* ============================================================================
@@ -381,7 +385,7 @@ body {
 /* Dark mode category overrides */
 
 .dark .category-health {
-  background: linear-gradient(135deg, #99FEFF, #70E0E3);
+  background: linear-gradient(135deg, #99FEFF, #94DAFF);
   color: #0A0B14;
 }
 
@@ -399,6 +403,29 @@ body {
   background: linear-gradient(135deg, #C9A5FF, #B983FF);
   color: white;
 }
+
+
+.dark .priority-urgent {
+  background: linear-gradient(135deg, #B983FF, #9965E8);
+  color: white;
+}
+
+.dark .priority-high {
+  background: linear-gradient(135deg, #94DAFF, #6B8FE8);
+  color: white;
+}
+
+.dark .priority-medium {
+  background: linear-gradient(135deg, #94B3FD, #6B8FE8);
+  color: white;
+}
+
+.dark .priority-low {
+  background: linear-gradient(135deg, #99FEFF, #70E0E3);
+  color: #0A0B14;
+}
+
+
 
 /* Line clamp utility */
 .line-clamp-1 {
@@ -696,7 +723,8 @@ body {
   color: var(--color-primary-dark);
 }
 
+/* Selection */
 .dark ::selection {
-  background-color: #B983FF;
-  color: white;
+  background-color: #99FEFF;
+  color: #0A0B14;
 }

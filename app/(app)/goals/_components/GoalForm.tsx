@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, AlertTriangle, Save, Target } from "lucide-react";
+import { X, AlertTriangle, CheckCircle, Save, Target } from "lucide-react";
 import { goalService } from "@/lib/services";
 import { CreateGoalPayload, Priority, GoalType } from "@/types";
 import { DEFAULT_GOAL_COLOR } from "@/lib/constants";
@@ -15,31 +15,11 @@ interface GoalFormProps {
   parentColor?: string | null;
 }
 
-const priorities: {
-  value: Priority;
-  label: string;
-  color: string;
-  bg: string;
-}[] = [
-  { value: "LOW", label: "Low", color: "bg-priority-low", bg: "bg-blue-50" },
-  {
-    value: "MEDIUM",
-    label: "Medium",
-    color: "bg-priority-medium",
-    bg: "bg-indigo-50",
-  },
-  {
-    value: "HIGH",
-    label: "High",
-    color: "bg-priority-high",
-    bg: "bg-amber-50",
-  },
-  {
-    value: "URGENT",
-    label: "Urgent",
-    color: "bg-priority-urgent",
-    bg: "bg-red-50",
-  },
+const priorities: { value: Priority; label: string; className: string }[] = [
+  { value: "LOW", label: "Low", className: "bg-blue-500 text-white" },
+  { value: "MEDIUM", label: "Medium", className: "bg-indigo-500 text-white" },
+  { value: "HIGH", label: "High", className: "bg-amber-500 text-white" },
+  { value: "URGENT", label: "Urgent", className: "bg-red-500 text-white" },
 ];
 
 export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
@@ -51,10 +31,9 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
   const [targetValue, setTargetValue] = useState("");
   const [unit, setUnit] = useState("");
   const [color, setColor] = useState(parentColor || DEFAULT_GOAL_COLOR);
-  const [endDate, setEndDate] = useState("");
-  const [hasEndDate, setHasEndDate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const isSubGoal = !!parentId;
   const isColorLocked = isSubGoal;
@@ -68,6 +47,7 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
 
     if (!title.trim()) {
       setError("Title is required");
@@ -81,23 +61,44 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
         description: description.trim() || undefined,
         priority,
         goalType,
-        targetValue: targetValue ? parseFloat(targetValue) : undefined,
-        unit: goalType === "time" ? "hours" : unit.trim() || undefined,
+        targetValue:
+          goalType !== "project" && targetValue
+            ? parseFloat(targetValue)
+            : undefined,
+        unit:
+          goalType === "time"
+            ? unit || "hours"
+            : goalType === "quantity"
+              ? unit.trim() || undefined
+              : undefined,
         color: isSubGoal ? undefined : color,
-        endDate:
-          hasEndDate && endDate ? new Date(endDate).toISOString() : undefined,
         parentId,
       };
 
       await goalService.create(payload);
+      setSuccess(true);
+      setTitle("");
+      setDescription("");
+      setTargetValue("");
+      setUnit("");
       router.refresh();
-      onClose();
+
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 800);
     } catch {
       setError("Failed to create goal. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const goalTypes = [
+    { type: "quantity" as GoalType, label: "Quantity", icon: "📏" },
+    { type: "time" as GoalType, label: "Time", icon: "⏱️" },
+    { type: "project" as GoalType, label: "Project", icon: "📂" },
+  ];
 
   return (
     <AnimatePresence>
@@ -117,23 +118,28 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
           className="bg-surface rounded-2xl shadow-2xl border border-border w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border bg-bg/50 flex-shrink-0">
+          <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary-bg">
                 <Target size={18} className="text-primary" />
               </div>
-              <h3 className="text-lg font-bold text-text">
-                {isSubGoal ? "Create Sub-Goal" : "Create Goal"}
-              </h3>
+              <div>
+                <h3 className="text-lg font-bold text-text">
+                  {isSubGoal ? "Create Sub-Goal" : "Create Goal"}
+                </h3>
+                {isSubGoal && (
+                  <p className="text-xs text-text-muted">
+                    Inherits parent color and deadline
+                  </p>
+                )}
+              </div>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={onClose}
               className="p-2 text-text-muted hover:text-text rounded-xl hover:bg-border-light transition-colors"
             >
               <X size={20} />
-            </motion.button>
+            </button>
           </div>
 
           {/* Form Body */}
@@ -145,17 +151,29 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-3 text-sm font-medium flex items-center gap-2"
+                    className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
                   >
                     <AlertTriangle size={16} />
                     {error}
+                  </motion.div>
+                )}
+
+                {success && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-success-bg text-success border border-success/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
+                  >
+                    <CheckCircle size={16} />
+                    Goal created successfully!
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-semibold text-text mb-2">
+                <label className="block text-sm font-bold text-text mb-2">
                   Title *
                 </label>
                 <input
@@ -170,7 +188,7 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-text mb-2">
+                <label className="block text-sm font-bold text-text mb-2">
                   Description
                 </label>
                 <textarea
@@ -182,7 +200,7 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                 />
               </div>
 
-              {/* Color Picker */}
+              {/* Color Picker - Locked for sub-goals */}
               <ColorPicker
                 value={color}
                 onChange={setColor}
@@ -191,22 +209,11 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
 
               {/* Goal Type */}
               <div>
-                <label className="block text-sm font-semibold text-text mb-2">
+                <label className="block text-sm font-bold text-text mb-2">
                   Goal Type
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    {
-                      type: "quantity" as GoalType,
-                      label: "Quantity",
-                      icon: "📏",
-                    },
-                    {
-                      type: "time" as GoalType,
-                      label: "Time-based",
-                      icon: "⏱️",
-                    },
-                  ].map(({ type, label, icon }) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {goalTypes.map(({ type, label, icon }) => (
                     <motion.button
                       key={type}
                       type="button"
@@ -215,6 +222,7 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                       onClick={() => {
                         setGoalType(type);
                         setUnit(type === "time" ? "hours" : "");
+                        if (type === "project") setTargetValue("");
                       }}
                       className={`py-3 px-4 rounded-xl text-sm font-semibold transition-all border-2 ${
                         goalType === type
@@ -229,9 +237,53 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                 </div>
               </div>
 
+              {/* Target Value & Unit - Only for quantity/time */}
+              {goalType !== "project" && (
+                <div>
+                  <label className="block text-sm font-bold text-text mb-2">
+                    Target Value & Unit
+                  </label>
+                  <div className="grid grid-cols-5 gap-3">
+                    <div className="col-span-3">
+                      <input
+                        type="number"
+                        value={targetValue}
+                        onChange={(e) => setTargetValue(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                        placeholder={
+                          goalType === "time" ? "e.g., 10" : "e.g., 100"
+                        }
+                        min="0"
+                        step={goalType === "time" ? "0.5" : "1"}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      {goalType === "time" ? (
+                        <select
+                          value={unit}
+                          onChange={(e) => setUnit(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                        >
+                          <option value="hours">Hours</option>
+                          <option value="minutes">Minutes</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={unit}
+                          onChange={(e) => setUnit(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                          placeholder="e.g., words"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Priority */}
               <div>
-                <label className="block text-sm font-semibold text-text mb-2">
+                <label className="block text-sm font-bold text-text mb-3">
                   Priority
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -242,9 +294,9 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setPriority(p.value)}
-                      className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                         priority === p.value
-                          ? `${p.color} text-white shadow-sm`
+                          ? `${p.className} shadow-lg`
                           : "bg-bg text-text-secondary border-2 border-border hover:border-primary/30"
                       }`}
                     >
@@ -253,108 +305,18 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                   ))}
                 </div>
               </div>
-
-              {/* Target Value & Unit */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-text mb-2">
-                    Target Value
-                  </label>
-                  <input
-                    type="number"
-                    value={targetValue}
-                    onChange={(e) => setTargetValue(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
-                    placeholder={goalType === "time" ? "e.g., 10" : "e.g., 100"}
-                    min="0"
-                    step={goalType === "time" ? "0.5" : "1"}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-text mb-2">
-                    Unit
-                  </label>
-                  {goalType === "time" ? (
-                    <select
-                      value={unit}
-                      onChange={(e) => setUnit(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
-                    >
-                      <option value="hours">Hours</option>
-                      <option value="minutes">Minutes</option>
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={unit}
-                      onChange={(e) => setUnit(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
-                      placeholder="e.g., words, km"
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Deadline */}
-              <div>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div
-                    className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${
-                      hasEndDate
-                        ? "bg-primary border-primary"
-                        : "border-border group-hover:border-primary/50"
-                    }`}
-                  >
-                    {hasEndDate && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="w-2.5 h-2.5 rounded-sm bg-white"
-                      />
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-text-secondary group-hover:text-text transition-colors">
-                    Set deadline
-                  </span>
-                </label>
-                <input
-                  type="checkbox"
-                  checked={hasEndDate}
-                  onChange={(e) => setHasEndDate(e.target.checked)}
-                  className="hidden"
-                />
-                <AnimatePresence>
-                  {hasEndDate && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="mt-3 w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
             </form>
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 p-6 border-t border-border bg-bg/50 flex-shrink-0">
-            <motion.button
+          <div className="flex gap-3 p-6 border-t border-border flex-shrink-0">
+            <button
               type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={onClose}
               className="flex-1 py-3 px-4 border-2 border-border text-text-secondary rounded-xl font-semibold hover:bg-border-light transition-all"
             >
               Cancel
-            </motion.button>
+            </button>
             <motion.button
               type="submit"
               whileHover={{ scale: 1.02 }}

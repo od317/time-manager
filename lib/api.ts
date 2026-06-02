@@ -175,7 +175,9 @@ class ApiErrorHandler {
 const DEFAULT_TIMEOUT = 15000;
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: 'https://time-manager-api-3r7i.onrender.com/api',
+  baseURL:
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://time-manager-api-3r7i.onrender.com/api",
   timeout: DEFAULT_TIMEOUT,
   headers: {
     "Content-Type": "application/json",

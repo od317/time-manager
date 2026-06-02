@@ -152,15 +152,13 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-2">
-                    <AnimatePresence mode="popLayout">
-                      {sortedGoals.map((goal) => (
-                        <SortableGoalItem
-                          key={goal.id}
-                          goal={goal}
-                          allGoals={allGoals}
-                        />
-                      ))}
-                    </AnimatePresence>
+                    {sortedGoals.map((goal) => (
+                      <SortableGoalItem
+                        key={goal.id}
+                        goal={goal}
+                        allGoals={allGoals}
+                      />
+                    ))}
                   </div>
                 </SortableContext>
 
