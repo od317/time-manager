@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "@/store/authStore";
 import { ApiError } from "@/lib/api";
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +14,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const getErrorMessage = (apiError: ApiError): string => {
@@ -47,72 +50,131 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-text mb-6">Welcome back</h2>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-text">Welcome back</h2>
+        <p className="text-text-muted text-sm mt-1">
+          Sign in to continue your journey
+        </p>
+      </div>
 
-      {error && (
-        <div className="bg-danger-bg text-danger border border-danger/20 rounded-lg p-3 mb-6 text-sm">
-          {error}
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-4 mb-6 text-sm font-medium flex items-start gap-3"
+          >
+            <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {/* Email */}
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-sm font-semibold text-text mb-2"
           >
             Email
           </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="you@example.com"
-          />
+          <div className="relative">
+            <Mail
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
+            />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+              placeholder="you@example.com"
+            />
+          </div>
         </div>
 
+        {/* Password */}
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-sm font-semibold text-text mb-2"
           >
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="••••••••"
-          />
+          <div className="relative">
+            <Lock
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
+            />
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              className="w-full pl-11 pr-12 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+              placeholder="••••••••"
+            />
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </motion.button>
+          </div>
         </div>
 
-        <button
+        {/* Submit */}
+        <motion.button
           type="submit"
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full py-3.5 px-4 bg-primary text-white rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
         >
-          {isLoading ? "Signing in..." : "Sign in"}
-        </button>
+          {isLoading ? (
+            <>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+              />
+              Signing in...
+            </>
+          ) : (
+            <>
+              <LogIn size={18} />
+              Sign in
+            </>
+          )}
+        </motion.button>
       </form>
 
-      <p className="text-center text-sm text-text-muted mt-6">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/register"
-          className="text-primary hover:text-primary-dark font-medium"
-        >
-          Create one
-        </Link>
-      </p>
-    </div>
+      <div className="mt-8 pt-6 border-t-2 border-border">
+        <p className="text-center text-sm text-text-muted">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/register"
+            className="text-primary hover:text-primary-dark font-semibold transition-colors"
+          >
+            Create one
+          </Link>
+        </p>
+      </div>
+    </motion.div>
   );
 }

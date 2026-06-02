@@ -3,8 +3,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "@/store/authStore";
 import { ApiError } from "@/lib/api";
+import {
+  Mail,
+  Lock,
+  User,
+  UserPlus,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Check,
+  X,
+} from "lucide-react";
 
 interface FormErrors {
   name?: string;
@@ -21,6 +33,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState("");
 
@@ -89,153 +103,326 @@ export default function RegisterPage() {
     }
   };
 
+  // Password strength indicator
+  const getPasswordStrength = (
+    pwd: string,
+  ): { strength: string; color: string; width: string } => {
+    if (pwd.length === 0) return { strength: "", color: "", width: "0%" };
+    if (pwd.length < 6)
+      return { strength: "Weak", color: "bg-danger", width: "25%" };
+    if (pwd.length < 8)
+      return { strength: "Fair", color: "bg-warning", width: "50%" };
+    if (pwd.length < 10)
+      return { strength: "Good", color: "bg-info", width: "75%" };
+    return { strength: "Strong", color: "bg-success", width: "100%" };
+  };
+
+  const passwordStrength = getPasswordStrength(password);
+
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-text mb-6">
-        Create your account
-      </h2>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-text">Create your account</h2>
+        <p className="text-text-muted text-sm mt-1">
+          Start your productivity journey
+        </p>
+      </div>
 
-      {serverError && (
-        <div className="bg-danger-bg text-danger border border-danger/20 rounded-lg p-3 mb-6 text-sm">
-          {serverError}
-        </div>
-      )}
+      <AnimatePresence>
+        {serverError && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-4 mb-6 text-sm font-medium flex items-start gap-3"
+          >
+            <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+            <span>{serverError}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {/* Name */}
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-sm font-semibold text-text mb-2"
           >
             Name
           </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (errors.name)
-                setErrors((prev) => ({ ...prev, name: undefined }));
-            }}
-            autoComplete="name"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-surface text-text placeholder:text-text-muted focus:outline-none focus:ring-2 transition-all ${
-              errors.name
-                ? "border-danger focus:ring-danger/20"
-                : "border-border focus:ring-primary/20 focus:border-primary"
-            }`}
-            placeholder="Your full name"
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-danger">{errors.name}</p>
-          )}
+          <div className="relative">
+            <User
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
+            />
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name)
+                  setErrors((prev) => ({ ...prev, name: undefined }));
+              }}
+              autoComplete="name"
+              className={`w-full pl-11 pr-4 py-3 rounded-xl border-2 bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-4 transition-all font-medium ${
+                errors.name
+                  ? "border-danger focus:ring-danger/10"
+                  : "border-border focus:border-primary focus:ring-primary/10"
+              }`}
+              placeholder="Your full name"
+            />
+          </div>
+          <AnimatePresence>
+            {errors.name && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-1.5 text-sm text-danger flex items-center gap-1"
+              >
+                <X size={14} />
+                {errors.name}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
+        {/* Email */}
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-sm font-semibold text-text mb-2"
           >
             Email
           </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (errors.email)
-                setErrors((prev) => ({ ...prev, email: undefined }));
-            }}
-            autoComplete="email"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-surface text-text placeholder:text-text-muted focus:outline-none focus:ring-2 transition-all ${
-              errors.email
-                ? "border-danger focus:ring-danger/20"
-                : "border-border focus:ring-primary/20 focus:border-primary"
-            }`}
-            placeholder="you@example.com"
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-danger">{errors.email}</p>
-          )}
+          <div className="relative">
+            <Mail
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
+            />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email)
+                  setErrors((prev) => ({ ...prev, email: undefined }));
+              }}
+              autoComplete="email"
+              className={`w-full pl-11 pr-4 py-3 rounded-xl border-2 bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-4 transition-all font-medium ${
+                errors.email
+                  ? "border-danger focus:ring-danger/10"
+                  : "border-border focus:border-primary focus:ring-primary/10"
+              }`}
+              placeholder="you@example.com"
+            />
+          </div>
+          <AnimatePresence>
+            {errors.email && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-1.5 text-sm text-danger flex items-center gap-1"
+              >
+                <X size={14} />
+                {errors.email}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
+        {/* Password */}
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-sm font-semibold text-text mb-2"
           >
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password)
-                setErrors((prev) => ({ ...prev, password: undefined }));
-            }}
-            autoComplete="new-password"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-surface text-text placeholder:text-text-muted focus:outline-none focus:ring-2 transition-all ${
-              errors.password
-                ? "border-danger focus:ring-danger/20"
-                : "border-border focus:ring-primary/20 focus:border-primary"
-            }`}
-            placeholder="Min. 6 characters"
-          />
-          {errors.password && (
-            <p className="mt-1 text-sm text-danger">{errors.password}</p>
+          <div className="relative">
+            <Lock
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
+            />
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password)
+                  setErrors((prev) => ({ ...prev, password: undefined }));
+              }}
+              autoComplete="new-password"
+              className={`w-full pl-11 pr-12 py-3 rounded-xl border-2 bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-4 transition-all font-medium ${
+                errors.password
+                  ? "border-danger focus:ring-danger/10"
+                  : "border-border focus:border-primary focus:ring-primary/10"
+              }`}
+              placeholder="Min. 6 characters"
+            />
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </motion.button>
+          </div>
+
+          {/* Password strength indicator */}
+          {password && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-2"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: passwordStrength.width }}
+                    className={`h-full rounded-full ${passwordStrength.color}`}
+                  />
+                </div>
+                <span className="text-xs font-semibold text-text-muted">
+                  {passwordStrength.strength}
+                </span>
+              </div>
+            </motion.div>
           )}
+
+          <AnimatePresence>
+            {errors.password && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-1.5 text-sm text-danger flex items-center gap-1"
+              >
+                <X size={14} />
+                {errors.password}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
+        {/* Confirm Password */}
         <div>
           <label
             htmlFor="confirmPassword"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-sm font-semibold text-text mb-2"
           >
             Confirm password
           </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              if (errors.confirmPassword)
-                setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-            }}
-            autoComplete="new-password"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-surface text-text placeholder:text-text-muted focus:outline-none focus:ring-2 transition-all ${
-              errors.confirmPassword
-                ? "border-danger focus:ring-danger/20"
-                : "border-border focus:ring-primary/20 focus:border-primary"
-            }`}
-            placeholder="Repeat your password"
-          />
-          {errors.confirmPassword && (
-            <p className="mt-1 text-sm text-danger">{errors.confirmPassword}</p>
-          )}
+          <div className="relative">
+            <Lock
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
+            />
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (errors.confirmPassword)
+                  setErrors((prev) => ({
+                    ...prev,
+                    confirmPassword: undefined,
+                  }));
+              }}
+              autoComplete="new-password"
+              className={`w-full pl-11 pr-12 py-3 rounded-xl border-2 bg-bg text-text placeholder:text-text-muted focus:outline-none focus:ring-4 transition-all font-medium ${
+                errors.confirmPassword
+                  ? "border-danger focus:ring-danger/10"
+                  : password && confirmPassword && password === confirmPassword
+                    ? "border-success focus:ring-success/10"
+                    : "border-border focus:border-primary focus:ring-primary/10"
+              }`}
+              placeholder="Repeat your password"
+            />
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </motion.button>
+            {password && confirmPassword && password === confirmPassword && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute right-12 top-1/2 -translate-y-1/2"
+              >
+                <Check size={18} className="text-success" />
+              </motion.div>
+            )}
+          </div>
+          <AnimatePresence>
+            {errors.confirmPassword && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-1.5 text-sm text-danger flex items-center gap-1"
+              >
+                <X size={14} />
+                {errors.confirmPassword}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
-        <button
+        {/* Submit */}
+        <motion.button
           type="submit"
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full py-3.5 px-4 bg-primary text-white rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
         >
-          {isLoading ? "Creating account..." : "Create account"}
-        </button>
+          {isLoading ? (
+            <>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+              />
+              Creating account...
+            </>
+          ) : (
+            <>
+              <UserPlus size={18} />
+              Create account
+            </>
+          )}
+        </motion.button>
       </form>
 
-      <p className="text-center text-sm text-text-muted mt-6">
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="text-primary hover:text-primary-dark font-medium"
-        >
-          Sign in
-        </Link>
-      </p>
-    </div>
+      <div className="mt-8 pt-6 border-t-2 border-border">
+        <p className="text-center text-sm text-text-muted">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-primary hover:text-primary-dark font-semibold transition-colors"
+          >
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </motion.div>
   );
 }
