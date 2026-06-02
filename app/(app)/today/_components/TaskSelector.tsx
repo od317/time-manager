@@ -34,7 +34,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelectTask = (task: Task) => {
+  const handleSelectTask = async (task: Task) => {
     setSelectedTask(task);
     setIsOpen(false);
     setSearch("");
@@ -63,13 +63,11 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => !isRunning && setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-          isRunning
-            ? "opacity-60 cursor-not-allowed"
-            : selectedTask
-              ? "bg-primary-bg text-primary shadow-sm"
-              : "bg-bg border-2 border-dashed border-border text-text-secondary hover:border-primary/50 hover:text-text"
+          selectedTask
+            ? "bg-primary-bg text-primary shadow-sm"
+            : "bg-bg border-2 border-dashed border-border text-text-secondary hover:border-primary/50 hover:text-text"
         }`}
       >
         {selectedTask ? (
