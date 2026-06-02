@@ -1,6 +1,5 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://timeflow-api.onrender.com/api";
-  
+const API_URL = "https://timeflow-api.onrender.com/api";
+
 interface FetchOptions<TParams = Record<string, unknown>> {
   params?: TParams;
   revalidate?: number | false;
