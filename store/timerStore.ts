@@ -69,10 +69,10 @@ interface TimerState {
 }
 
 const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
-  workDuration: 10,
+  workDuration: 25,
   shortBreakDuration: 5,
-  longBreakDuration: 8,
-  sessionsBeforeLongBreak: 2,
+  longBreakDuration: 15,
+  sessionsBeforeLongBreak: 4,
 };
 
 function buildPersistedState(state: TimerState, runningTimerId: string | null) {
