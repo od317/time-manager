@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import { Goal, Task } from "@/types";
 import { X, CheckCircle2, ChevronDown, Layers, Search } from "lucide-react";
+import { taskService } from "@/lib/services/taskService";
 
 interface TaskSelectorProps {
   goals: Goal[];
@@ -191,37 +192,69 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
 
                         <div className="ml-4 border-l-2 border-border/50 pl-3 space-y-0.5">
                           {goalTasks.map((task) => (
-                            <motion.button
-                              key={task.id}
-                              whileHover={{ x: 4 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => handleSelectTask(task)}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
-                                selectedTask?.id === task.id
-                                  ? "bg-primary-bg text-primary"
-                                  : "hover:bg-bg text-text-secondary hover:text-text"
-                              }`}
-                            >
-                              <CheckCircle2
-                                size={16}
-                                className={`flex-shrink-0 ${
+                            <div key={task.id} className="relative group">
+                              <motion.button
+                                whileHover={{ x: 4 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => handleSelectTask(task)}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
                                   selectedTask?.id === task.id
-                                    ? "text-primary"
-                                    : "text-text-muted"
+                                    ? "bg-primary-bg text-primary"
+                                    : "hover:bg-bg text-text-secondary hover:text-text"
                                 }`}
-                              />
-                              <span className="text-sm truncate flex-1 font-medium">
-                                {task.title}
-                              </span>
-                              {task.estimatedMinutes && (
-                                <span className="text-[10px] text-text-muted bg-bg px-2 py-0.5 rounded-full flex-shrink-0 font-medium">
-                                  {task.estimatedMinutes}m
+                              >
+                                <CheckCircle2
+                                  size={16}
+                                  className={`flex-shrink-0 ${
+                                    selectedTask?.id === task.id
+                                      ? "text-primary"
+                                      : "text-text-muted"
+                                  }`}
+                                />
+                                <span className="text-sm truncate flex-1 font-medium">
+                                  {task.title}
                                 </span>
-                              )}
-                              {task.priority === "URGENT" && (
-                                <span className="w-2 h-2 rounded-full bg-danger flex-shrink-0 animate-pulse" />
-                              )}
-                            </motion.button>
+                                {task.estimatedMinutes && (
+                                  <span className="text-[10px] text-text-muted bg-bg px-2 py-0.5 rounded-full flex-shrink-0 font-medium">
+                                    {task.estimatedMinutes}m
+                                  </span>
+                                )}
+                                {task.priority === "URGENT" && (
+                                  <span className="w-2 h-2 rounded-full bg-danger flex-shrink-0 animate-pulse" />
+                                )}
+                              </motion.button>
+
+                              {/* Quick complete - outside the main button */}
+                              <div
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    await taskService.update(task.id, {
+                                      status: "COMPLETED",
+                                    });
+                                    if (selectedTask?.id === task.id) {
+                                      clearSelection();
+                                    }
+                                    window.location.reload();
+                                  } catch {
+                                    // Handle silently
+                                  }
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-success-bg text-text-muted hover:text-success transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                                title="Mark complete"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // Same logic as onClick
+                                  }
+                                }}
+                              >
+                                <CheckCircle2 size={14} />
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>

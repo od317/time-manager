@@ -8,8 +8,9 @@ import { TaskSelector } from "./TaskSelector";
 import { TimerModeTabs } from "./TimerModeTabs";
 import { QuickLogForm } from "./QuickLogForm";
 import { PomodoroTimer } from "./PomodoroTimer";
-import { Play, Pause, Square, Clock } from "lucide-react";
+import { Play, Pause, Square, Clock, CheckCircle2 } from "lucide-react";
 import { SessionHistory } from "./SessionHistory";
+import { useRouter } from "next/navigation";
 
 interface TodayTimerProps {
   runningTimer: TimeEntry | null;
@@ -30,9 +31,10 @@ export function TodayTimer({
     timerMode,
     selectedTask,
   } = store;
+  const router = useRouter();
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const hasSelection = selectedTask !== null;
+  const hasSelection = useTimerStore((s) => s.selectedTask !== null);
 
   useEffect(() => {
     if (initialTimer && !store.runningTimer) {
@@ -202,7 +204,12 @@ export function TodayTimer({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => useTimerStore.getState().resume()}
-                        className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                        disabled={!hasSelection}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all ${
+                          hasSelection
+                            ? "bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
+                            : "bg-border text-text-muted cursor-not-allowed"
+                        }`}
                       >
                         <Play size={18} className="fill-current" /> Resume
                       </motion.button>
@@ -219,6 +226,38 @@ export function TodayTimer({
                 )}
               </AnimatePresence>
             </div>
+
+            {isPaused && !hasSelection && (
+              <p className="text-xs text-text-muted mt-3">
+                Select a task to resume
+              </p>
+            )}
+
+            {/* Complete current task */}
+            {isActive && selectedTask && (
+              <button
+                onClick={async () => {
+                  try {
+                    const { taskService } =
+                      await import("@/lib/services/taskService");
+                    if (isActive) {
+                      await useTimerStore.getState().pause();
+                    }
+                    await taskService.update(selectedTask.id, {
+                      status: "COMPLETED",
+                    });
+                    useTimerStore.getState().clearSelection();
+                    router.refresh();
+                  } catch {
+                    // Handle silently
+                  }
+                }}
+                className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 bg-success-bg text-success rounded-xl text-sm font-semibold hover:bg-success/10 transition-all"
+              >
+                <CheckCircle2 size={16} />
+                Complete & Pause
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -238,6 +277,30 @@ export function TodayTimer({
             Focusing on:{" "}
             <span className="font-medium text-text">{selectedTask.title}</span>
           </span>
+
+          <button
+            onClick={async () => {
+              try {
+                const { taskService } =
+                  await import("@/lib/services/taskService");
+                if (isActive) {
+                  await useTimerStore.getState().pause();
+                }
+                await taskService.update(selectedTask.id, {
+                  status: "COMPLETED",
+                });
+                useTimerStore.getState().clearSelection();
+                router.refresh();
+              } catch {
+                // Handle silently
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-success hover:bg-success-bg transition-all flex-shrink-0"
+            title="Mark task as complete"
+          >
+            <CheckCircle2 size={14} />
+            Complete
+          </button>
         </motion.div>
       )}
     </motion.div>

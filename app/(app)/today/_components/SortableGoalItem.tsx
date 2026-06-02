@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Goal } from "@/types";
+import { useRouter } from "next/navigation";
+import { Goal, Task } from "@/types";
+import { taskService } from "@/lib/services/taskService";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -46,6 +48,7 @@ export function SortableGoalItem({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { goalOrder, setGoalOrder } = useUIStore();
+  const router = useRouter();
 
   const {
     attributes,
@@ -66,7 +69,11 @@ export function SortableGoalItem({
   const activeTasks = (goal.tasks || []).filter(
     (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
   );
-  const hasChildren = subGoals.length > 0 || activeTasks.length > 0;
+  const completedTasks = (goal.tasks || []).filter(
+    (t) => t.status === "COMPLETED",
+  );
+  const hasChildren =
+    subGoals.length > 0 || activeTasks.length > 0 || completedTasks.length > 0;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -90,16 +97,13 @@ export function SortableGoalItem({
       if (oldIndex !== -1 && newIndex !== -1) {
         const newSubOrder = arrayMove(currentIds, oldIndex, newIndex);
 
-        // Update only these sub-goals in the global order
         const existingOrder =
           goalOrder.length > 0 ? [...goalOrder] : allGoals.map((g) => g.id);
 
-        // Find where these sub-goals are in the full order
         const firstSubIndex = existingOrder.findIndex((id) =>
           currentIds.includes(id),
         );
         if (firstSubIndex !== -1) {
-          // Replace just this sub-goal section
           existingOrder.splice(
             firstSubIndex,
             currentIds.length,
@@ -110,6 +114,17 @@ export function SortableGoalItem({
       }
     }
   };
+
+  const handleToggleTask = async (task: Task) => {
+    const newStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
+    try {
+      await taskService.update(task.id, { status: newStatus });
+      router.refresh();
+    } catch {
+      // Handle silently
+    }
+  };
+
   return (
     <div ref={setNodeRef} style={style}>
       <div
@@ -187,10 +202,17 @@ export function SortableGoalItem({
 
       {isExpanded && hasChildren && (
         <div className="ml-4 border-l-2 border-border pl-2 space-y-1">
+          {/* Active tasks - with complete button */}
           {activeTasks.map((task) => (
-            <TaskRow key={task.id} task={task} />
+            <TaskRow key={task.id} task={task} onToggle={handleToggleTask} />
           ))}
 
+          {/* Completed tasks */}
+          {completedTasks.map((task) => (
+            <TaskRow key={task.id} task={task} onToggle={handleToggleTask} />
+          ))}
+
+          {/* Sub-goals */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
