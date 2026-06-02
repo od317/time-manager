@@ -7,6 +7,14 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "TimeFlow",
   description: "Master your time, achieve your goals",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default async function RootLayout({
@@ -23,6 +31,12 @@ export default async function RootLayout({
       className={theme === "dark" ? "dark" : ""}
       suppressHydrationWarning
     >
+      <head>
+        {/* Fallback for older browsers */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
+      </head>
       <body>
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>

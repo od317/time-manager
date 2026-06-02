@@ -145,68 +145,68 @@
    ============================================================================ */
 
 .dark {
-  --color-primary: #6D67E4;
-  --color-primary-light: #8A85EC;
-  --color-primary-dark: #453C67;
-  --color-primary-bg: #1E1A2E;
+  --color-primary: #B983FF;
+  --color-primary-light: #C9A5FF;
+  --color-primary-dark: #9965E8;
+  --color-primary-bg: #1E1830;
 
-  --color-secondary: #46C2CB;
-  --color-secondary-light: #6FD5DC;
-  --color-secondary-dark: #359BA3;
-  --color-secondary-bg: #0F2A2D;
+  --color-secondary: #94B3FD;
+  --color-secondary-light: #B0C8FE;
+  --color-secondary-dark: #6B8FE8;
+  --color-secondary-bg: #151E30;
 
-  --color-accent: #F2F7A1;
-  --color-accent-light: #F7FABF;
-  --color-accent-dark: #D9DF7A;
+  --color-accent: #99FEFF;
+  --color-accent-light: #B8FEFF;
+  --color-accent-dark: #70E0E3;
 
-  --color-bg: #1A1625;
-  --color-surface: #231F32;
-  --color-border: #2E2940;
-  --color-border-light: #262236;
+  --color-bg: #0F0E17;
+  --color-surface: #181627;
+  --color-border: #242036;
+  --color-border-light: #1C1A2E;
 
-  --color-text: #EEECF5;
-  --color-text-secondary: #BCB8CC;
-  --color-text-muted: #8A83A3;
-  --color-text-inverse: #1A1625;
+  --color-text: #F0EEF8;
+  --color-text-secondary: #C4C0D8;
+  --color-text-muted: #8A85A8;
+  --color-text-inverse: #0F0E17;
 
-  --color-primary-bg: #1E1A2E;
-  --color-success-bg: #0F2A2D;
-  --color-warning-bg: #2D2A1A;
-  --color-danger-bg: #2D1A1E;
-  --color-info-bg: #1A232D;
+  --color-primary-bg: #1E1830;
+  --color-success-bg: #0F2D2D;
+  --color-warning-bg: #2D2818;
+  --color-danger-bg: #2D1820;
+  --color-info-bg: #182030;
 
-  --color-success: #46C2CB;
-  --color-warning: #F2F7A1;
-  --color-danger: #6D67E4;
-  --color-info: #453C67;
+  --color-success: #99FEFF;
+  --color-warning: #94B3FD;
+  --color-danger: #B983FF;
+  --color-info: #94DAFF;
 
-  --shadow-xs: 0 1px 2px rgba(109, 103, 228, 0.15);
-  --shadow-sm: 0 1px 3px rgba(109, 103, 228, 0.2), 0 1px 2px rgba(69, 60, 103, 0.1);
-  --shadow-md: 0 4px 6px rgba(109, 103, 228, 0.2), 0 2px 4px rgba(69, 60, 103, 0.1);
-  --shadow-lg: 0 10px 15px rgba(109, 103, 228, 0.2), 0 4px 6px rgba(69, 60, 103, 0.1);
-  --shadow-xl: 0 20px 25px rgba(109, 103, 228, 0.2), 0 10px 10px rgba(69, 60, 103, 0.1);
+  --shadow-xs: 0 1px 2px rgba(185, 131, 255, 0.15);
+  --shadow-sm: 0 1px 3px rgba(185, 131, 255, 0.2), 0 1px 2px rgba(148, 179, 253, 0.1);
+  --shadow-md: 0 4px 6px rgba(185, 131, 255, 0.2), 0 2px 4px rgba(148, 179, 253, 0.1);
+  --shadow-lg: 0 10px 15px rgba(185, 131, 255, 0.2), 0 4px 6px rgba(148, 179, 253, 0.1);
+  --shadow-xl: 0 20px 25px rgba(185, 131, 255, 0.2), 0 10px 10px rgba(148, 179, 253, 0.1);
 
   /* Priority Colors - Dark Mode */
-  --priority-urgent: #6D67E4;
-  --priority-high: #453C67;
-  --priority-medium: #46C2CB;
-  --priority-low: #F2F7A1;
+  --priority-urgent: #B983FF;
+  --priority-high: #94B3FD;
+  --priority-medium: #94DAFF;
+  --priority-low: #99FEFF;
 
   /* Category Colors - Dark Mode */
-  --category-health: #46C2CB;
-  --category-learning: #6D67E4;
-  --category-career: #453C67;
-  --category-personal: #F2F7A1;
-  --category-finance: #8A85EC;
-  --category-other: #BCB8CC;
+  --category-health: #99FEFF;
+  --category-learning: #B983FF;
+  --category-career: #94DAFF;
+  --category-personal: #94B3FD;
+  --category-finance: #C9A5FF;
+  --category-other: #C4C0D8;
 
   /* Chart Colors - Dark Mode */
-  --chart-1: #6D67E4;
-  --chart-2: #46C2CB;
-  --chart-3: #453C67;
-  --chart-4: #F2F7A1;
-  --chart-5: #8A85EC;
-  --chart-6: #6FD5DC;
+  --chart-1: #B983FF;
+  --chart-2: #94B3FD;
+  --chart-3: #94DAFF;
+  --chart-4: #99FEFF;
+  --chart-5: #C9A5FF;
+  --chart-6: #B0C8FE;
 }
 
 /* ============================================================================
@@ -258,10 +258,10 @@ body {
 }
 
 .dark .glass {
-  background: rgba(35, 31, 50, 0.7);
+  background: rgba(24, 22, 39, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(46, 41, 64, 0.6);
+  border: 1px solid rgba(36, 32, 54, 0.6);
 }
 
 /* Card styles */
@@ -347,24 +347,24 @@ body {
 }
 
 /* Dark mode category overrides */
-/* Dark mode category overrides */
+
 .dark .category-health {
-  background: linear-gradient(135deg, #46C2CB, #359BA3);
-  color: white;
+  background: linear-gradient(135deg, #99FEFF, #94DAFF);
+  color: #0F0E17;
 }
 
 .dark .category-career {
-  background: linear-gradient(135deg, #453C67, #6D67E4);
-  color: white;
+  background: linear-gradient(135deg, #94DAFF, #94B3FD);
+  color: #0F0E17;
 }
 
 .dark .category-personal {
-  background: linear-gradient(135deg, #F2F7A1, #D9DF7A);
-  color: #1A1625;
+  background: linear-gradient(135deg, #B983FF, #94B3FD);
+  color: white;
 }
 
 .dark .category-finance {
-  background: linear-gradient(135deg, #8A85EC, #6D67E4);
+  background: linear-gradient(135deg, #C9A5FF, #B983FF);
   color: white;
 }
 
@@ -399,7 +399,7 @@ body {
 }
 
 .dark .gradient-text {
-  background: linear-gradient(135deg, #6D67E4, #46C2CB);
+  background: linear-gradient(135deg, #B983FF, #94DAFF);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -483,11 +483,11 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(109, 103, 228, 0.4);
+    box-shadow: 0 0 0 0 rgba(185, 131, 255, 0.4);
   }
 
   50% {
-    box-shadow: 0 0 0 12px rgba(109, 103, 228, 0);
+    box-shadow: 0 0 0 12px rgba(185, 131, 255, 0);
   }
 }
 
@@ -665,6 +665,6 @@ body {
 }
 
 .dark ::selection {
-  background-color: #6D67E4;
+  background-color: #B983FF;
   color: white;
 }
