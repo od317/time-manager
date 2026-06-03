@@ -74,7 +74,7 @@ export function GoalSubgoals({ subGoals }: GoalSubgoalsProps) {
                     {subGoal.status}
                   </span>
                 </div>
-                {subGoal.goalType === "project" && (
+                {subGoal.goalType !== "project" && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-text-muted flex items-center gap-1.5">

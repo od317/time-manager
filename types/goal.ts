@@ -5,6 +5,9 @@ import { TimeEntry } from "./timeEntry";
 export interface Goal {
   id: GoalId;
   userId: string;
+  combinedProgress?: number;
+  allTimeEntries?: TimeEntry[];
+  totalTimeSpent?: number;
   parentId: GoalId | null;
   title: string;
   description: string | null;

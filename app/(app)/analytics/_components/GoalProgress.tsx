@@ -20,11 +20,14 @@ interface GoalProgressProps {
 
 export function GoalProgress({ goals }: GoalProgressProps) {
   const data = goals
-    .filter((g) => g.progress > 0 || g.status === "COMPLETED")
+    .filter((g) => {
+      const progress = g.combinedProgress || g.progress || 0;
+      return progress > 0 || g.status === "COMPLETED";
+    })
     .slice(0, 10)
     .map((g) => ({
       name: g.title.length > 20 ? g.title.slice(0, 20) + "..." : g.title,
-      progress: Math.round(g.progress),
+      progress: Math.round(g.combinedProgress || g.progress || 0),
       color: g.color || "#9FA1FF",
       status: g.status,
     }))

@@ -53,6 +53,14 @@ export function GoalActions({ goal }: GoalActionsProps) {
 
   const isActive = goal.status === "ACTIVE";
 
+  const hasActiveChildren = goal.children?.some(
+    (c) => c.status === "ACTIVE" || c.status === "PAUSED",
+  );
+  const hasActiveTasks = (goal.tasks || []).some(
+    (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
+  );
+  const canComplete = !hasActiveChildren && !hasActiveTasks;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -74,8 +82,17 @@ export function GoalActions({ goal }: GoalActionsProps) {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleStatusChange("COMPLETED")}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm border-2 bg-success-bg text-success border-success/20 hover:shadow-md transition-all disabled:opacity-50"
+              disabled={isLoading || !canComplete}
+              title={
+                !canComplete
+                  ? "Complete all sub-goals and tasks first"
+                  : "Mark as complete"
+              }
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
+                canComplete
+                  ? "bg-success-bg text-success hover:bg-success/10"
+                  : "bg-border text-text-muted cursor-not-allowed"
+              }`}
             >
               <CheckCircle2 size={18} />
               Mark Complete
