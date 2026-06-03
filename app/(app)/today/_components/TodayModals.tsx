@@ -2,19 +2,29 @@
 
 import { useModalStore } from "@/store/modalStore";
 import { QuickTaskModal } from "./QuickTaskModal";
-import { Goal } from "@/types";
+import { TaskEditModal } from "./TaskEditModal";
+import { Goal, Task } from "@/types";
 
 interface TodayModalsProps {
   allGoals: Goal[];
 }
 
 export function TodayModals({ allGoals }: TodayModalsProps) {
-  const { quickTaskGoalId, closeQuickTask } = useModalStore();
+  const { quickTaskGoalId, editingTask, closeQuickTask, closeEditTask } =
+    useModalStore();
+
   const quickTaskGoal = quickTaskGoalId
     ? allGoals.find((g) => g.id === quickTaskGoalId)
     : null;
 
-  if (!quickTaskGoal) return null;
-
-  return <QuickTaskModal goal={quickTaskGoal} onClose={closeQuickTask} />;
+  return (
+    <>
+      {quickTaskGoal && (
+        <QuickTaskModal goal={quickTaskGoal} onClose={closeQuickTask} />
+      )}
+      {editingTask && (
+        <TaskEditModal task={editingTask} onClose={closeEditTask} />
+      )}
+    </>
+  );
 }

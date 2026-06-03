@@ -3,7 +3,8 @@
 import { Task } from "@/types";
 import { useTimerStore } from "@/store/timerStore";
 import { useTaskStore } from "@/store/taskStore";
-import { Circle, Play, CheckCircle2 } from "lucide-react";
+import { useModalStore } from "@/store/modalStore";
+import { Circle, Play, CheckCircle2, Pencil } from "lucide-react";
 
 interface TaskRowProps {
   task: Task;
@@ -17,6 +18,7 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
     s.localCompletedIds.has(task.id),
   );
   const isCompleted = task.status === "COMPLETED" || isLocallyCompleted;
+  const { openEditTask } = useModalStore();
 
   const handleStartTask = () => {
     setSelectedTask(task);
@@ -62,6 +64,15 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
           {task.estimatedMinutes}m
         </span>
       )}
+
+      {/* Edit button */}
+      <button
+        onClick={() => openEditTask(task)}
+        className="p-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+        title="Edit task"
+      >
+        <Pencil size={14} />
+      </button>
 
       {!isCompleted && (
         <button

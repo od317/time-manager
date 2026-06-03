@@ -145,104 +145,100 @@
    ============================================================================ */
 
 .dark {
-  /* Primary - Purple: Limited use (brand, logo, key CTAs) */
-  --color-primary: #B983FF;
-  --color-primary-light: #C9A5FF;
-  --color-primary-dark: #9965E8;
-  --color-primary-bg: #1E1830;
+  /* Primary - Rich Purple: Main brand, buttons, active states */
+  --color-primary: #9929EA;
+  --color-primary-light: #B14FEF;
+  --color-primary-dark: #7A1FCC;
+  --color-primary-bg: #1A0A2E;
 
-  /* Secondary - Periwinkle Blue: Main UI elements, cards, secondary buttons */
-  --color-secondary: #94B3FD;
-  --color-secondary-light: #B0C8FE;
-  --color-secondary-dark: #6B8FE8;
-  --color-secondary-bg: #151E30;
+  /* Secondary - Soft Pink-Purple: Cards, secondary elements */
+  --color-secondary: #CC66DA;
+  --color-secondary-light: #D98AE6;
+  --color-secondary-dark: #A845B8;
+  --color-secondary-bg: #1E1028;
 
-  /* Accent - Cyan: Highlights, accents, active indicators */
-  --color-accent: #99FEFF;
-  --color-accent-light: #B8FEFF;
-  --color-accent-dark: #70E0E3;
+  /* Accent - Warm Gold: Highlights, success, accents */
+  --color-accent: #FAEB92;
+  --color-accent-light: #FCF0B0;
+  --color-accent-dark: #E0D060;
 
-  /* Background & Surfaces - Better contrast! */
-  --color-bg: #06070F;
-  /* Darker - page background */
-  --color-surface: #141524;
-  /* Lighter - cards, containers */
-  --color-border: #1E1F33;
-  /* Visible borders */
-  --color-border-light: #181927;
-  /* Subtle borders */
+  /* Background & Surfaces - True black base */
+  --color-bg: #000000;
+  --color-surface: #0A0A0A;
+  --color-border: #1A1A1A;
+  --color-border-light: #141414;
 
   /* Text */
-  --color-text: #EEEDF6;
-  --color-text-secondary: #B8B7CC;
-  --color-text-muted: #7A7899;
-  --color-text-inverse: #06070F;
+  --color-text: #F5F0FA;
+  --color-text-secondary: #C8C0D4;
+  --color-text-muted: #8A80A0;
+  --color-text-inverse: #000000;
 
-  /* Semantic Colors - Distributed across all four colors */
-  --color-success: #99FEFF;
-  /* Cyan mint - success */
-  --color-success-light: #B8FEFF;
-  --color-success-bg: #0F2D2D;
+  /* Semantic Colors - Distributed across the palette */
+  --color-success: #FAEB92;
+  /* Warm Gold - success */
+  --color-success-light: #FCF0B0;
+  --color-success-bg: #1A180F;
 
-  --color-warning: #94DAFF;
-  /* Sky blue - warnings */
-  --color-warning-light: #B0E6FF;
-  --color-warning-bg: #152530;
+  --color-warning: #CC66DA;
+  /* Soft Pink-Purple - warnings */
+  --color-warning-light: #D98AE6;
+  --color-warning-bg: #1E1028;
 
-  --color-danger: #B983FF;
-  /* Purple - danger/delete */
-  --color-danger-light: #C9A5FF;
-  --color-danger-bg: #201830;
+  --color-danger: #9929EA;
+  /* Rich Purple - danger/delete */
+  --color-danger-light: #B14FEF;
+  --color-danger-bg: #1A0A2E;
 
-  --color-info: #94B3FD;
-  /* Periwinkle - info */
-  --color-info-light: #B0C8FE;
-  --color-info-bg: #151E30;
+  --color-info: #FAEB92;
+  /* Warm Gold - info */
+  --color-info-light: #FCF0B0;
+  --color-info-bg: #1A180F;
 
-  /* Shadows - Mixed periwinkle and cyan tones */
-  --shadow-xs: 0 1px 2px rgba(148, 179, 253, 0.08);
-  --shadow-sm: 0 1px 3px rgba(148, 179, 253, 0.1), 0 1px 2px rgba(153, 254, 255, 0.06);
-  --shadow-md: 0 4px 6px rgba(148, 179, 253, 0.1), 0 2px 4px rgba(148, 218, 255, 0.06);
-  --shadow-lg: 0 10px 15px rgba(148, 179, 253, 0.1), 0 4px 6px rgba(153, 254, 255, 0.05);
-  --shadow-xl: 0 20px 25px rgba(148, 179, 253, 0.1), 0 10px 10px rgba(148, 218, 255, 0.04);
+  /* Shadows - Purple tinted */
+  --shadow-xs: 0 1px 2px rgba(153, 41, 234, 0.08);
+  --shadow-sm: 0 1px 3px rgba(153, 41, 234, 0.1), 0 1px 2px rgba(204, 102, 218, 0.06);
+  --shadow-md: 0 4px 6px rgba(153, 41, 234, 0.1), 0 2px 4px rgba(204, 102, 218, 0.06);
+  --shadow-lg: 0 10px 15px rgba(153, 41, 234, 0.1), 0 4px 6px rgba(250, 235, 146, 0.05);
+  --shadow-xl: 0 20px 25px rgba(153, 41, 234, 0.1), 0 10px 10px rgba(204, 102, 218, 0.04);
 
-  /* Priority Colors - Each uses a different color from the palette */
-  --priority-urgent: #B983FF;
-  /* Purple - urgent */
-  --priority-high: #94DAFF;
-  /* Sky Blue - high */
-  --priority-medium: #94B3FD;
-  /* Periwinkle - medium */
-  --priority-low: #99FEFF;
-  /* Cyan - low */
+  /* Priority Colors - Each uses a different color */
+  --priority-urgent: #9929EA;
+  /* Rich Purple */
+  --priority-high: #CC66DA;
+  /* Soft Pink-Purple */
+  --priority-medium: #FAEB92;
+  /* Warm Gold */
+  --priority-low: #8A80A0;
+  /* Muted */
 
   /* Category Colors - All four colors distributed */
-  --category-health: #99FEFF;
-  /* Cyan */
-  --category-learning: #B983FF;
-  /* Purple */
-  --category-career: #94DAFF;
-  /* Sky Blue */
-  --category-personal: #94B3FD;
-  /* Periwinkle */
-  --category-finance: #C9A5FF;
+  --category-health: #FAEB92;
+  /* Warm Gold */
+  --category-learning: #9929EA;
+  /* Rich Purple */
+  --category-career: #CC66DA;
+  /* Soft Pink-Purple */
+  --category-personal: #FAEB92;
+  /* Warm Gold */
+  --category-finance: #B14FEF;
   /* Light Purple */
-  --category-other: #B8B7CC;
+  --category-other: #C8C0D4;
   /* Muted Text */
 
-  /* Chart Colors - Six distinct colors for visibility */
-  --chart-1: #B983FF;
-  /* Purple */
-  --chart-2: #94B3FD;
-  /* Periwinkle */
-  --chart-3: #94DAFF;
-  /* Sky Blue */
-  --chart-4: #99FEFF;
-  /* Cyan */
-  --chart-5: #C9A5FF;
+  /* Chart Colors - Six distinct colors */
+  --chart-1: #9929EA;
+  /* Rich Purple */
+  --chart-2: #CC66DA;
+  /* Soft Pink-Purple */
+  --chart-3: #FAEB92;
+  /* Warm Gold */
+  --chart-4: #B14FEF;
   /* Light Purple */
-  --chart-6: #B0E6FF;
-  /* Light Sky Blue */
+  --chart-5: #D98AE6;
+  /* Light Pink */
+  --chart-6: #FCF0B0;
+  /* Light Gold */
 }
 
 /* ============================================================================
@@ -294,10 +290,10 @@ body {
 }
 
 .dark .glass {
-  background: rgba(18, 19, 31, 0.7);
+  background: rgba(10, 10, 10, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(28, 29, 46, 0.6);
+  border: 1px solid rgba(26, 26, 26, 0.6);
 }
 
 /* Card styles */
@@ -385,44 +381,44 @@ body {
 /* Dark mode category overrides */
 
 .dark .category-health {
-  background: linear-gradient(135deg, #99FEFF, #94DAFF);
-  color: #0A0B14;
+  background: linear-gradient(135deg, #FAEB92, #E0D060);
+  color: #000000;
 }
 
 .dark .category-career {
-  background: linear-gradient(135deg, #94DAFF, #94B3FD);
-  color: #0A0B14;
+  background: linear-gradient(135deg, #CC66DA, #9929EA);
+  color: white;
 }
 
 .dark .category-personal {
-  background: linear-gradient(135deg, #B983FF, #94B3FD);
-  color: white;
+  background: linear-gradient(135deg, #FAEB92, #CC66DA);
+  color: #000000;
 }
 
 .dark .category-finance {
-  background: linear-gradient(135deg, #C9A5FF, #B983FF);
+  background: linear-gradient(135deg, #B14FEF, #9929EA);
   color: white;
 }
 
-
+/* Priority badge overrides */
 .dark .priority-urgent {
-  background: linear-gradient(135deg, #B983FF, #9965E8);
+  background: linear-gradient(135deg, #9929EA, #7A1FCC);
   color: white;
 }
 
 .dark .priority-high {
-  background: linear-gradient(135deg, #94DAFF, #6B8FE8);
+  background: linear-gradient(135deg, #CC66DA, #A845B8);
   color: white;
 }
 
 .dark .priority-medium {
-  background: linear-gradient(135deg, #94B3FD, #6B8FE8);
-  color: white;
+  background: linear-gradient(135deg, #FAEB92, #E0D060);
+  color: #000000;
 }
 
 .dark .priority-low {
-  background: linear-gradient(135deg, #99FEFF, #70E0E3);
-  color: #0A0B14;
+  background: linear-gradient(135deg, #8A80A0, #6B6580);
+  color: white;
 }
 
 
@@ -458,7 +454,7 @@ body {
 }
 
 .dark .gradient-text {
-  background: linear-gradient(135deg, #B983FF, #99FEFF);
+  background: linear-gradient(135deg, #9929EA, #FAEB92);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -542,11 +538,11 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(153, 254, 255, 0.4);
+    box-shadow: 0 0 0 0 rgba(250, 235, 146, 0.4);
   }
 
   50% {
-    box-shadow: 0 0 0 12px rgba(153, 254, 255, 0);
+    box-shadow: 0 0 0 12px rgba(250, 235, 146, 0);
   }
 }
 
@@ -725,6 +721,6 @@ body {
 
 /* Selection */
 .dark ::selection {
-  background-color: #99FEFF;
-  color: #0A0B14;
+  background-color: #9929EA;
+  color: white;
 }
