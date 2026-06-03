@@ -22,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Columns, Rows, LayoutGrid } from "lucide-react";
+import { GripVertical, Columns, Rows } from "lucide-react";
 
 interface DashboardLayoutProps {
   habitsSection: React.ReactNode;
@@ -52,19 +52,12 @@ function SortableSection({
   };
 
   return (
-    <motion.div
+    <div
       ref={setNodeRef}
       style={style}
-      layout
-      animate={{
-        opacity: isDragging ? 0.5 : 1,
-        scale: isDragging ? 0.98 : 1,
-        boxShadow: isDragging
-          ? "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-          : "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
-      }}
-      transition={{ duration: 0.2 }}
-      className="relative group break-inside-avoid"
+      className={`relative group break-inside-avoid transition-all duration-200 ${
+        isDragging ? "opacity-40 scale-[0.98]" : "opacity-100 scale-100"
+      }`}
     >
       <div
         {...attributes}
@@ -75,7 +68,7 @@ function SortableSection({
         <GripVertical size={16} />
       </div>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -172,8 +165,7 @@ export function DashboardLayout({
           items={visibleSections}
           strategy={verticalListSortingStrategy}
         >
-          <motion.div
-            layout
+          <div
             className={
               layoutMode === "double"
                 ? "columns-1 lg:columns-2 gap-4 space-y-4"
@@ -183,24 +175,18 @@ export function DashboardLayout({
             <AnimatePresence mode="popLayout">
               {visibleSections.map((sectionId) => (
                 <SortableSection key={sectionId} id={sectionId}>
-                  <React.Fragment key={sectionId}>
-                    {sections[sectionId]}
-                  </React.Fragment>
+                  {sections[sectionId]}
                 </SortableSection>
               ))}
             </AnimatePresence>
-          </motion.div>
+          </div>
         </SortableContext>
 
         <DragOverlay>
           {activeId && sections[activeId] ? (
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1.05, rotate: 1 }}
-              className="shadow-2xl opacity-95"
-            >
+            <div className="opacity-95 scale-[1.02] shadow-2xl rounded-2xl">
               {sections[activeId]}
-            </motion.div>
+            </div>
           ) : null}
         </DragOverlay>
       </DndContext>
