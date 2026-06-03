@@ -11,6 +11,10 @@ import { DailyBreakdown } from "./_components/DailyBreakdown";
 import { Comparisons } from "./_components/Comparisons";
 import { RecentActivity } from "./_components/RecentActivity";
 import { AIInsights } from "./_components/AIInsights";
+import { SummaryFeedback } from "./_components/SummaryFeedback";
+import { Task } from "@/types";
+import { serverApi } from "@/lib/server-api";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +26,11 @@ export default async function AnalyticsPage() {
     serverTimeEntryService.getAll({ limit: 100 }),
   ]);
 
+  const tasksData = await serverApi.get<Task[]>("/tasks", {
+    revalidate: false,
+  });
+
+  const allTasks = Array.isArray(tasksData) ? tasksData : [];
   const timeEntries = Array.isArray(timeEntriesData) ? timeEntriesData : [];
 
   const totalGoals = goals.length;
@@ -76,8 +85,19 @@ export default async function AnalyticsPage() {
 
       <DailyBreakdown goals={goals} habits={habits} timeEntries={timeEntries} />
 
+      <Suspense
+        fallback={
+          <div className="bg-surface rounded-2xl border border-border p-6 animate-pulse">
+            <div className="h-4 bg-border rounded w-1/3 mb-4" />
+            <div className="h-3 bg-border rounded w-full mb-2" />
+            <div className="h-3 bg-border rounded w-3/4" />
+          </div>
+        }
+      >
+        <SummaryFeedback goals={goals} habits={habits} tasks={allTasks} />
+      </Suspense>
+
       <Comparisons goals={goals} habits={habits} />
-      <AIInsights goals={goals} habits={habits} timeEntries={timeEntries} />
       <RecentActivity timeEntries={timeEntries.slice(0, 10)} goals={goals} />
     </div>
   );

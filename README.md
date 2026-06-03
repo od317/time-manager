@@ -1,115 +1,113 @@
 # ⏱️ TimeFlow
 
-A comprehensive time management application built with Next.js 16, React 19, and TypeScript. Track goals, habits, and time with a beautiful, responsive interface.
+A comprehensive time management application with goal tracking, habit building, Pomodoro timer, and analytics. Built with Next.js 16, Express, Prisma, and PostgreSQL.
 
 ## 🚀 Tech Stack
 
-| Category             | Technology                         |
-| -------------------- | ---------------------------------- |
-| **Framework**        | Next.js 16 (App Router)            |
-| **UI Library**       | React 19                           |
-| **Language**         | TypeScript                         |
-| **Styling**          | Tailwind CSS v4                    |
-| **State Management** | Zustand                            |
-| **HTTP Client**      | Axios (with request deduplication) |
-| **Drag & Drop**      | @dnd-kit                           |
-| **Icons**            | Lucide React                       |
-| **Charts**           | Recharts                           |
-| **Dates**            | date-fns                           |
-| **Sound**            | Web Audio API                      |
-| **AI**               | OpenRouter (Gemini 2.0 Flash)      |
+| Layer           | Technology                                                                    |
+| --------------- | ----------------------------------------------------------------------------- |
+| **Frontend**    | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion |
+| **Backend**     | Express.js, Prisma ORM, PostgreSQL                                            |
+| **State**       | Zustand                                                                       |
+| **Charts**      | Recharts                                                                      |
+| **Drag & Drop** | @dnd-kit                                                                      |
+| **Auth**        | JWT (cookies)                                                                 |
+| **Email**       | Resend                                                                        |
+| **AI**          | OpenRouter (Gemini 2.0 Flash)                                                 |
+| **Database**    | Neon (serverless PostgreSQL)                                                  |
+| **Hosting**     | Vercel (frontend) + Render (backend)                                          |
 
 ## ✨ Features
 
 ### ⏱️ Timer System
 
 - **Three modes**: Simple, Pomodoro, Quick Log
-- **Task context switching**: Change tasks mid-session without losing time
-- **Session history**: Track time per task with live updates and grouped display
-- **Pomodoro presets**: Classic, Short Focus, Deep Work, Meeting Style, Power Hour, Custom
-- **Customizable durations**: Work, short break, long break, sessions before long break
+- **Task context switching**: Change tasks while timer runs without losing time
+- **Session history**: Track time per task with grouped display
+- **Pomodoro presets**: Classic, Short Focus, Deep Work, Meeting, Power Hour, Custom
 - **Sound notifications**: Audio cues for phase changes
-- **Persistence**: Survives page reloads via localStorage with automatic pause on reload
-- **Browser tab timer**: See elapsed time in the tab title
-- **Goal progress auto-sync**: Time tracked on time-based goals updates progress automatically
+- **Persistence**: Survives page reloads via localStorage
+- **Browser tab timer**: See elapsed time in tab title
 
 ### 🎯 Goals
 
-- **Hierarchical goals**: Nest sub-goals infinitely with expand/collapse
-- **Three goal types**: Quantity, Time-based, Project
-- **Color coding**: 16 colors, sub-goals inherit parent color
-- **Progress tracking**: Manual updates + automatic timer sync for time-based goals
-- **Tasks**: Break goals into actionable items with priority, estimated time, and due dates
-- **Calendar-based creation**: Pick start/end dates with optional time selection
-- **Drag & drop reordering**: Reorder goals and sub-goals on the Today page
-- **Auto-fail overdue goals**: Goals past their deadline are automatically marked as failed
-- **Sub-goal management**: Create, edit, and nest sub-goals from the detail page
+- **Hierarchical**: Nest sub-goals infinitely
+- **Three types**: Quantity, Time-based, Project
+- **16 colors**: Sub-goals inherit parent color
+- **Progress tracking**: Manual + auto-sync from timer
+- **Tasks**: Break goals into actionable items
+- **Calendar**: Pick dates with conflict detection
+- **Drag & drop**: Reorder goals and sub-goals
+- **Auto-fail**: Overdue goals marked automatically
+- **Locked completion**: Can't complete goals with active sub-goals/tasks
 
 ### 🔄 Habits
 
-- **Flexible scheduling**: Daily, weekly, or custom frequency
-- **Day picker**: Select specific days for weekly habits
-- **Streak tracking**: Current streak, longest streak, total completions
-- **Amount tracking**: Log specific values, not just yes/no
-- **Heatmap view**: GitHub-style yearly activity visualization
-- **Log history**: Recent activity with Today/Yesterday labels
-- **Browser-based date handling**: All date logic uses browser's local time
-- **Edit habits**: Modal with title, description, and color
-- **Pause/Resume/Archive/Delete**: Full lifecycle management
-- **Time remaining**: Countdown until midnight for today's habits
+- **Flexible scheduling**: Daily, weekly, custom frequency
+- **Streaks**: Current, longest, total completions
+- **Heatmap**: GitHub-style yearly activity view
+- **Log history**: Today/Yesterday labels
+- **Browser-based dates**: All logic uses local time
+- **Pause/Resume/Archive**: Full lifecycle
 
-### 📊 Analytics Dashboard
+### 📊 Analytics
 
-- **Overview stats**: Goals completed, active habits, time tracked
-- **Goal progress chart**: Horizontal bar chart with goal colors
-- **Habit consistency**: Current vs longest streak comparison
-- **Time distribution**: Donut chart showing time by goal
-- **Productivity patterns**: Habit load by day, priority distribution, weekly wins
-- **Daily breakdown**: Line chart with week/month/year views
-- **Comparison mode**: Compare with previous period (dashed lines)
-- **AI-powered insights**: Personalized suggestions based on your data
-- **Recent activity**: Last 10 time entries with context
+- **Overview stats**: Goals, habits, time tracked
+- **Goal progress**: Horizontal bar chart with colors
+- **Habit consistency**: Streak comparison chart
+- **Time distribution**: Donut chart by goal
+- **Daily breakdown**: Line chart with week/month/year
+- **Comparison mode**: Previous period comparison
+- **AI insights**: Personalized suggestions (OpenRouter)
+- **Productivity patterns**: Day activity, priority distribution
 
-### 🎨 Dashboard Layout
+### 🎨 Dashboard
 
-- **Customizable layout**: Single or double column mode
-- **Draggable sections**: Reorder Habits, Tasks, and Goals sections
-- **Collapsible sections**: Expand/collapse each section independently
-- **Goal hierarchy**: Expand goals to see sub-goals and tasks inline
-- **Quick timer start**: Start timer directly from any task
-- **Dark mode**: Full dark mode support with no flash on load
+- **Customizable layout**: Single/double column, drag sections
+- **Collapsible sections**: Habits, Tasks, Goals
+- **Goal hierarchy**: Expand to see sub-goals and tasks
+- **Quick task add**: Modal from any goal
+- **Dark mode**: Full support, no flash on load
+- **Responsive**: Mobile bottom nav
 
-### 🔧 Other Features
+### 🔧 Auth & Email
 
-- **Settings page**: Profile management
-- **404 page**: Custom not-found page
-- **Request deduplication**: Automatic cancellation of duplicate API calls
-- **Race condition protection**: AbortController for stale requests
-- **Cookie-based auth**: JWT stored in cookies for security
-- **Server Components**: SSR/SSG with revalidation for initial data
-- **Responsive design**: Mobile bottom nav, adaptive layouts
+- **Register/Login**: JWT-based with cookies
+- **Email verification**: Resend integration
+- **Password reset**: Secure token-based flow
+- **Route protection**: Proxy middleware
 
 ## 📁 Project Structure
 
 ```
-frontend/
-├── app/
-│   ├── (auth)/              # Login/Register pages
-│   ├── (app)/               # Authenticated pages
-│   │   ├── today/           # Main dashboard
-│   │   ├── goals/           # Goals CRUD + hierarchy
-│   │   ├── habits/          # Habits list + detail
-│   │   ├── analytics/       # Charts & insights
-│   │   ├── create/          # Goal/habit creation
-│   │   └── settings/        # User preferences
-├── components/
-│   ├── calendar/            # Calendar, TimePicker, DayDetails
-│   ├── tasks/               # Shared TaskItem component
-│   └── ui/                  # ThemeProvider, ThemeToggle
-├── hooks/                   # useGoalProgressSync
-├── lib/                     # Utilities, services, persistence
-├── store/                   # Zustand stores (auth, timer, ui)
-└── types/                   # TypeScript types
+timeflow/
+├── frontend/                    # Next.js application
+│   ├── app/
+│   │   ├── (auth)/              # Login, Register, Forgot/Reset password
+│   │   └── (app)/               # Authenticated pages
+│   │       ├── today/           # Dashboard with timer, habits, goals
+│   │       ├── goals/           # Goals CRUD + detail page
+│   │       ├── habits/          # Habits list + detail + heatmap
+│   │       ├── analytics/       # Charts, daily breakdown, AI insights
+│   │       ├── create/          # Goal/habit creation with calendar
+│   │       └── settings/        # Profile management
+│   ├── components/
+│   │   ├── calendar/            # Calendar, TimePicker, DayDetails
+│   │   └── tasks/               # Shared TaskItem
+│   ├── hooks/                   # Custom hooks
+│   ├── lib/                     # API client, services, utils
+│   ├── store/                   # Zustand stores
+│   └── types/                   # TypeScript types
+│
+├── backend/                     # Express API
+│   ├── controllers/             # Auth, Goal, Habit, TimeEntry
+│   ├── middleware/               # Auth, Error handler
+│   ├── routes/                  # API routes
+│   ├── services/                # Deadline service
+│   ├── utils/                   # Prisma, Email (Resend)
+│   ├── prisma/
+│   │   └── schema.prisma        # Database schema
+│   └── server.js                # Entry point
 ```
 
 ## 🔧 Getting Started
@@ -117,19 +115,45 @@ frontend/
 ### Prerequisites
 
 - Node.js 20+
-- PostgreSQL 15+
-- Backend server running (see backend README)
+- PostgreSQL (local) or Neon (cloud)
+- Resend account (for emails)
 
 ### Installation
 
 ```bash
+# Clone the repo
+git clone https://github.com/yourusername/timeflow.git
+cd timeflow
+
+# Backend
+cd backend
+npm install
+cp .env.example .env  # Edit with your values
+npx prisma migrate dev --name init
+npx prisma generate
+npm run dev
+
+# Frontend (new terminal)
 cd frontend
 npm install
-cd ../backend
-npm install
+cp .env.local.example .env.local  # Edit with your values
+npm run dev
 ```
 
 ### Environment Variables
+
+**Backend** (`.env`):
+
+```env
+PORT=5000
+DATABASE_URL="postgresql://..."
+JWT_SECRET=your-secret-key
+JWT_EXPIRE=7d
+CLIENT_URL=http://localhost:3000
+RESEND_API_KEY=re_your_key
+OPENROUTER_API_KEY=sk-or-v1-your-key
+SETUP_SECRET=your-setup-secret
+```
 
 **Frontend** (`.env.local`):
 
@@ -137,46 +161,39 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
-**Backend** (`.env`):
+## 🚀 Deployment
 
-```env
-PORT=5000
-DATABASE_URL="postgresql://postgres:password@localhost:5432/timemanager"
-JWT_SECRET=your-secret-key
-JWT_EXPIRE=7d
-CLIENT_URL=http://localhost:3000
-OPENROUTER_API_KEY=your-openrouter-key
-```
+### Frontend (Vercel)
 
-### Database Setup
+1. Push to GitHub
+2. Import project on Vercel
+3. Set `NEXT_PUBLIC_API_URL` to your Render API URL
+4. Deploy
 
-```bash
-cd backend
-npx prisma migrate dev --name init
-npx prisma generate
-```
+### Backend (Render)
 
-### Seed Data (Optional)
+1. Push to GitHub
+2. Create Web Service on Render
+3. Set environment variables
+4. Build: `npm install && npx prisma generate`
+5. Start: `node server.js`
 
-```bash
-node scripts/seed.js
-```
+### Database (Neon)
 
-### Development
-
-```bash
-# Terminal 1 - Backend
-cd backend
-npm run dev
-
-# Terminal 2 - Frontend
-cd frontend
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000)
+1. Create project on Neon
+2. Copy connection string
+3. Set `DATABASE_URL` on Render
+4. Run migrations via setup endpoint
 
 ## 🎯 Key Design Patterns
+
+### Request Deduplication
+
+Duplicate API calls are automatically cancelled:
+
+```typescript
+api.post("/goals", data, CancelKeys.GOAL_CREATE);
+```
 
 ### Timer State Machine
 
@@ -184,23 +201,16 @@ Open [http://localhost:3000](http://localhost:3000)
 IDLE → RUNNING → PAUSED → RUNNING → COMPLETED
 ```
 
-### Request Deduplication
-
-```typescript
-api.post("/goals", data, CancelKeys.GOAL_CREATE);
-// Second call cancels the first
-```
-
 ### Browser-Based Date Logic
 
-All date calculations use the browser's local time:
+All date calculations use browser's local time, no server timezone dependencies.
 
-- `new Date().getDay()` for day of week
-- `toLocaleDateString('en-CA')` for YYYY-MM-DD format
-- No server timezone dependencies
+### Modal Management
 
-### Dark Mode
+Global modal store prevents prop drilling and DOM nesting issues.
 
-Theme preference stored in both cookie (server-side, no flash) and localStorage (client persistence).
+## 📄 License
+
+MIT
 
 ---

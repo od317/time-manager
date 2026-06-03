@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import { Goal, Habit, TimeEntry } from "@/types";
+import { Goal, Habit, Task, TimeEntry } from "@/types";
 
 interface AIInsight {
   title: string;
@@ -7,11 +7,19 @@ interface AIInsight {
   type: "summary" | "suggestion" | "encouragement" | "pattern";
 }
 
+export interface AIFeedback {
+  overall: string;
+  strengths: string[];
+  improvements: string[];
+  recommendation: string;
+}
+
 export const aiService = {
   generateInsights: (data: {
     goals: Goal[];
     habits: Habit[];
-    timeEntries: TimeEntry[];
+    tasks?: Task[];
+    timeEntries?: TimeEntry[];
     period: string;
-  }) => api.post<{ insights: AIInsight[] }>("/ai/insights", data),
+  }) => api.post<AIFeedback>("/api/ai/insights", data, "ai:insights"),
 };
