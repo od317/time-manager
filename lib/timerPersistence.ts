@@ -2,6 +2,16 @@
 
 const STORAGE_KEY = "timer-session";
 
+const POMODORO_CONFIG_KEY = "pomodoro-config";
+
+interface PomodoroConfigStorage {
+  workDuration: number;
+  shortBreakDuration: number;
+  longBreakDuration: number;
+  sessionsBeforeLongBreak: number;
+  selectedPreset: string;
+}
+
 export interface PersistedTimerState {
   runningTimerId: string | null;
   sessionStartTime: number | null;
@@ -36,6 +46,16 @@ export function saveTimerState(state: PersistedTimerState) {
     );
   } catch {
     // localStorage full or unavailable
+  }
+}
+
+export function loadPomodoroConfig(): PomodoroConfigStorage | null {
+  try {
+    const data = localStorage.getItem(POMODORO_CONFIG_KEY);
+    if (!data) return null;
+    return JSON.parse(data);
+  } catch {
+    return null;
   }
 }
 

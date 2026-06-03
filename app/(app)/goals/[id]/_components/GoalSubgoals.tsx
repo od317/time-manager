@@ -74,31 +74,32 @@ export function GoalSubgoals({ subGoals }: GoalSubgoalsProps) {
                     {subGoal.status}
                   </span>
                 </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-text-muted flex items-center gap-1.5">
-                      <TrendingUp size={12} />
-                      Progress
-                    </span>
-                    <span className="font-bold text-text">
-                      {Math.round(subGoal.progress || 0)}%
-                    </span>
+                {subGoal.goalType === "project" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-text-muted flex items-center gap-1.5">
+                        <TrendingUp size={12} />
+                        Progress
+                      </span>
+                      <span className="font-bold text-text">
+                        {Math.round(subGoal.progress || 0)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${Math.min(subGoal.progress || 0, 100)}%`,
+                        }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor: subGoal.color || "#9FA1FF",
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${Math.min(subGoal.progress || 0, 100)}%`,
-                      }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                      className="h-full rounded-full"
-                      style={{
-                        backgroundColor: subGoal.color || "#9FA1FF",
-                      }}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
               <motion.div

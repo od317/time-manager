@@ -37,6 +37,7 @@ interface TimerSessionEntry {
 interface TimerState {
   runningTimer: TimeEntry | null;
   elapsed: number;
+  selectedPreset: string;
   isLoading: boolean;
   selectedTask: Task | null;
   selectedGoal: Goal | null;
@@ -97,6 +98,7 @@ function buildPersistedState(state: TimerState, runningTimerId: string | null) {
 export const useTimerStore = create<TimerState>((set, get) => ({
   runningTimer: null,
   elapsed: 0,
+  selectedPreset: "classic",
   isLoading: false,
   selectedTask: null,
   selectedGoal: null,

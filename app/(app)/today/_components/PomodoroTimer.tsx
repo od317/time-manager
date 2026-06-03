@@ -6,6 +6,7 @@ import { useTimerStore } from "@/store/timerStore";
 import { Play, Pause, Square, Brain, Coffee, Zap } from "lucide-react";
 import { resumeAudioContext } from "@/lib/sounds";
 import { PomodoroSettings } from "./PomodoroSettings";
+import { loadPomodoroConfig } from "@/lib/timerPersistence";
 
 export function PomodoroTimer() {
   const {
@@ -24,6 +25,7 @@ export function PomodoroTimer() {
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = selectedTask !== null;
+  const selectedPreset = useTimerStore((s) => s.selectedPreset) || "Classic";
 
   const clearTimerInterval = useCallback(() => {
     if (intervalRef.current) {
@@ -31,6 +33,9 @@ export function PomodoroTimer() {
       intervalRef.current = null;
     }
   }, []);
+
+  const savedConfig =
+    typeof window !== "undefined" ? loadPomodoroConfig() : null;
 
   useEffect(() => {
     if (pomodoroState && sessionStartTime) {
@@ -142,6 +147,9 @@ export function PomodoroTimer() {
         <div>
           <span className={`text-sm font-bold ${phaseInfo.color}`}>
             {phaseInfo.label}
+          </span>
+          <span className="text-xs text-text-muted block">
+            {selectedPreset}
           </span>
           {isRunning && (
             <motion.p

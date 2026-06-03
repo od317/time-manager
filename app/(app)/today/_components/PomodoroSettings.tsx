@@ -31,6 +31,19 @@ export function PomodoroSettings() {
     setShortBreakDuration(preset.shortBreakDuration);
     setLongBreakDuration(preset.longBreakDuration);
     setSessionsBeforeLongBreak(preset.sessionsBeforeLongBreak);
+
+    if (preset.id !== "custom") {
+      const config = {
+        workDuration: preset.workDuration * 60,
+        shortBreakDuration: preset.shortBreakDuration * 60,
+        longBreakDuration: preset.longBreakDuration * 60,
+        sessionsBeforeLongBreak: preset.sessionsBeforeLongBreak,
+      };
+      useTimerStore.setState({
+        pomodoroConfig: config,
+        selectedPreset: preset.id,
+      });
+    }
   };
 
   const handleSave = () => {
@@ -41,6 +54,7 @@ export function PomodoroSettings() {
         longBreakDuration: longBreakDuration * 60,
         sessionsBeforeLongBreak,
       },
+      selectedPreset: selectedPreset, // 👈 Add this
     });
     setSaved(true);
     setTimeout(() => {
