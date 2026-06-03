@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
+import { useTaskStore } from "@/store/taskStore";
 import { Goal, Task } from "@/types";
 import { X, CheckCircle2, ChevronDown, Layers, Search } from "lucide-react";
 import { taskService } from "@/lib/services/taskService";
@@ -14,6 +15,7 @@ interface TaskSelectorProps {
 export function TaskSelector({ goals }: TaskSelectorProps) {
   const { selectedTask, setSelectedTask, clearSelection, runningTimer } =
     useTimerStore();
+  const { localCompletedIds, markComplete } = useTaskStore();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -34,7 +36,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelectTask = async (task: Task) => {
+  const handleSelectTask = (task: Task) => {
     setSelectedTask(task);
     setIsOpen(false);
     setSearch("");
@@ -45,6 +47,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
   const allTasks = activeGoals.flatMap((goal) =>
     (goal.tasks || [])
       .filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS")
+      .filter((t) => !localCompletedIds.has(t.id))
       .map((task) => ({ ...task, goal })),
   );
 
@@ -127,7 +130,6 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
             transition={{ duration: 0.2 }}
             className="absolute top-full mt-2 right-0 w-80 bg-surface rounded-2xl border border-border shadow-xl z-50 overflow-hidden"
           >
-            {/* Search */}
             <div className="p-3 border-b border-border">
               <div className="flex items-center gap-2 px-3 py-2 bg-bg rounded-xl">
                 <Search size={14} className="text-text-muted" />
@@ -142,7 +144,6 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
               </div>
             </div>
 
-            {/* Tasks List */}
             <div className="max-h-72 overflow-y-auto p-2">
               {filteredTasks.length === 0 ? (
                 <div className="text-center py-8">
@@ -156,7 +157,9 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                 activeGoals
                   .filter((goal) =>
                     (goal.tasks || []).some(
-                      (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
+                      (t) =>
+                        (t.status === "TODO" || t.status === "IN_PROGRESS") &&
+                        !localCompletedIds.has(t.id),
                     ),
                   )
                   .map((goal) => {
@@ -165,6 +168,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                         (t) =>
                           t.status === "TODO" || t.status === "IN_PROGRESS",
                       )
+                      .filter((t) => !localCompletedIds.has(t.id))
                       .filter(
                         (t) =>
                           !search ||
@@ -187,7 +191,6 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                             {goalTasks.length}
                           </span>
                         </div>
-
                         <div className="ml-4 border-l-2 border-border/50 pl-3 space-y-0.5">
                           {goalTasks.map((task) => (
                             <div key={task.id} className="relative group">
@@ -203,11 +206,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                               >
                                 <CheckCircle2
                                   size={16}
-                                  className={`flex-shrink-0 ${
-                                    selectedTask?.id === task.id
-                                      ? "text-primary"
-                                      : "text-text-muted"
-                                  }`}
+                                  className={`flex-shrink-0 ${selectedTask?.id === task.id ? "text-primary" : "text-text-muted"}`}
                                 />
                                 <span className="text-sm truncate flex-1 font-medium">
                                   {task.title}
@@ -221,8 +220,6 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                   <span className="w-2 h-2 rounded-full bg-danger flex-shrink-0 animate-pulse" />
                                 )}
                               </motion.button>
-
-                              {/* Quick complete - outside the main button */}
                               <div
                                 onClick={async (e) => {
                                   e.stopPropagation();
@@ -230,25 +227,14 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                     await taskService.update(task.id, {
                                       status: "COMPLETED",
                                     });
+                                    markComplete(task.id);
                                     if (selectedTask?.id === task.id) {
                                       clearSelection();
                                     }
-                                    window.location.reload();
-                                  } catch {
-                                    // Handle silently
-                                  }
+                                  } catch {}
                                 }}
                                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-success-bg text-text-muted hover:text-success transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                                 title="Mark complete"
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    // Same logic as onClick
-                                  }
-                                }}
                               >
                                 <CheckCircle2 size={14} />
                               </div>
@@ -260,8 +246,6 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                   })
               )}
             </div>
-
-            {/* Footer */}
             <div className="p-3 border-t border-border bg-bg">
               <p className="text-[10px] text-text-muted text-center">
                 {filteredTasks.length} task

@@ -4,13 +4,14 @@ import { useEffect, useRef, useCallback } from "react";
 import { Goal, TimeEntry } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
+import { useTaskStore } from "@/store/taskStore";
 import { TaskSelector } from "./TaskSelector";
 import { TimerModeTabs } from "./TimerModeTabs";
 import { QuickLogForm } from "./QuickLogForm";
 import { PomodoroTimer } from "./PomodoroTimer";
 import { Play, Pause, Square, Clock, CheckCircle2 } from "lucide-react";
 import { SessionHistory } from "./SessionHistory";
-import { useRouter } from "next/navigation";
+import { taskService } from "@/lib/services/taskService";
 
 interface TodayTimerProps {
   runningTimer: TimeEntry | null;
@@ -31,8 +32,7 @@ export function TodayTimer({
     timerMode,
     selectedTask,
   } = store;
-  const router = useRouter();
-
+  const { markComplete } = useTaskStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = useTimerStore((s) => s.selectedTask !== null);
 
@@ -56,11 +56,10 @@ export function TodayTimer({
       timerMode === "SIMPLE"
     ) {
       const tick = () => {
-        const currentElapsed = Math.floor(
-          (Date.now() - sessionStartTime) / 1000,
-        );
         useTimerStore.setState({
-          elapsed: accumulatedBeforePause + currentElapsed,
+          elapsed:
+            accumulatedBeforePause +
+            Math.floor((Date.now() - sessionStartTime) / 1000),
         });
       };
       tick();
@@ -97,7 +96,6 @@ export function TodayTimer({
       transition={{ duration: 0.4, delay: 0.1 }}
       className="bg-surface rounded-2xl border border-border shadow-sm"
     >
-      {/* Header */}
       <div className="flex items-center justify-between p-6 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary-bg">
@@ -108,33 +106,21 @@ export function TodayTimer({
         </div>
         <TaskSelector goals={goals} />
       </div>
-
-      {/* Timer Modes */}
       <div className="px-6 pb-4">
         <TimerModeTabs />
       </div>
-
-      {/* Timer Content */}
       <div className="px-6 pb-6">
         {timerMode === "QUICK_LOG" && <QuickLogForm />}
         {timerMode === "POMODORO" && <PomodoroTimer />}
-
         {timerMode === "SIMPLE" && (
           <div className="text-center">
-            {/* Timer Display */}
             <motion.div
               className="mb-8"
               animate={isRunning ? { scale: [1, 1.02, 1] } : {}}
               transition={{ duration: 2, repeat: Infinity }}
             >
               <span
-                className={`text-7xl font-mono font-bold tabular-nums tracking-tight ${
-                  isRunning
-                    ? "text-primary"
-                    : isPaused
-                      ? "text-warning"
-                      : "text-text"
-                }`}
+                className={`text-7xl font-mono font-bold tabular-nums tracking-tight ${isRunning ? "text-primary" : isPaused ? "text-warning" : "text-text"}`}
               >
                 {formatTime(elapsed)}
               </span>
@@ -162,8 +148,6 @@ export function TodayTimer({
                 </motion.div>
               )}
             </motion.div>
-
-            {/* Controls */}
             <div className="flex items-center justify-center gap-3">
               <AnimatePresence mode="wait">
                 {!isActive ? (
@@ -205,11 +189,7 @@ export function TodayTimer({
                         whileTap={{ scale: 0.95 }}
                         onClick={() => useTimerStore.getState().resume()}
                         disabled={!hasSelection}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all ${
-                          hasSelection
-                            ? "bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
-                            : "bg-border text-text-muted cursor-not-allowed"
-                        }`}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all ${hasSelection ? "bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30" : "bg-border text-text-muted cursor-not-allowed"}`}
                       >
                         <Play size={18} className="fill-current" /> Resume
                       </motion.button>
@@ -226,43 +206,14 @@ export function TodayTimer({
                 )}
               </AnimatePresence>
             </div>
-
             {isPaused && !hasSelection && (
               <p className="text-xs text-text-muted mt-3">
                 Select a task to resume
               </p>
             )}
-
-            {/* Complete current task */}
-            {isActive && selectedTask && (
-              <button
-                onClick={async () => {
-                  try {
-                    const { taskService } =
-                      await import("@/lib/services/taskService");
-                    if (isActive) {
-                      await useTimerStore.getState().pause();
-                    }
-                    await taskService.update(selectedTask.id, {
-                      status: "COMPLETED",
-                    });
-                    useTimerStore.getState().clearSelection();
-                    router.refresh();
-                  } catch {
-                    // Handle silently
-                  }
-                }}
-                className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 bg-success-bg text-success rounded-xl text-sm font-semibold hover:bg-success/10 transition-all"
-              >
-                <CheckCircle2 size={16} />
-                Complete & Pause
-              </button>
-            )}
           </div>
         )}
       </div>
-
-      {/* Selected Task Indicator */}
       {selectedTask && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -277,29 +228,21 @@ export function TodayTimer({
             Focusing on:{" "}
             <span className="font-medium text-text">{selectedTask.title}</span>
           </span>
-
           <button
             onClick={async () => {
               try {
-                const { taskService } =
-                  await import("@/lib/services/taskService");
-                if (isActive) {
-                  await useTimerStore.getState().pause();
-                }
+                if (isRunning) await useTimerStore.getState().pause();
                 await taskService.update(selectedTask.id, {
                   status: "COMPLETED",
                 });
+                markComplete(selectedTask.id);
                 useTimerStore.getState().clearSelection();
-                router.refresh();
-              } catch {
-                // Handle silently
-              }
+              } catch {}
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-success hover:bg-success-bg transition-all flex-shrink-0"
             title="Mark task as complete"
           >
-            <CheckCircle2 size={14} />
-            Complete
+            <CheckCircle2 size={14} /> Complete
           </button>
         </motion.div>
       )}

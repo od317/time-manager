@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { TaskEditModal } from "./TaskEditModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
+import { useTaskStore } from "@/store/taskStore";
 
 interface TodayTasksProps {
   tasks: Task[];
@@ -31,13 +32,17 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
+  const { localCompletedIds, markComplete } = useTaskStore();
+  const visibleTasks = tasks.filter((t) => !localCompletedIds.has(t.id));
 
   const handleToggle = async (task: Task) => {
     setCompletingId(task.id);
     try {
-      await taskService.update(task.id, {
-        status: task.status === "COMPLETED" ? "TODO" : "COMPLETED",
-      });
+      const newStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
+      await taskService.update(task.id, { status: newStatus });
+      if (newStatus === "COMPLETED") {
+        markComplete(task.id);
+      }
       router.refresh();
     } catch {
       // Handle silently
@@ -71,7 +76,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   >();
   const unassignedTasks: Task[] = [];
 
-  tasks.forEach((task) => {
+  visibleTasks.forEach((task) => {
     if (task.goalId) {
       const goal = goals.find((g) => g.id === task.goalId);
       if (!tasksByGoal.has(task.goalId)) {
@@ -91,10 +96,10 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
     });
   });
 
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
+  const totalTasks = visibleTasks.length;
+  const completedTasks = visibleTasks.filter((t) => t.status === "COMPLETED").length;
 
-  if (tasks.length === 0) {
+  if (visibleTasks.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}

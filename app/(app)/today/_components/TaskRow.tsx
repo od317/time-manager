@@ -2,6 +2,7 @@
 
 import { Task } from "@/types";
 import { useTimerStore } from "@/store/timerStore";
+import { useTaskStore } from "@/store/taskStore";
 import { Circle, Play, CheckCircle2 } from "lucide-react";
 
 interface TaskRowProps {
@@ -12,7 +13,10 @@ interface TaskRowProps {
 export function TaskRow({ task, onToggle }: TaskRowProps) {
   const isSelected = useTimerStore((s) => s.selectedTask?.id === task.id);
   const setSelectedTask = useTimerStore((s) => s.setSelectedTask);
-  const isCompleted = task.status === "COMPLETED";
+  const isLocallyCompleted = useTaskStore((s) =>
+    s.localCompletedIds.has(task.id),
+  );
+  const isCompleted = task.status === "COMPLETED" || isLocallyCompleted;
 
   const handleStartTask = () => {
     setSelectedTask(task);
@@ -31,7 +35,6 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
             : "text-text-secondary hover:bg-border-light"
       }`}
     >
-      {/* Complete toggle - only shows if onToggle is provided */}
       {onToggle ? (
         <button
           onClick={() => onToggle(task)}

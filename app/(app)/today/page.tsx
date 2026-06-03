@@ -75,14 +75,15 @@ export default async function TodayPage() {
         <TodayTimer runningTimer={runningTimer} goals={goals} />
 
         <DashboardLayout
-          habitsSection={<TodayHabits habits={habitsDueToday} />}
+          habitsSection={<TodayHabits key={"habits"} habits={habitsDueToday} />}
           tasksSection={
             focusTasks.length > 0 && (
-              <TodayTasks tasks={focusTasks} goals={goals} />
+              <TodayTasks key={"tasks"} tasks={focusTasks} goals={goals} />
             )
           }
           goalsSection={
             <TodayGoals
+              key={"goals"}
               goals={goals}
               totalCount={goals.length}
               allGoals={goals}
