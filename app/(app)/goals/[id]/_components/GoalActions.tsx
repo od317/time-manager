@@ -23,6 +23,7 @@ export function GoalActions({ goal }: GoalActionsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const hasCompletedParent = goal.parent?.status === "COMPLETED";
 
   const handleStatusChange = async (status: string) => {
     setIsLoading(true);
@@ -122,7 +123,7 @@ export function GoalActions({ goal }: GoalActionsProps) {
           </>
         )}
 
-        {!isActive && (
+        {!isActive && !hasCompletedParent && (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
