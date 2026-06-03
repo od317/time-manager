@@ -10,6 +10,7 @@ import { TodayTasks } from "./_components/TodayTasks";
 import { TodayTimer } from "./_components/TodayTimer";
 import { TimerTitle } from "./_components/TimerTitle";
 import { DashboardLayout } from "./_components/DashboardLayout";
+import { TodayModals } from "./_components/TodayModals";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,8 @@ export default async function TodayPage() {
   return (
     <>
       <TimerTitle />
+      <TodayModals allGoals={goals} />
+
       <div className="space-y-6 pb-20 md:pb-6">
         <TodayOverview
           goals={goals}

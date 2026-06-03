@@ -30,9 +30,11 @@ import {
   CornerDownRight,
   CheckSquare,
   GripVertical,
+  Plus,
 } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
 import { TaskRow } from "./TaskRow";
+import { useModalStore } from "@/store/modalStore";
 
 interface SortableGoalItemProps {
   goal: Goal;
@@ -49,6 +51,7 @@ export function SortableGoalItem({
   const [activeId, setActiveId] = useState<string | null>(null);
   const { goalOrder, setGoalOrder } = useUIStore();
   const router = useRouter();
+  const { openQuickTask } = useModalStore();
 
   const {
     attributes,
@@ -196,6 +199,20 @@ export function SortableGoalItem({
             <span className="text-xs px-1.5 py-0.5 rounded-full bg-danger-bg text-danger font-medium">
               Urgent
             </span>
+          )}
+
+          {goal.status !== "COMPLETED" && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                openQuickTask(goal.id);
+              }}
+              className="p-1 rounded-lg hover:bg-primary-bg text-text-muted hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+              title="Add task"
+            >
+              <Plus size={14} />
+            </button>
           )}
         </div>
       </div>
