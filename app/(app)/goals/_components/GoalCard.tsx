@@ -82,7 +82,6 @@ export function GoalCard({ goal, subGoals, allGoals }: GoalCardProps) {
   const priorityConfig = getPriorityConfig();
   const statusConfig = getStatusConfig();
   const progress = Math.min(goal.progress || 0, 100);
-
   return (
     <motion.div layout>
       <motion.div
@@ -149,31 +148,32 @@ export function GoalCard({ goal, subGoals, allGoals }: GoalCardProps) {
               )}
 
               {/* Progress Bar */}
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <TrendingUp size={12} className="text-text-muted" />
-                    <span className="text-[10px] font-semibold text-text-muted uppercase">
-                      Progress
+              {goal.goalType !== "project" && (
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp size={12} className="text-text-muted" />
+                      <span className="text-[10px] font-semibold text-text-muted uppercase">
+                        Progress
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-text">
+                      {Math.round(progress)}%
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-text">
-                    {Math.round(progress)}%
-                  </span>
+                  <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full rounded-full"
+                      style={{
+                        background: `linear-gradient(90deg, ${goal.color || "#9FA1FF"}80, ${goal.color || "#9FA1FF"})`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="h-full rounded-full"
-                    style={{
-                      background: `linear-gradient(90deg, ${goal.color || "#9FA1FF"}80, ${goal.color || "#9FA1FF"})`,
-                    }}
-                  />
-                </div>
-              </div>
-
+              )}
               {/* Stats */}
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-4">
