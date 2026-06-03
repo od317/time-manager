@@ -156,15 +156,17 @@ export function GoalTasks({ goal }: GoalTasksProps) {
             <p className="text-xs text-text-muted">{tasks.length} total</p>
           </div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary bg-primary-bg hover:bg-primary hover:text-white rounded-xl transition-all"
-        >
-          <Plus size={16} />
-          Add Task
-        </motion.button>
+        {goal.status !== "COMPLETED" && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary bg-primary-bg hover:bg-primary hover:text-white rounded-xl transition-all"
+          >
+            <Plus size={16} />
+            Add Task
+          </motion.button>
+        )}
       </div>
 
       <AnimatePresence>

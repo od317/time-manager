@@ -204,20 +204,22 @@ export function GoalCard({ goal, subGoals, allGoals }: GoalCardProps) {
 
         {/* Add sub-goal button */}
         <div className="px-5 pb-4">
-          <motion.button
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={(e) => {
-              e.preventDefault();
-              setShowSubGoalForm(true);
-            }}
-            className="flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-primary transition-all group"
-          >
-            <div className="p-1 rounded-md bg-bg group-hover:bg-primary-bg transition-colors">
-              <Plus size={12} />
-            </div>
-            Add sub-goal
-          </motion.button>
+          {goal.status !== "COMPLETED" && (
+            <motion.button
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={(e) => {
+                e.preventDefault();
+                setShowSubGoalForm(true);
+              }}
+              className="flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-primary transition-all group"
+            >
+              <div className="p-1 rounded-md bg-bg group-hover:bg-primary-bg transition-colors">
+                <Plus size={12} />
+              </div>
+              Add sub-goal
+            </motion.button>
+          )}
         </div>
       </motion.div>
 

@@ -45,7 +45,7 @@ export default async function GoalDetailPage({ params }: GoalDetailPageProps) {
               Sub-goals ({goal.children?.length || 0})
             </h3>
           </div>
-          <CreateSubGoal parentId={goal.id} />
+          {goal.status !== "COMPLETED" && <CreateSubGoal parentId={goal.id} />}
         </div>
 
         {goal.children && goal.children.length > 0 ? (
