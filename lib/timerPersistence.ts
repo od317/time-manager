@@ -35,6 +35,25 @@ export interface PersistedTimerState {
   savedAt: number;
 }
 
+export function buildPersistedState(state: any, runningTimerId: string | null) {
+  return {
+    runningTimerId,
+    sessionStartTime: state.sessionStartTime,
+    currentTaskStartTime: state.currentTaskStartTime,
+    accumulatedBeforePause: state.accumulatedBeforePause,
+    selectedTaskId: state.selectedTask?.id || null,
+    selectedTaskTitle: state.selectedTask?.title || null,
+    selectedTaskColor: state.selectedTask?.color || null,
+    selectedTaskGoalId: state.selectedTask?.goalId || null,
+    sessionHistory: state.sessionHistory,
+    timerMode: state.timerMode,
+    pomodoroPhase: state.pomodoroState?.phase || null,
+    pomodoroSessionsCompleted: state.pomodoroState?.sessionsCompleted || 0,
+    pomodoroTimeLeft: state.pomodoroState?.timeLeftInPhase || null,
+    savedAt: Date.now(),
+  };
+}
+
 export function saveTimerState(state: PersistedTimerState) {
   try {
     localStorage.setItem(

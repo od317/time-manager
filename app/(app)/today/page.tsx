@@ -11,6 +11,7 @@ import { TodayTimer } from "./_components/TodayTimer";
 import { TimerTitle } from "./_components/TimerTitle";
 import { DashboardLayout } from "./_components/DashboardLayout";
 import { TodayModals } from "./_components/TodayModals";
+import { TimerInitializer } from "./_components/TimerInitializer";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,7 @@ export default async function TodayPage() {
   return (
     <>
       <TimerTitle />
+      <TimerInitializer goals={goals} />
       <TodayModals allGoals={goals} />
 
       <div className="space-y-6 pb-20 md:pb-6">

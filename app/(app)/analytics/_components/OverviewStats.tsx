@@ -8,6 +8,7 @@ import {
   Clock,
   CheckCircle2,
   Repeat,
+  Timer,
 } from "lucide-react";
 
 interface OverviewStatsProps {
@@ -33,6 +34,13 @@ export function OverviewStats({
   bestStreak,
   totalHours,
 }: OverviewStatsProps) {
+  const totalSeconds = Math.round(totalHours * 3600);
+  const formatDuration = (totalSeconds: number): string => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
   const stats = [
     {
       label: "Goals Completed",
@@ -72,8 +80,8 @@ export function OverviewStats({
     },
     {
       label: "Time Tracked",
-      value: totalHours,
-      sub: "hours this month",
+      value: formatDuration(totalSeconds),
+      sub: "this month",
       icon: Clock,
       color: "text-success",
       bg: "bg-success-bg",

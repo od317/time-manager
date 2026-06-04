@@ -36,9 +36,16 @@ export const timeEntryService = {
   resume: (id: string) =>
     api.put<TimeEntry>(`/time-entries/${id}/resume`, undefined, "timer:resume"),
 
-  update: (id: string, data: { goalId?: string; taskId?: string }) =>
-    api.patch<TimeEntry, typeof data>(`/time-entries/${id}`, data),
-
+  update: (
+    id: string,
+    data: {
+      goalId?: string;
+      taskId?: string;
+      status?: string;
+      duration?: number;
+    },
+  ) => api.patch<TimeEntry, typeof data>(`/time-entries/${id}`, data),
+  
   quickLog: (data: QuickLogPayload) =>
     api.post<TimeEntry, QuickLogPayload>(
       "/time-entries/quick-log",
