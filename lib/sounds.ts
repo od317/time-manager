@@ -98,6 +98,17 @@ export function playLongBreakSound() {
   ]);
 }
 
+export function playAllSessionsCompleteSound() {
+  playSequence([
+    { frequency: 523, duration: 0.15, delay: 0 }, // C5
+    { frequency: 659, duration: 0.15, delay: 0.1 }, // E5
+    { frequency: 784, duration: 0.15, delay: 0.1 }, // G5
+    { frequency: 1047, duration: 0.3, delay: 0.1 }, // C6
+    { frequency: 784, duration: 0.15, delay: 0.15 }, // G5
+    { frequency: 1047, duration: 0.5, delay: 0.1 }, // C6
+  ]);
+}
+
 /**
  * Sound played when pomodoro session is fully complete.
  */

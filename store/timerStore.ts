@@ -5,6 +5,7 @@ import {
   playWorkStartSound,
   playBreakStartSound,
   playLongBreakSound,
+  playAllSessionsCompleteSound,
 } from "@/lib/sounds";
 
 import {
@@ -46,6 +47,13 @@ interface TimerState {
   timerMode: TimerMode;
   currentTaskStartTime: number | null;
   initializeFromStorage: (goals: Goal[]) => Promise<void>;
+  syncPomodoroSession: (sessionData: {
+    taskId?: string;
+    goalId?: string;
+    duration: number;
+    sessionsCompleted: number;
+    timestamp: number;
+  }) => Promise<void>;
   sessionStartTime: number | null;
   accumulatedBeforePause: number;
   sessionHistory: TimerSessionEntry[];
@@ -240,7 +248,28 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         return "Long Break";
     }
   },
-
+  syncPomodoroSession: async (sessionData: {
+    taskId?: string;
+    goalId?: string;
+    duration: number;
+    sessionsCompleted: number;
+    timestamp: number;
+  }) => {
+    try {
+      await timeEntryService.start({
+        entryType: "POMODORO",
+        taskId: sessionData.taskId,
+        goalId: sessionData.goalId,
+        note: `Pomodoro session - ${sessionData.sessionsCompleted + 1} completed`,
+      });
+      const runningTimer = await timeEntryService.getRunning();
+      if (runningTimer) {
+        await timeEntryService.stop(runningTimer.id);
+      }
+    } catch {
+      throw new Error("Failed to sync session");
+    }
+  },
   setSelectedTask: async (task) => {
     const state = get();
     const { runningTimer } = state;
@@ -545,6 +574,53 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       ? pomodoroState.sessionsCompleted + 1
       : pomodoroState.sessionsCompleted;
 
+    // Check if all sessions are complete
+    if (
+      isWorkPhase &&
+      newSessionsCompleted >= pomodoroConfig.sessionsBeforeLongBreak
+    ) {
+      playAllSessionsCompleteSound();
+
+      if (runningTimer) {
+        timeEntryService.stop(runningTimer.id).catch(() => {});
+      }
+
+      const now = Date.now();
+      const updatedHistory = get().sessionHistory.map((entry) => ({
+        ...entry,
+        endTime: entry.endTime === null ? now : entry.endTime,
+      }));
+
+      // Save final session data
+      const workTimeSpent = pomodoroConfig.workDuration;
+      const sessionData = {
+        taskId: selectedTask?.id,
+        goalId: selectedTask?.goalId ?? undefined,
+        duration: workTimeSpent * newSessionsCompleted,
+        sessionsCompleted: newSessionsCompleted,
+        timestamp: now,
+      };
+
+      // Queue for sync
+      const pending = JSON.parse(
+        localStorage.getItem("pomodoro-pending") || "[]",
+      );
+      pending.push(sessionData);
+      localStorage.setItem("pomodoro-pending", JSON.stringify(pending));
+
+      // Reset everything
+      set({
+        pomodoroState: null,
+        elapsed: 0,
+        sessionStartTime: null,
+        currentTaskStartTime: null,
+        accumulatedBeforePause: 0,
+        sessionHistory: updatedHistory,
+        runningTimer: null,
+      });
+      return;
+    }
+
     let nextPhase: PomodoroPhase;
     let nextDuration: number;
 
@@ -552,7 +628,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       if (newSessionsCompleted % pomodoroConfig.sessionsBeforeLongBreak === 0) {
         nextPhase = "LONG_BREAK";
         nextDuration = pomodoroConfig.longBreakDuration;
-        playLongBreakSound(); // 👈 Add
+        playLongBreakSound();
       } else {
         nextPhase = "SHORT_BREAK";
         nextDuration = pomodoroConfig.shortBreakDuration;
@@ -569,9 +645,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     let updatedHistory = get().sessionHistory;
     if (isWorkPhase) {
       updatedHistory = updatedHistory.map((entry) => {
-        if (entry.endTime === null) {
-          return { ...entry, endTime: now };
-        }
+        if (entry.endTime === null) return { ...entry, endTime: now };
         return entry;
       });
     }
@@ -589,12 +663,10 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       ];
     }
 
-    // Stop old entry
     if (runningTimer) {
       timeEntryService.stop(runningTimer.id).catch(() => {});
     }
 
-    // Update state immediately (don't wait for new timer)
     set({
       pomodoroState: {
         phase: nextPhase,
@@ -602,14 +674,13 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         timeLeftInPhase: nextDuration,
       },
       elapsed: nextDuration,
-      sessionStartTime: now, // Always set for countdown
+      sessionStartTime: now,
       currentTaskStartTime: nextPhase === "WORK" ? now : null,
       accumulatedBeforePause: 0,
       sessionHistory: updatedHistory,
       runningTimer: null,
     });
 
-    // Start new time entry for work phase
     if (!isWorkPhase && selectedTask) {
       timeEntryService
         .start({
@@ -620,8 +691,6 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         })
         .then((newTimer) => {
           set({ runningTimer: newTimer });
-          const newState = get();
-          saveTimerState(buildPersistedState(newState, newTimer.id));
         })
         .catch(() => {});
     }
