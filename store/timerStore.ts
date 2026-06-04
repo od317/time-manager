@@ -248,23 +248,19 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         return "Long Break";
     }
   },
-  syncPomodoroSession: async (sessionData: {
-    taskId?: string;
-    goalId?: string;
-    duration: number;
-    sessionsCompleted: number;
-    timestamp: number;
-  }) => {
+  syncPomodoroSession: async (sessionData) => {
     try {
-      await timeEntryService.start({
+      // Create and immediately stop to record the session
+      const timer = await timeEntryService.start({
         entryType: "POMODORO",
         taskId: sessionData.taskId,
         goalId: sessionData.goalId,
-        note: `Pomodoro session - ${sessionData.sessionsCompleted + 1} completed`,
       });
-      const runningTimer = await timeEntryService.getRunning();
-      if (runningTimer) {
-        await timeEntryService.stop(runningTimer.id);
+      if (timer) {
+        await timeEntryService.update(timer.id, {
+          duration: sessionData.duration,
+        });
+        await timeEntryService.stop(timer.id);
       }
     } catch {
       throw new Error("Failed to sync session");
@@ -272,7 +268,13 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   },
   setSelectedTask: async (task) => {
     const state = get();
-    const { runningTimer } = state;
+    const {
+      runningTimer,
+      timerMode,
+      pomodoroState,
+      sessionStartTime,
+      pomodoroConfig,
+    } = state;
     const currentTask = state.selectedTask;
     const now = Date.now();
 
@@ -283,14 +285,111 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       return;
     }
 
-    if (runningTimer.status === "PAUSED") {
-      if (task) {
-        await timeEntryService.update(runningTimer.id, {
-          goalId: task.goalId || undefined,
-          taskId: task.id ?? undefined,
-        });
+    if (timerMode === "POMODORO" && pomodoroState && currentTask) {
+      // Calculate time spent on current task
+      const phaseElapsed = sessionStartTime
+        ? Math.floor((now - sessionStartTime) / 1000)
+        : 0;
+
+      // Stop current Pomodoro entry
+      if (runningTimer) {
+        timeEntryService.stop(runningTimer.id).catch(() => {});
       }
-      set({ selectedTask: task, selectedGoal: null });
+
+      // Save time to current task
+      if (phaseElapsed > 0) {
+        const sessionData = {
+          taskId: currentTask.id,
+          goalId: currentTask.goalId ?? undefined,
+          duration: phaseElapsed,
+          sessionsCompleted: pomodoroState.sessionsCompleted,
+          timestamp: now,
+        };
+
+        // Try to sync, queue if fails
+        try {
+          await get().syncPomodoroSession(sessionData);
+        } catch {
+          const pending = JSON.parse(
+            localStorage.getItem("pomodoro-pending") || "[]",
+          );
+          pending.push(sessionData);
+          localStorage.setItem("pomodoro-pending", JSON.stringify(pending));
+        }
+      }
+
+      // Start new Pomodoro entry for new task
+      const newTimer = await timeEntryService.start({
+        entryType: "POMODORO",
+        taskId: task?.id,
+        goalId: task?.goalId || undefined,
+        note: `Pomodoro - ${task?.title || ""}`,
+      });
+
+      // Reset session for new task but keep the count
+      set({
+        selectedTask: task,
+        selectedGoal: null,
+        runningTimer: newTimer,
+        sessionStartTime: now,
+        elapsed: pomodoroConfig.workDuration,
+        accumulatedBeforePause: 0,
+        currentTaskStartTime: now,
+      });
+      return;
+    }
+
+    if (runningTimer.status === "PAUSED" && currentTask) {
+      const { accumulatedBeforePause } = get();
+      const now = Date.now();
+
+      // Close current entry with accumulated time
+      const updatedHistory = state.sessionHistory.map((entry) => {
+        if (entry.taskId === currentTask.id && entry.endTime === null) {
+          return { ...entry, endTime: now };
+        }
+        return entry;
+      });
+
+      // Stop current entry (saves time to current task)
+      timeEntryService
+        .update(runningTimer.id, {
+          duration: accumulatedBeforePause,
+        })
+        .catch(() => {});
+      timeEntryService.stop(runningTimer.id).catch(() => {});
+
+      // Start new entry for new task
+      const newTimer = await timeEntryService.start({
+        entryType: "TIMER",
+        taskId: task?.id,
+        goalId: task?.goalId || undefined,
+        note: task?.title || undefined,
+      });
+
+      const finalHistory = task
+        ? [
+            ...updatedHistory,
+            {
+              taskId: task.id,
+              taskTitle: task.title,
+              startTime: now,
+              endTime: null,
+              color: task.color || "#6366F1",
+            },
+          ]
+        : updatedHistory;
+
+      set({
+        selectedTask: task,
+        selectedGoal: null,
+        runningTimer: newTimer,
+        accumulatedBeforePause,
+        sessionHistory: finalHistory,
+      });
+
+      const newState = get();
+      saveTimerState(buildPersistedState(newState, newTimer.id));
       return;
     }
 
