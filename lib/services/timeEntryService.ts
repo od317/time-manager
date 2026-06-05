@@ -45,7 +45,7 @@ export const timeEntryService = {
       duration?: number;
     },
   ) => api.patch<TimeEntry, typeof data>(`/time-entries/${id}`, data),
-  
+
   quickLog: (data: QuickLogPayload) =>
     api.post<TimeEntry, QuickLogPayload>(
       "/time-entries/quick-log",
@@ -57,4 +57,13 @@ export const timeEntryService = {
 
   getSummary: (params: TimeSummaryParams) =>
     api.get<TimeSummary, TimeSummaryParams>("/time-entries/summary", params),
+  completePomodoro: (
+    sessionLog: Array<{
+      taskId?: string;
+      goalId?: string;
+      duration: number;
+      note?: string;
+    }>,
+  ) =>
+    api.post("/time-entries/complete", { sessionLog }, CancelKeys.TIMER_STOP),
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import {
   Play,
@@ -12,6 +12,9 @@ import {
   WifiOff,
   Minus,
   Plus,
+  Pause,
+  RotateCcw,
+  Timer,
 } from "lucide-react";
 import { resumeAudioContext } from "@/lib/sounds";
 import { PomodoroSettings } from "./PomodoroSettings";
@@ -23,52 +26,46 @@ export function PomodoroTimer() {
     pomodoroState,
     pomodoroConfig,
     sessionStartTime,
-    stop,
     handlePhaseComplete,
     selectedTask,
     selectedPreset,
+    recoveredPomodoro,
+    isPomodoroPaused,
+    resumePomodoro,
+    endPomodoroSession,
+    startPomodoro,
   } = useTimerStore();
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = selectedTask !== null;
   const [isOffline, setIsOffline] = useState(false);
-  const [pendingSync, setPendingSync] = useState(false);
-  const [totalSessions, setTotalSessions] = useState(4);
+  const [totalSessions, setTotalSessions] = useState(
+    () => pomodoroState?.sessionsCompleted || 4,
+  );
   const [isEnding, setIsEnding] = useState(false);
 
-  // Track online/offline
+  // ============================================================================
+  // ONLINE/OFFLINE TRACKING
+  // ============================================================================
+
   useEffect(() => {
     setIsOffline(!navigator.onLine);
+
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
+
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
-  // Sync pending sessions when online
-  useEffect(() => {
-    if (!isOffline && pendingSync) {
-      syncPendingSessions();
-    }
-  }, [isOffline, pendingSync]);
-
-  const syncPendingSessions = async () => {
-    try {
-      const pending = localStorage.getItem("pomodoro-pending");
-      if (pending) {
-        const sessions = JSON.parse(pending);
-        for (const session of sessions) {
-          await useTimerStore.getState().syncPomodoroSession(session);
-        }
-        localStorage.removeItem("pomodoro-pending");
-        setPendingSync(false);
-      }
-    } catch {}
-  };
+  // ============================================================================
+  // TIMER INTERVAL MANAGEMENT
+  // ============================================================================
 
   const clearTimerInterval = useCallback(() => {
     if (intervalRef.current) {
@@ -77,15 +74,19 @@ export function PomodoroTimer() {
     }
   }, []);
 
-  // Countdown
+  // ============================================================================
+  // COUNTDOWN LOGIC
+  // ============================================================================
+
   useEffect(() => {
-    if (pomodoroState && sessionStartTime) {
+    if (pomodoroState && sessionStartTime && !isPomodoroPaused) {
       const tick = () => {
         const phaseElapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
         const timeLeft = Math.max(
           pomodoroState.timeLeftInPhase - phaseElapsed,
           0,
         );
+
         useTimerStore.setState({ elapsed: timeLeft });
 
         if (timeLeft <= 0) {
@@ -93,81 +94,57 @@ export function PomodoroTimer() {
           handlePhaseComplete();
         }
       };
+
+      // Initial tick
       tick();
+
+      // Start interval
       intervalRef.current = setInterval(tick, 1000);
     } else {
       clearTimerInterval();
     }
+
     return clearTimerInterval;
   }, [
     pomodoroState?.phase,
+    pomodoroState?.sessionsCompleted,
     sessionStartTime,
+    isPomodoroPaused,
     clearTimerInterval,
     handlePhaseComplete,
   ]);
 
+  // ============================================================================
+  // HANDLERS
+  // ============================================================================
+
   const handleStartPomodoro = () => {
     if (isOffline) return;
     resumeAudioContext();
-    const { startPomodoro } = useTimerStore.getState();
-    // Set the number of sessions before starting
-    useTimerStore.setState({
-      pomodoroConfig: {
-        ...pomodoroConfig,
-        sessionsBeforeLongBreak: totalSessions,
-      },
-    });
-    startPomodoro();
+    startPomodoro(totalSessions);
+  };
+
+  const handleContinuePomodoro = () => {
+    resumeAudioContext();
+    resumePomodoro();
   };
 
   const handleEndSession = async () => {
     if (isEnding) return;
     setIsEnding(true);
     clearTimerInterval();
-
-    const state = useTimerStore.getState();
-
-    // Only save if at least one work session was completed
-    const sessionsCompleted = state.pomodoroState?.sessionsCompleted || 0;
-
-    if (sessionsCompleted > 0) {
-      // Save completed sessions
-      const workTimeSpent = pomodoroConfig.workDuration;
-      const sessionData = {
-        taskId: state.selectedTask?.id,
-        goalId: state.selectedTask?.goalId ?? undefined,
-        duration: workTimeSpent * sessionsCompleted,
-        sessionsCompleted,
-        timestamp: Date.now(),
-      };
-
-      if (isOffline) {
-        const pending = JSON.parse(
-          localStorage.getItem("pomodoro-pending") || "[]",
-        );
-        pending.push(sessionData);
-        localStorage.setItem("pomodoro-pending", JSON.stringify(pending));
-        setPendingSync(true);
-      } else {
-        try {
-          await useTimerStore.getState().syncPomodoroSession(sessionData);
-        } catch {
-          const pending = JSON.parse(
-            localStorage.getItem("pomodoro-pending") || "[]",
-          );
-          pending.push(sessionData);
-          localStorage.setItem("pomodoro-pending", JSON.stringify(pending));
-          setPendingSync(true);
-        }
-      }
-    }
-
-    // Always stop and clear
-    stop();
+    await endPomodoroSession();
     setIsEnding(false);
   };
 
-  const isRunning = !!sessionStartTime;
+  // ============================================================================
+  // DERIVED STATE
+  // ============================================================================
+
+  const isRunning =
+    !!sessionStartTime && !isPomodoroPaused && !recoveredPomodoro;
+  const isPaused = !!pomodoroState && (isPomodoroPaused || recoveredPomodoro);
+  const hasStarted = !!pomodoroState;
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(Math.abs(seconds) / 60);
@@ -175,10 +152,14 @@ export function PomodoroTimer() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  // ============================================================================
+  // PHASE INFORMATION
+  // ============================================================================
+
   const phase = pomodoroState?.phase;
 
   const getPhaseInfo = () => {
-    if (!phase)
+    if (!phase) {
       return {
         icon: Brain,
         label: "Ready",
@@ -186,30 +167,32 @@ export function PomodoroTimer() {
         bg: "bg-primary-bg",
         borderColor: "border-primary/20",
       };
+    }
+
     switch (phase) {
       case "WORK":
         return {
           icon: Brain,
           label: "Focus Time",
-          color: "text-danger",
-          bg: "bg-danger-bg",
-          borderColor: "border-danger/20",
+          color: "text-red-500",
+          bg: "bg-red-50 dark:bg-red-950",
+          borderColor: "border-red-200 dark:border-red-800",
         };
       case "SHORT_BREAK":
         return {
           icon: Coffee,
           label: "Short Break",
-          color: "text-success",
-          bg: "bg-success-bg",
-          borderColor: "border-success/20",
+          color: "text-green-500",
+          bg: "bg-green-50 dark:bg-green-950",
+          borderColor: "border-green-200 dark:border-green-800",
         };
       case "LONG_BREAK":
         return {
           icon: Zap,
           label: "Long Break",
-          color: "text-warning",
-          bg: "bg-warning-bg",
-          borderColor: "border-warning/20",
+          color: "text-amber-500",
+          bg: "bg-amber-50 dark:bg-amber-950",
+          borderColor: "border-amber-200 dark:border-amber-800",
         };
     }
   };
@@ -218,17 +201,27 @@ export function PomodoroTimer() {
   const PhaseIcon = phaseInfo.icon;
   const totalPhaseTime =
     pomodoroState?.timeLeftInPhase || pomodoroConfig.workDuration;
-  const progress =
-    totalPhaseTime > 0
-      ? ((totalPhaseTime - elapsed) / totalPhaseTime) * 100
-      : 0;
+  const timeSpent = totalPhaseTime - elapsed; // How much time has passed
+  const progress = totalPhaseTime > 0 ? (timeSpent / totalPhaseTime) * 100 : 0;
 
-  // Calculate session summary
+  // ============================================================================
+  // SESSION CALCULATIONS
+  // ============================================================================
+
   const totalWorkMinutes = (totalSessions * pomodoroConfig.workDuration) / 60;
   const totalBreakMinutes =
     ((totalSessions - 1) * pomodoroConfig.shortBreakDuration +
       pomodoroConfig.longBreakDuration) /
     60;
+
+  // Use the stored total sessions if recovering, otherwise use the selected amount
+  const effectiveTotalSessions = pomodoroState
+    ? Math.max(totalSessions, pomodoroState.sessionsCompleted)
+    : totalSessions;
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
     <motion.div
@@ -236,7 +229,9 @@ export function PomodoroTimer() {
       animate={{ opacity: 1 }}
       className="max-w-md mx-auto"
     >
-      {/* Phase Indicator */}
+      {/* ========================================================================
+          PHASE INDICATOR
+          ======================================================================== */}
       <div className="flex items-center justify-center gap-3 mb-6">
         <motion.div
           className={`p-3 rounded-2xl ${phaseInfo.bg} border ${phaseInfo.borderColor}`}
@@ -245,6 +240,7 @@ export function PomodoroTimer() {
         >
           <PhaseIcon size={24} className={phaseInfo.color} />
         </motion.div>
+
         <div>
           <span className={`text-sm font-bold ${phaseInfo.color}`}>
             {phaseInfo.label}
@@ -252,41 +248,64 @@ export function PomodoroTimer() {
           <span className="text-xs text-text-muted block">
             {selectedPreset}
           </span>
+
+          {/* Status indicators */}
           {isOffline && (
-            <p className="text-xs text-warning flex items-center gap-1">
+            <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
               <WifiOff size={10} /> Offline
             </p>
           )}
-          {pendingSync && !isOffline && (
-            <p className="text-xs text-warning">Syncing...</p>
+          {isPaused && !isOffline && (
+            <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
+              <Pause size={10} /> Paused
+            </p>
+          )}
+          {recoveredPomodoro && (
+            <p className="text-xs text-blue-500 flex items-center gap-1 mt-0.5">
+              <Timer size={10} /> Session recovered
+            </p>
           )}
         </div>
+
         <PomodoroSettings />
       </div>
 
-      {/* Session Selector - only when not running */}
-      {!isRunning && !pomodoroState && (
-        <div className="mb-6">
+      {/* ========================================================================
+          SESSION SELECTOR (only when not started)
+          ======================================================================== */}
+      {!hasStarted && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
           <p className="text-xs font-semibold text-text-muted text-center mb-3">
             Number of Sessions
           </p>
+
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => setTotalSessions(Math.max(1, totalSessions - 1))}
-              className="p-2 rounded-xl border-2 border-border hover:border-primary/30 transition-all"
+              className="p-2 rounded-xl border-2 border-border hover:border-primary/30 transition-all active:scale-95"
+              aria-label="Decrease sessions"
             >
               <Minus size={16} />
             </button>
-            <span className="text-2xl font-bold text-text w-12 text-center">
+
+            <span className="text-2xl font-bold text-text w-12 text-center tabular-nums">
               {totalSessions}
             </span>
+
             <button
               onClick={() => setTotalSessions(Math.min(10, totalSessions + 1))}
-              className="p-2 rounded-xl border-2 border-border hover:border-primary/30 transition-all"
+              className="p-2 rounded-xl border-2 border-border hover:border-primary/30 transition-all active:scale-95"
+              aria-label="Increase sessions"
             >
               <Plus size={16} />
             </button>
           </div>
+
+          {/* Session Summary */}
           <div className="mt-3 p-3 bg-bg rounded-xl border border-border">
             <div className="flex justify-between text-xs text-text-secondary">
               <span>Work time</span>
@@ -307,21 +326,27 @@ export function PomodoroTimer() {
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Session Dots */}
+      {/* ========================================================================
+          SESSION DOTS
+          ======================================================================== */}
       {pomodoroState && (
-        <div className="flex items-center justify-center gap-2 mb-6">
-          {Array.from({ length: totalSessions }).map((_, i) => (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center gap-2 mb-6"
+        >
+          {Array.from({ length: effectiveTotalSessions }).map((_, i) => (
             <motion.div
               key={i}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className={`w-3 h-3 rounded-full transition-all ${
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 i < pomodoroState.sessionsCompleted
-                  ? "bg-primary"
+                  ? "bg-primary shadow-sm shadow-primary/30"
                   : i === pomodoroState.sessionsCompleted && phase === "WORK"
                     ? "bg-primary/30 animate-pulse"
                     : "bg-border"
@@ -329,60 +354,154 @@ export function PomodoroTimer() {
             />
           ))}
           <span className="text-xs font-medium text-text-muted ml-2 bg-bg px-2 py-0.5 rounded-full">
-            {pomodoroState.sessionsCompleted}/{totalSessions}
+            {pomodoroState.sessionsCompleted}/{effectiveTotalSessions}
           </span>
-        </div>
+        </motion.div>
       )}
 
-      {/* Timer Display */}
+      {/* ========================================================================
+          TIMER DISPLAY
+          ======================================================================== */}
       <motion.div
-        className="mb-6"
-        animate={isRunning ? { scale: [1, 1.02, 1] } : {}}
-        transition={{ duration: 2, repeat: Infinity }}
+        className="mb-6 text-center"
+        animate={
+          isRunning
+            ? { scale: [1, 1.02, 1] }
+            : isPaused
+              ? { opacity: [0.7, 1, 0.7] }
+              : {}
+        }
+        transition={
+          isRunning
+            ? { duration: 2, repeat: Infinity }
+            : isPaused
+              ? { duration: 2, repeat: Infinity }
+              : {}
+        }
       >
         <span
-          className={`text-7xl font-mono font-bold tabular-nums tracking-tight ${isRunning ? phaseInfo.color : "text-text"}`}
+          className={`text-7xl font-mono font-bold tabular-nums tracking-tight select-none ${
+            isRunning
+              ? phaseInfo.color
+              : isPaused
+                ? "text-amber-500"
+                : "text-text"
+          }`}
         >
           {formatTime(elapsed)}
         </span>
       </motion.div>
 
-      {/* Progress Bar */}
-      <div className="w-full h-3 bg-border rounded-full overflow-hidden mb-8">
+      {/* ========================================================================
+          PROGRESS BAR
+          ======================================================================== */}
+      <div className="w-full h-2 bg-border rounded-full overflow-hidden mb-8">
         <motion.div
-          className={`h-full rounded-full bg-current ${phaseInfo.color}`}
+          className={`h-full rounded-full ${
+            isRunning || isPaused ? phaseInfo.color : "bg-primary"
+          }`}
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(progress, 100)}%` }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </div>
 
-      {/* Controls */}
+      {/* ========================================================================
+          CONTROLS
+          ======================================================================== */}
       <div className="flex items-center justify-center gap-3">
-        {!isRunning ? (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleStartPomodoro}
-            disabled={isLoading || !hasSelection || isOffline}
-            className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            <Play size={20} className="fill-current" />
-            {isLoading ? "Starting..." : "Start Pomodoro"}
-          </motion.button>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleEndSession}
-            disabled={isEnding}
-            className="flex items-center gap-2 px-8 py-3.5 bg-danger-bg text-danger rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50"
-          >
-            <Square size={18} />
-            {isEnding ? "Ending..." : "End Session"}
-          </motion.button>
-        )}
+        <AnimatePresence mode="wait">
+          {/* START BUTTON */}
+          {!hasStarted && (
+            <motion.button
+              key="start"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStartPomodoro}
+              disabled={isLoading || !hasSelection || isOffline}
+              className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <Play size={20} className="fill-current" />
+              {isLoading ? "Starting..." : "Start Pomodoro"}
+            </motion.button>
+          )}
+
+          {/* PAUSED CONTROLS (Recovery or manual pause) */}
+          {isPaused && (
+            <motion.div
+              key="paused-controls"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex items-center gap-3"
+            >
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleContinuePomodoro}
+                className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+              >
+                <Play size={20} className="fill-current" />
+                Continue
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleEndSession}
+                disabled={isEnding}
+                className="flex items-center gap-2 px-6 py-3.5 bg-red-50 dark:bg-red-950 text-red-500 rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50 border border-red-200 dark:border-red-800"
+              >
+                <RotateCcw size={18} />
+                {isEnding ? "Resetting..." : "Reset"}
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* RUNNING CONTROLS */}
+          {isRunning && (
+            <motion.button
+              key="running"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleEndSession}
+              disabled={isEnding}
+              className="flex items-center gap-2 px-8 py-3.5 bg-red-50 dark:bg-red-950 text-red-500 rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50 border border-red-200 dark:border-red-800"
+            >
+              <Square size={18} />
+              {isEnding ? "Ending..." : "End Session"}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* ========================================================================
+          HELPER TEXT
+          ======================================================================== */}
+      {!hasSelection && !hasStarted && (
+        <p className="text-xs text-text-muted text-center mt-4">
+          Select a task to start focusing
+        </p>
+      )}
+
+      {isOffline && hasSelection && !hasStarted && (
+        <p className="text-xs text-amber-500 text-center mt-4">
+          Pomodoro requires an internet connection to start
+        </p>
+      )}
+
+      {recoveredPomodoro && (
+        <p className="text-xs text-blue-500 text-center mt-4">
+          Session recovered from {pomodoroConfig.workDuration / 60} minutes ago.
+          Press Continue to resume.
+        </p>
+      )}
     </motion.div>
   );
 }

@@ -1,5 +1,7 @@
+// lib/sounds.ts
+
 // ============================================================================
-// SIMPLE SOUND UTILITIES USING WEB AUDIO API
+// SOUND UTILITIES USING WEB AUDIO API
 // ============================================================================
 
 let audioContext: AudioContext | null = null;
@@ -12,6 +14,37 @@ function getAudioContext(): AudioContext {
 }
 
 /**
+ * Resume audio context - must be called from a user gesture
+ */
+export function resumeAudioContext() {
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended") {
+    ctx.resume().catch(console.error);
+  }
+}
+
+/**
+ * Ensure audio context is running before playing sounds.
+ * If suspended, try to resume and queue the callback.
+ */
+async function ensureAudioContext(callback: () => void) {
+  const ctx = getAudioContext();
+
+  if (ctx.state === "suspended") {
+    try {
+      await ctx.resume();
+    } catch (e) {
+      console.warn("Could not resume audio context:", e);
+      return; // Can't play sounds
+    }
+  }
+
+  if (ctx.state === "running") {
+    callback();
+  }
+}
+
+/**
  * Play a beep with specific frequency and duration.
  */
 function playBeep(
@@ -19,21 +52,26 @@ function playBeep(
   duration: number,
   type: OscillatorType = "sine",
 ) {
-  const ctx = getAudioContext();
-  const oscillator = ctx.createOscillator();
-  const gainNode = ctx.createGain();
+  ensureAudioContext(() => {
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
 
-  oscillator.connect(gainNode);
-  gainNode.connect(ctx.destination);
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
 
-  oscillator.type = type;
-  oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
 
-  gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      ctx.currentTime + duration,
+    );
 
-  oscillator.start(ctx.currentTime);
-  oscillator.stop(ctx.currentTime + duration);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + duration);
+  });
 }
 
 /**
@@ -42,25 +80,27 @@ function playBeep(
 function playSequence(
   beeps: { frequency: number; duration: number; delay: number }[],
 ) {
-  const ctx = getAudioContext();
-  let currentTime = ctx.currentTime;
+  ensureAudioContext(() => {
+    const ctx = getAudioContext();
+    let currentTime = ctx.currentTime;
 
-  beeps.forEach(({ frequency, duration, delay }) => {
-    currentTime += delay;
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+    beeps.forEach(({ frequency, duration, delay }) => {
+      currentTime += delay;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
 
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency, currentTime);
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, currentTime);
 
-    gainNode.gain.setValueAtTime(0.3, currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + duration);
+      gainNode.gain.setValueAtTime(0.3, currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + duration);
 
-    oscillator.start(currentTime);
-    oscillator.stop(currentTime + duration);
+      oscillator.start(currentTime);
+      oscillator.stop(currentTime + duration);
+    });
   });
 }
 
@@ -98,6 +138,9 @@ export function playLongBreakSound() {
   ]);
 }
 
+/**
+ * Sound played when all pomodoro sessions are complete.
+ */
 export function playAllSessionsCompleteSound() {
   playSequence([
     { frequency: 523, duration: 0.15, delay: 0 }, // C5
@@ -110,7 +153,7 @@ export function playAllSessionsCompleteSound() {
 }
 
 /**
- * Sound played when pomodoro session is fully complete.
+ * Sound played when pomodoro session is fully complete (legacy).
  */
 export function playSessionCompleteSound() {
   playSequence([
@@ -134,14 +177,4 @@ export function playClickSound() {
 export function playTimerCompleteSound() {
   playBeep(880, 0.5, "sine");
   setTimeout(() => playBeep(1100, 0.5, "sine"), 300);
-}
-
-/**
- * Resume audio context after user interaction (required by browsers).
- */
-export function resumeAudioContext() {
-  const ctx = getAudioContext();
-  if (ctx.state === "suspended") {
-    ctx.resume();
-  }
 }
