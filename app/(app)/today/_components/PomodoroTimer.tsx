@@ -40,6 +40,10 @@ export function PomodoroTimer() {
     startPomodoro,
   } = useTimerStore();
 
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(false);
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = selectedTask !== null;
   const [isOffline, setIsOffline] = useState(false);
@@ -49,6 +53,43 @@ export function PomodoroTimer() {
     return pomodoroState?.sessionsCompleted || 4;
   });
   const [isEnding, setIsEnding] = useState(false);
+
+  // Check for pending sessions on mount
+  useEffect(() => {
+    const checkPending = () => {
+      try {
+        const pending = localStorage.getItem("pomodoro-pending");
+        setPendingCount(pending ? JSON.parse(pending).length : 0);
+      } catch {
+        setPendingCount(0);
+      }
+    };
+
+    checkPending();
+    const interval = setInterval(checkPending, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-sync when coming online
+  useEffect(() => {
+    if (!isOffline && pendingCount > 0) {
+      handleSyncNow();
+    }
+  }, [isOffline]);
+
+  const handleSyncNow = async () => {
+    setIsSyncing(true);
+    setSyncError(false);
+
+    try {
+      await useTimerStore.getState().syncCompletedPomodoroSessions();
+      setPendingCount(0);
+    } catch {
+      setSyncError(true);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // ============================================================================
   // ONLINE/OFFLINE TRACKING
@@ -271,7 +312,52 @@ export function PomodoroTimer() {
           <span className="text-xs text-text-muted block">
             {selectedPreset}
           </span>
+          {/* Add this near the phase indicator or as a banner */}
+          {isOffline && hasStarted && (
+            <div className="mb-4 p-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl">
+              <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <WifiOff size={12} />
+                Offline - Sessions will sync when you reconnect
+              </p>
+            </div>
+          )}
 
+          {pendingCount > 0 && (
+            <div className="mb-4 p-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl">
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                ⚠️ {pendingCount} Pomodoro session{pendingCount > 1 ? "s" : ""}{" "}
+                pending sync.
+                {isOffline
+                  ? " Will sync when online."
+                  : " Will retry automatically."}
+              </p>
+            </div>
+          )}
+          
+          {pendingCount > 0 && !isOffline && (
+            <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  {pendingCount} session{pendingCount > 1 ? "s" : ""} pending
+                  sync
+                </p>
+                <button
+                  onClick={handleSyncNow}
+                  disabled={isSyncing}
+                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                >
+                  {isSyncing ? "Syncing..." : "Sync now"}
+                </button>
+              </div>
+            </div>
+          )}
+          {syncError && (
+            <div className="mb-4 p-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl">
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Sync failed. Will retry automatically.
+              </p>
+            </div>
+          )}
           {/* Status indicators */}
           {isOffline && (
             <p className="text-xs text-warning flex items-center gap-1 mt-0.5">

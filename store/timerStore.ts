@@ -210,8 +210,21 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         })),
       });
 
+      const attemptSync = async (retries = 3) => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            await get().syncCompletedPomodoroSessions();
+            break;
+          } catch {
+            if (i < retries - 1) {
+              await new Promise((r) => setTimeout(r, 2000 * (i + 1))); // Exponential backoff
+            }
+          }
+        }
+      };
+
       // Sync any pending sessions in background
-      get().syncCompletedPomodoroSessions();
+      attemptSync();
       return;
     }
 
@@ -365,7 +378,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
   syncCompletedPomodoroSessions: async () => {
     const pending = loadPendingSessions();
-    if (pending.length === 0) return;
+    if (pending.length === 0) return; // Just return, no value
 
     const sessionLog = pending.map((session) => ({
       taskId: session.taskId,
@@ -377,8 +390,9 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     try {
       await timeEntryService.completePomodoroSession(sessionLog);
       clearPendingSessions();
+      // Remove "return true"
     } catch {
-      // Will retry on next load
+      throw new Error("Sync failed");
     }
   },
 
