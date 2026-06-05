@@ -44,7 +44,6 @@ export function PomodoroTimer() {
   const hasSelection = selectedTask !== null;
   const [isOffline, setIsOffline] = useState(false);
   const [totalSessions, setTotalSessions] = useState(() => {
-    // Check for recovered session first
     const saved = loadPomodoroSession();
     if (saved) return saved.totalSessions;
     return pomodoroState?.sessionsCompleted || 4;
@@ -96,7 +95,6 @@ export function PomodoroTimer() {
 
         useTimerStore.setState({ elapsed: timeLeft });
 
-        // Save EVERY tick to ensure recovery data is accurate
         const data = loadPomodoroSession();
         if (data) {
           data.timeLeftInPhase = timeLeft;
@@ -175,7 +173,7 @@ export function PomodoroTimer() {
   };
 
   // ============================================================================
-  // PHASE INFORMATION
+  // PHASE INFORMATION - Using theme colors
   // ============================================================================
 
   const phase = pomodoroState?.phase;
@@ -188,6 +186,7 @@ export function PomodoroTimer() {
         color: "text-primary",
         bg: "bg-primary-bg",
         borderColor: "border-primary/20",
+        progressColor: "var(--color-primary)",
       };
     }
 
@@ -196,25 +195,28 @@ export function PomodoroTimer() {
         return {
           icon: Brain,
           label: "Focus Time",
-          color: "text-red-500",
-          bg: "bg-red-50 dark:bg-red-950",
-          borderColor: "border-red-200 dark:border-red-800",
+          color: "text-danger",
+          bg: "bg-danger-bg",
+          borderColor: "border-danger/20",
+          progressColor: "var(--color-danger)",
         };
       case "SHORT_BREAK":
         return {
           icon: Coffee,
           label: "Short Break",
-          color: "text-green-500",
-          bg: "bg-green-50 dark:bg-green-950",
-          borderColor: "border-green-200 dark:border-green-800",
+          color: "text-success",
+          bg: "bg-success-bg",
+          borderColor: "border-success/20",
+          progressColor: "var(--color-success)",
         };
       case "LONG_BREAK":
         return {
           icon: Zap,
           label: "Long Break",
-          color: "text-amber-500",
-          bg: "bg-amber-50 dark:bg-amber-950",
-          borderColor: "border-amber-200 dark:border-amber-800",
+          color: "text-warning",
+          bg: "bg-warning-bg",
+          borderColor: "border-warning/20",
+          progressColor: "var(--color-warning)",
         };
     }
   };
@@ -223,7 +225,7 @@ export function PomodoroTimer() {
   const PhaseIcon = phaseInfo.icon;
   const totalPhaseTime =
     pomodoroState?.timeLeftInPhase || pomodoroConfig.workDuration;
-  const timeSpent = totalPhaseTime - elapsed; // How much time has passed
+  const timeSpent = totalPhaseTime - elapsed;
   const progress = totalPhaseTime > 0 ? (timeSpent / totalPhaseTime) * 100 : 0;
 
   // ============================================================================
@@ -236,7 +238,6 @@ export function PomodoroTimer() {
       pomodoroConfig.longBreakDuration) /
     60;
 
-  // Use the stored total sessions if recovering, otherwise use the selected amount
   const effectiveTotalSessions = pomodoroState
     ? Math.max(totalSessions, pomodoroState.sessionsCompleted)
     : totalSessions;
@@ -273,17 +274,17 @@ export function PomodoroTimer() {
 
           {/* Status indicators */}
           {isOffline && (
-            <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-warning flex items-center gap-1 mt-0.5">
               <WifiOff size={10} /> Offline
             </p>
           )}
           {isPaused && !isOffline && (
-            <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-warning flex items-center gap-1 mt-0.5">
               <Pause size={10} /> Paused
             </p>
           )}
           {recoveredPomodoro && (
-            <p className="text-xs text-blue-500 flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-info flex items-center gap-1 mt-0.5">
               <Timer size={10} /> Session recovered
             </p>
           )}
@@ -311,7 +312,7 @@ export function PomodoroTimer() {
               className="p-2 rounded-xl border-2 border-border hover:border-primary/30 transition-all active:scale-95"
               aria-label="Decrease sessions"
             >
-              <Minus size={16} />
+              <Minus size={16} className="text-text" />
             </button>
 
             <span className="text-2xl font-bold text-text w-12 text-center tabular-nums">
@@ -323,7 +324,7 @@ export function PomodoroTimer() {
               className="p-2 rounded-xl border-2 border-border hover:border-primary/30 transition-all active:scale-95"
               aria-label="Increase sessions"
             >
-              <Plus size={16} />
+              <Plus size={16} className="text-text" />
             </button>
           </div>
 
@@ -406,7 +407,7 @@ export function PomodoroTimer() {
             isRunning
               ? phaseInfo.color
               : isPaused
-                ? "text-amber-500"
+                ? "text-warning"
                 : "text-text"
           }`}
         >
@@ -415,24 +416,15 @@ export function PomodoroTimer() {
       </motion.div>
 
       {/* ========================================================================
-          PROGRESS BAR
+          PROGRESS BAR - Using theme colors
           ======================================================================== */}
       <div className="w-full h-2 bg-border rounded-full overflow-hidden mb-8">
         <motion.div
           key={`${pomodoroState?.phase}-${pomodoroState?.sessionsCompleted}`}
           className="h-full rounded-full"
+          style={{ backgroundColor: phaseInfo.progressColor }}
           initial={{ width: 0 }}
-          animate={{
-            width: `${Math.min(progress, 100)}%`,
-            backgroundColor:
-              phase === "WORK"
-                ? "#ef4444" // red-500
-                : phase === "SHORT_BREAK"
-                  ? "#22c55e" // green-500
-                  : phase === "LONG_BREAK"
-                    ? "#f59e0b" // amber-500
-                    : "#6366f1", // primary
-          }}
+          animate={{ width: `${Math.min(progress, 100)}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </div>
@@ -460,7 +452,7 @@ export function PomodoroTimer() {
             </motion.button>
           )}
 
-          {/* PAUSED CONTROLS (Recovery or manual pause) */}
+          {/* PAUSED CONTROLS */}
           {isPaused && (
             <motion.div
               key="paused-controls"
@@ -484,7 +476,7 @@ export function PomodoroTimer() {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleEndSession}
                 disabled={isEnding}
-                className="flex items-center gap-2 px-6 py-3.5 bg-red-50 dark:bg-red-950 text-red-500 rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50 border border-red-200 dark:border-red-800"
+                className="flex items-center gap-2 px-6 py-3.5 bg-danger-bg text-danger rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50 border border-danger/20"
               >
                 <RotateCcw size={18} />
                 {isEnding ? "Resetting..." : "Reset"}
@@ -503,7 +495,7 @@ export function PomodoroTimer() {
               whileTap={{ scale: 0.95 }}
               onClick={handleEndSession}
               disabled={isEnding}
-              className="flex items-center gap-2 px-8 py-3.5 bg-red-50 dark:bg-red-950 text-red-500 rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50 border border-red-200 dark:border-red-800"
+              className="flex items-center gap-2 px-8 py-3.5 bg-danger-bg text-danger rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50 border border-danger/20"
             >
               <Square size={18} />
               {isEnding ? "Ending..." : "End Session"}
@@ -522,13 +514,13 @@ export function PomodoroTimer() {
       )}
 
       {isOffline && hasSelection && !hasStarted && (
-        <p className="text-xs text-amber-500 text-center mt-4">
+        <p className="text-xs text-warning text-center mt-4">
           Pomodoro requires an internet connection to start
         </p>
       )}
 
       {recoveredPomodoro && (
-        <p className="text-xs text-blue-500 text-center mt-4">
+        <p className="text-xs text-info text-center mt-4">
           Session recovered from {pomodoroConfig.workDuration / 60} minutes ago.
           Press Continue to resume.
         </p>
