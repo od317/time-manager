@@ -64,11 +64,19 @@ export function GoalSubgoals({ subGoals }: GoalSubgoalsProps) {
                   </span>
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                      subGoal.status === "COMPLETED"
-                        ? "bg-success-bg text-success border border-success/20"
-                        : subGoal.status === "FAILED"
-                          ? "bg-danger-bg text-danger border border-danger/20"
-                          : "bg-primary-bg text-primary border border-primary/20"
+                      subGoal.status === "ACTIVE"
+                        ? "bg-primary-bg text-primary border border-primary/20"
+                        : subGoal.status === "COMPLETED"
+                          ? "bg-success-bg text-success border border-success/20"
+                          : subGoal.status === "OVERDUE"
+                            ? "bg-amber-50 dark:bg-amber-950 text-amber-500 border border-amber-200 dark:border-amber-800"
+                            : subGoal.status === "PAUSED"
+                              ? "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                              : subGoal.status === "FAILED"
+                                ? "bg-danger-bg text-danger border border-danger/20"
+                                : subGoal.status === "ARCHIVED"
+                                  ? "bg-border text-text-muted border border-border"
+                                  : "bg-bg text-text-muted border border-border"
                     }`}
                   >
                     {subGoal.status}

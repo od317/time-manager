@@ -9,9 +9,8 @@ import {
   Target,
   CheckSquare,
   Repeat,
-  AlertCircle,
+  AlertTriangle,
   Clock,
-  RefreshCw,
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
@@ -39,11 +38,10 @@ export function SummaryFeedback({
 
   // Calculate summary stats
   const activeGoals = goals.filter((g) => g.status === "ACTIVE");
+  const overdueGoals = goals.filter((g) => g.status === "OVERDUE");
+  const pausedGoals = goals.filter((g) => g.status === "PAUSED");
   const completedGoals = goals.filter((g) => g.status === "COMPLETED");
   const failedGoals = goals.filter((g) => g.status === "FAILED");
-  const overdueGoals = activeGoals.filter(
-    (g) => g.endDate && new Date(g.endDate) < new Date(),
-  );
 
   const activeTasks = tasks.filter(
     (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
@@ -77,7 +75,6 @@ export function SummaryFeedback({
           period: "overall",
         });
 
-        // Response is now the object directly
         if (response) {
           setFeedback({
             overall: response.overall || "Keep pushing forward!",
@@ -111,7 +108,7 @@ export function SummaryFeedback({
           icon={Target}
           title="Active Goals"
           value={activeGoals.length}
-          sub={`${completedGoals.length} completed, ${failedGoals.length} failed`}
+          sub={`${completedGoals.length} completed, ${overdueGoals.length} overdue, ${pausedGoals.length} paused`}
           color="text-primary"
           bg="bg-primary-bg"
           alert={
@@ -139,7 +136,7 @@ export function SummaryFeedback({
           value={activeHabits.length}
           sub={`${pausedHabits.length} paused, best streak: ${bestStreak}`}
           color="text-purple-500"
-          bg="bg-purple-100"
+          bg="bg-purple-50 dark:bg-purple-950"
         />
         <SummaryCard
           icon={Clock}
@@ -263,20 +260,28 @@ function SummaryCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-surface rounded-2xl border border-border shadow-sm p-5"
+      whileHover={{ y: -2, scale: 1.02 }}
+      className="bg-surface rounded-2xl border border-border shadow-sm p-5 hover:shadow-lg hover:border-primary/20 transition-all"
     >
       <div className="flex items-center justify-between mb-3">
         <div className={`p-2 rounded-xl ${bg}`}>
           <Icon size={18} className={color} />
         </div>
         {alert && (
-          <span className="flex items-center gap-1 text-xs font-medium text-danger bg-danger-bg px-2 py-0.5 rounded-full">
-            <AlertCircle size={12} />
+          <span className="flex items-center gap-1 text-xs font-medium text-amber-500 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+            <AlertTriangle size={12} />
             {alert}
           </span>
         )}
       </div>
-      <p className="text-3xl font-bold text-text">{value}</p>
+      <motion.p
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1, type: "spring" }}
+        className="text-3xl font-bold text-text"
+      >
+        {value}
+      </motion.p>
       <p className="text-sm font-medium text-text mt-1">{title}</p>
       <p className="text-xs text-text-muted mt-1">{sub}</p>
     </motion.div>

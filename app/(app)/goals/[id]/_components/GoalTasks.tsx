@@ -156,7 +156,7 @@ export function GoalTasks({ goal }: GoalTasksProps) {
             <p className="text-xs text-text-muted">{tasks.length} total</p>
           </div>
         </div>
-        {goal.status !== "COMPLETED" && (
+        {goal.status !== "COMPLETED" && goal.status !== "FAILED" && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

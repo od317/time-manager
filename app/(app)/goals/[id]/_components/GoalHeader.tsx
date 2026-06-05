@@ -41,19 +41,41 @@ export function GoalHeader({ goal }: GoalHeaderProps) {
 
   const getStatusConfig = () => {
     switch (goal.status) {
+      case "ACTIVE":
+        return {
+          color: "text-primary",
+          bg: "bg-primary-bg",
+          label: "Active",
+        };
       case "COMPLETED":
         return {
           color: "text-success",
           bg: "bg-success-bg",
           label: "Completed",
         };
-      case "FAILED":
-        return { color: "text-danger", bg: "bg-danger-bg", label: "Failed" };
-      case "ACTIVE":
+      case "OVERDUE":
         return {
-          color: "text-success",
-          bg: "bg-success-bg/50",
-          label: "Active",
+          color: "text-amber-500",
+          bg: "bg-amber-50 dark:bg-amber-950",
+          label: "Overdue",
+        };
+      case "PAUSED":
+        return {
+          color: "text-slate-500",
+          bg: "bg-slate-100 dark:bg-slate-800",
+          label: "Paused",
+        };
+      case "FAILED":
+        return {
+          color: "text-danger",
+          bg: "bg-danger-bg",
+          label: "Failed",
+        };
+      case "ARCHIVED":
+        return {
+          color: "text-text-muted",
+          bg: "bg-border",
+          label: "Archived",
         };
       default:
         return { color: "text-text-muted", bg: "bg-bg", label: goal.status };

@@ -1,6 +1,5 @@
 "use client";
 
-import { Goal } from "@/types";
 import { motion } from "framer-motion";
 import {
   Target,
@@ -11,24 +10,23 @@ import {
 } from "lucide-react";
 
 interface TodayOverviewProps {
-  goals: Goal[];
+  activeGoals: number;
+  overdueGoals: number;
+  totalGoals: number;
   habitsDue: number;
   tasksCount: number;
 }
 
 export function TodayOverview({
-  goals,
+  activeGoals,
+  overdueGoals,
+  totalGoals,
   habitsDue,
   tasksCount,
 }: TodayOverviewProps) {
-  const activeGoals = goals.filter((g) => g.status === "ACTIVE").length;
-  const urgentGoals = goals.filter(
-    (g) => g.priority === "URGENT" && g.status === "ACTIVE",
-  ).length;
-
   const stats = [
     {
-      label: "Goals",
+      label: "Active",
       value: activeGoals,
       icon: Target,
       color: "text-primary",
@@ -48,14 +46,14 @@ export function TodayOverview({
       color: "text-success",
       bg: "bg-success-bg",
     },
-    ...(urgentGoals > 0
+    ...(overdueGoals > 0
       ? [
           {
-            label: "Urgent",
-            value: urgentGoals,
+            label: "Overdue",
+            value: overdueGoals,
             icon: AlertTriangle,
-            color: "text-danger",
-            bg: "bg-danger-bg",
+            color: "text-amber-500",
+            bg: "bg-amber-50 dark:bg-amber-950",
           },
         ]
       : []),

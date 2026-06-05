@@ -151,6 +151,7 @@ export function DailyBreakdown({
         });
       }).length;
 
+      // Find this line:
       const tasksCompleted = goals.reduce((sum, g) => {
         return (
           sum +
@@ -162,6 +163,8 @@ export function DailyBreakdown({
           }).length
         );
       }, 0);
+
+      // Keep as-is (this filters by task status, not goal status - it's fine)
 
       return {
         day: format(day, dateRange === "year" ? "MMM" : "EEE d"),

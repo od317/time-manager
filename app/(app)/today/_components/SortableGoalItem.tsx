@@ -31,6 +31,7 @@ import {
   CheckSquare,
   GripVertical,
   Plus,
+  AlertTriangle,
 } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
 import { TaskRow } from "./TaskRow";
@@ -198,6 +199,13 @@ export function SortableGoalItem({
           {goal.priority === "URGENT" && (
             <span className="text-xs px-1.5 py-0.5 rounded-full bg-danger-bg text-danger font-medium">
               Urgent
+            </span>
+          )}
+
+          {goal.status === "OVERDUE" && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-500 font-medium flex items-center gap-1">
+              <AlertTriangle size={10} />
+              Overdue
             </span>
           )}
 

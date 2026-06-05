@@ -9,6 +9,13 @@ export const serverGoalService = {
       tags: ["goals"],
     });
   },
+  getActiveAndOverdue: async (revalidate: number | false = 60) => {
+    return serverApi.get<Goal[]>("/goals", {
+      params: { status: "ACTIVE,OVERDUE" },
+      revalidate,
+      tags: ["goals"],
+    });
+  },
 
   getById: async (id: string) => {
     return serverApi.get<Goal>(`/goals/${id}`, {

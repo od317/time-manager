@@ -17,11 +17,14 @@ export const dynamic = "force-dynamic";
 
 export default async function TodayPage() {
   const [goals, habits, runningTimer, allTasks] = await Promise.all([
-    serverGoalService.getAll({ status: "ACTIVE" }, false),
+    serverGoalService.getActiveAndOverdue(false),
     serverHabitService.getAll({ status: "ACTIVE" }, false),
     serverTimeEntryService.getRunning(),
     serverApi.get<Task[]>("/tasks", { revalidate: false, tags: ["tasks"] }),
   ]);
+
+  const overdueGoals = goals.filter((g) => g.status === "OVERDUE");
+  const activeGoals = goals.filter((g) => g.status === "ACTIVE");
 
   const today = new Date().getDay();
 
@@ -72,6 +75,8 @@ export default async function TodayPage() {
 
       <div className="space-y-6 pb-20 md:pb-6">
         <TodayOverview
+          activeGoals={activeGoals.length}
+          overdueGoals={overdueGoals.length}
           goals={goals}
           habitsDue={habitsDueToday.length}
           tasksCount={activeTasks.length}

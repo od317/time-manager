@@ -36,7 +36,9 @@ export default async function AnalyticsPage() {
   const totalGoals = goals.length;
   const completedGoals = goals.filter((g) => g.status === "COMPLETED").length;
   const activeGoals = goals.filter((g) => g.status === "ACTIVE").length;
+  const overdueGoals = goals.filter((g) => g.status === "OVERDUE").length;
   const failedGoals = goals.filter((g) => g.status === "FAILED").length;
+  const pausedGoals = goals.filter((g) => g.status === "PAUSED").length;
 
   const totalHabits = habits.length;
   const activeHabits = habits.filter((h) => h.status === "ACTIVE");
@@ -66,6 +68,8 @@ export default async function AnalyticsPage() {
         completedGoals={completedGoals}
         activeGoals={activeGoals}
         failedGoals={failedGoals}
+        overdueGoals={overdueGoals}
+        pausedGoals={pausedGoals}
         totalHabits={totalHabits}
         activeHabits={activeHabitsCount}
         avgStreak={avgStreak}

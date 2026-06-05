@@ -111,10 +111,10 @@ interface TimerState {
 // ============================================================================
 
 const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
-  workDuration: 5, // 5 seconds for testing
-  shortBreakDuration: 3, // 3 seconds
-  longBreakDuration: 5, // 5 seconds
-  sessionsBeforeLongBreak: 4,
+  workDuration: 25 * 60, // 25 minutes
+  shortBreakDuration: 5 * 60, // 5 minutes
+  longBreakDuration: 15 * 60, // 15 minutes
+  sessionsBeforeLongBreak: 4, // Long break after 4 sessions
 };
 
 // ============================================================================

@@ -9,12 +9,15 @@ import {
   CheckCircle2,
   Repeat,
   Timer,
+  AlertTriangle,
 } from "lucide-react";
 
 interface OverviewStatsProps {
   totalGoals: number;
   completedGoals: number;
   activeGoals: number;
+  overdueGoals: number;
+  pausedGoals: number;
   failedGoals: number;
   totalHabits: number;
   activeHabits: number;
@@ -27,6 +30,8 @@ export function OverviewStats({
   totalGoals,
   completedGoals,
   activeGoals,
+  overdueGoals,
+  pausedGoals,
   failedGoals,
   totalHabits,
   activeHabits,
@@ -54,11 +59,20 @@ export function OverviewStats({
     {
       label: "Active Goals",
       value: activeGoals,
-      sub: `${failedGoals} failed`,
+      sub: `${overdueGoals} overdue`,
       icon: Target,
       color: "text-primary",
       bg: "bg-primary-bg",
       border: "border-primary/20",
+    },
+    {
+      label: "Overdue",
+      value: overdueGoals,
+      sub: `${pausedGoals} paused, ${failedGoals} failed`,
+      icon: AlertTriangle,
+      color: "text-amber-500",
+      bg: "bg-amber-50 dark:bg-amber-950",
+      border: "border-amber-200 dark:border-amber-800",
     },
     {
       label: "Active Habits",
@@ -121,7 +135,7 @@ export function OverviewStats({
       variants={container}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4"
     >
       {stats.map((stat) => {
         const Icon = stat.icon;

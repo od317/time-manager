@@ -34,7 +34,9 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
           ? "text-primary bg-primary-bg/30"
           : isCompleted
             ? "text-text-secondary bg-success-bg/10"
-            : "text-text-secondary hover:bg-border-light"
+            : task.status === "OVERDUE"
+              ? "text-amber-500 bg-amber-50 dark:bg-amber-950"
+              : "text-text-secondary hover:bg-border-light"
       }`}
     >
       {onToggle ? (

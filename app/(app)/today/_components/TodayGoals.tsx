@@ -44,6 +44,7 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
   const { goalOrder, setGoalOrder } = useUIStore();
 
   const topLevelGoals = goals.filter((g) => !g.parentId);
+  const overdueCount = allGoals.filter((g) => g.status === "OVERDUE").length;
 
   const sortedGoals = (() => {
     if (goalOrder.length === 0) return topLevelGoals;
@@ -100,7 +101,14 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
             <Target size={18} className="text-primary" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-bold text-text">Active Goals</h3>
+            <h3 className="text-sm font-bold text-text">
+              Active Goals
+              {overdueCount > 0 && (
+                <span className="ml-2 text-xs font-medium text-amber-500 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full">
+                  {overdueCount} overdue
+                </span>
+              )}
+            </h3>
             <p className="text-xs text-text-muted">{totalCount} total</p>
           </div>
         </div>

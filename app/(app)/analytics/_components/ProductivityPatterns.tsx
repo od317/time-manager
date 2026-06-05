@@ -30,15 +30,25 @@ export function ProductivityPatterns({
 
   const priorityDist = {
     URGENT: goals.filter(
-      (g) => g.priority === "URGENT" && g.status === "ACTIVE",
+      (g) =>
+        g.priority === "URGENT" &&
+        (g.status === "ACTIVE" || g.status === "OVERDUE"),
     ).length,
-    HIGH: goals.filter((g) => g.priority === "HIGH" && g.status === "ACTIVE")
-      .length,
+    HIGH: goals.filter(
+      (g) =>
+        g.priority === "HIGH" &&
+        (g.status === "ACTIVE" || g.status === "OVERDUE"),
+    ).length,
     MEDIUM: goals.filter(
-      (g) => g.priority === "MEDIUM" && g.status === "ACTIVE",
+      (g) =>
+        g.priority === "MEDIUM" &&
+        (g.status === "ACTIVE" || g.status === "OVERDUE"),
     ).length,
-    LOW: goals.filter((g) => g.priority === "LOW" && g.status === "ACTIVE")
-      .length,
+    LOW: goals.filter(
+      (g) =>
+        g.priority === "LOW" &&
+        (g.status === "ACTIVE" || g.status === "OVERDUE"),
+    ).length,
   };
 
   const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -65,6 +75,7 @@ export function ProductivityPatterns({
     },
     LOW: { color: "bg-border", textColor: "text-text-muted", bg: "bg-bg" },
   };
+  const overdueGoals = goals.filter((g) => g.status === "OVERDUE");
 
   return (
     <motion.div
@@ -155,6 +166,25 @@ export function ProductivityPatterns({
             })}
           </div>
         </div>
+
+        {/* Add this after the priority distribution div */}
+        {overdueGoals.length > 0 && (
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="bg-amber-50 dark:bg-amber-950 rounded-xl p-5 border border-amber-200 dark:border-amber-800"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle size={18} className="text-amber-500" />
+              <p className="text-sm font-bold text-amber-500">Overdue</p>
+            </div>
+            <p className="text-3xl font-bold text-amber-500">
+              {overdueGoals.length}
+            </p>
+            <p className="text-xs text-amber-500/70 mt-1 font-medium">
+              goals past their deadline
+            </p>
+          </motion.div>
+        )}
 
         {/* Weekly Wins */}
         <motion.div

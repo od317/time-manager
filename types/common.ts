@@ -13,6 +13,7 @@ export type GoalStatus =
   | "COMPLETED"
   | "FAILED"
   | "ARCHIVED"
+  | "OVERDUE"
   | "PAUSED";
 
 export type TaskStatus =
@@ -20,6 +21,7 @@ export type TaskStatus =
   | "IN_PROGRESS"
   | "COMPLETED"
   | "FAILED"
+  | "OVERDUE"
   | "ARCHIVED";
 
 export type HabitStatus = "ACTIVE" | "PAUSED" | "ARCHIVED";

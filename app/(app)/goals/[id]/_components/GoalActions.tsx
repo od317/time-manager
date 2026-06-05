@@ -52,13 +52,17 @@ export function GoalActions({ goal }: GoalActionsProps) {
     }
   };
 
-  const isActive = goal.status === "ACTIVE";
+  const isActive = goal.status === "ACTIVE" || goal.status === "OVERDUE";
 
   const hasActiveChildren = goal.children?.some(
-    (c) => c.status === "ACTIVE" || c.status === "PAUSED",
+    (c) =>
+      c.status === "ACTIVE" || c.status === "PAUSED" || c.status === "OVERDUE",
   );
   const hasActiveTasks = (goal.tasks || []).some(
-    (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
+    (t) =>
+      t.status === "TODO" ||
+      t.status === "IN_PROGRESS" ||
+      t.status === "OVERDUE",
   );
   const canComplete = !hasActiveChildren && !hasActiveTasks;
 
@@ -122,8 +126,7 @@ export function GoalActions({ goal }: GoalActionsProps) {
             </motion.button>
           </>
         )}
-
-        {!isActive && !hasCompletedParent && (
+        {!isActive && !hasCompletedParent && goal.status !== "FAILED" && (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
