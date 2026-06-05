@@ -18,6 +18,10 @@ import {
 } from "lucide-react";
 import { resumeAudioContext } from "@/lib/sounds";
 import { PomodoroSettings } from "./PomodoroSettings";
+import {
+  loadPomodoroSession,
+  savePomodoroSession,
+} from "@/lib/pomodoroPersistence";
 
 export function PomodoroTimer() {
   const {
@@ -39,9 +43,12 @@ export function PomodoroTimer() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = selectedTask !== null;
   const [isOffline, setIsOffline] = useState(false);
-  const [totalSessions, setTotalSessions] = useState(
-    () => pomodoroState?.sessionsCompleted || 4,
-  );
+  const [totalSessions, setTotalSessions] = useState(() => {
+    // Check for recovered session first
+    const saved = loadPomodoroSession();
+    if (saved) return saved.totalSessions;
+    return pomodoroState?.sessionsCompleted || 4;
+  });
   const [isEnding, setIsEnding] = useState(false);
 
   // ============================================================================
@@ -89,16 +96,22 @@ export function PomodoroTimer() {
 
         useTimerStore.setState({ elapsed: timeLeft });
 
+        // Save EVERY tick to ensure recovery data is accurate
+        const data = loadPomodoroSession();
+        if (data) {
+          data.timeLeftInPhase = timeLeft;
+          data.lastTickTime = Date.now();
+          data.lastActiveAt = Date.now();
+          savePomodoroSession(data);
+        }
+
         if (timeLeft <= 0) {
           clearTimerInterval();
           handlePhaseComplete();
         }
       };
 
-      // Initial tick
       tick();
-
-      // Start interval
       intervalRef.current = setInterval(tick, 1000);
     } else {
       clearTimerInterval();
@@ -113,6 +126,15 @@ export function PomodoroTimer() {
     clearTimerInterval,
     handlePhaseComplete,
   ]);
+
+  useEffect(() => {
+    if (recoveredPomodoro) {
+      const saved = loadPomodoroSession();
+      if (saved) {
+        setTotalSessions(saved.totalSessions);
+      }
+    }
+  }, [recoveredPomodoro]);
 
   // ============================================================================
   // HANDLERS
@@ -397,11 +419,20 @@ export function PomodoroTimer() {
           ======================================================================== */}
       <div className="w-full h-2 bg-border rounded-full overflow-hidden mb-8">
         <motion.div
-          className={`h-full rounded-full ${
-            isRunning || isPaused ? phaseInfo.color : "bg-primary"
-          }`}
+          key={`${pomodoroState?.phase}-${pomodoroState?.sessionsCompleted}`}
+          className="h-full rounded-full"
           initial={{ width: 0 }}
-          animate={{ width: `${Math.min(progress, 100)}%` }}
+          animate={{
+            width: `${Math.min(progress, 100)}%`,
+            backgroundColor:
+              phase === "WORK"
+                ? "#ef4444" // red-500
+                : phase === "SHORT_BREAK"
+                  ? "#22c55e" // green-500
+                  : phase === "LONG_BREAK"
+                    ? "#f59e0b" // amber-500
+                    : "#6366f1", // primary
+          }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </div>
