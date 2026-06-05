@@ -57,13 +57,12 @@ export const timeEntryService = {
 
   getSummary: (params: TimeSummaryParams) =>
     api.get<TimeSummary, TimeSummaryParams>("/time-entries/summary", params),
-  completePomodoro: (
-    sessionLog: Array<{
+  completePomodoroSession: (
+    sessionLog: {
       taskId?: string;
       goalId?: string;
       duration: number;
       note?: string;
-    }>,
-  ) =>
-    api.post("/time-entries/complete", { sessionLog }, CancelKeys.TIMER_STOP),
+    }[],
+  ) => api.post("/pomodoro/complete", { sessionLog }),
 };
