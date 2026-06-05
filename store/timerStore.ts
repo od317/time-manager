@@ -375,21 +375,8 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     }));
 
     try {
-      const token = getTokenFromCookie();
-      const apiUrl = getApiUrl();
-
-      const response = await fetch(
-        `${apiUrl}/time-entries/complete?token=${token}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionLog }),
-        },
-      );
-
-      if (response.ok) {
-        clearPendingSessions();
-      }
+      await timeEntryService.completePomodoroSession(sessionLog);
+      clearPendingSessions();
     } catch {
       // Will retry on next load
     }
@@ -665,21 +652,8 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
     if (sessionLog.length > 0) {
       try {
-        const token = getTokenFromCookie();
-        const apiUrl = getApiUrl();
-
-        const response = await fetch(
-          `${apiUrl}/time-entries/complete?token=${token}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionLog }),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to save sessions");
-        }
+        // Use the service method instead of raw fetch
+        await timeEntryService.completePomodoroSession(sessionLog);
       } catch {
         // Queue for later sync
         for (const session of data.completedWorkSessions) {
