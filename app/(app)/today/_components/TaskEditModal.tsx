@@ -103,31 +103,33 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-hidden py-8"
         onClick={onClose}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.2 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-surface rounded-2xl shadow-2xl border border-border w-full max-w-md overflow-hidden"
+          className="bg-surface rounded-2xl shadow-2xl border border-border w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border bg-bg/50">
-            <h3 className="text-lg font-bold text-text">Edit Task</h3>
+          <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-surface z-10">
+            <div>
+              <h3 className="text-lg font-bold text-text">Edit Task</h3>
+              <p className="text-xs text-text-muted mt-0.5">{task.title}</p>
+            </div>
             <motion.button
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
               onClick={onClose}
               className="p-2 text-text-muted hover:text-text rounded-xl hover:bg-border-light transition-colors"
             >
-              <X size={20} />
+              <X size={18} />
             </motion.button>
           </div>
 
-          <form onSubmit={handleSave} className="p-6 space-y-5">
+          <form onSubmit={handleSave} className="p-5 space-y-4">
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -143,80 +145,68 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
             </AnimatePresence>
 
             {/* Title */}
-            <div>
-              <label className="block text-sm font-semibold text-text mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
-                autoFocus
-              />
-            </div>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Task title"
+              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium"
+              autoFocus
+            />
 
-            {/* Priority */}
-            <div>
-              <label className="block text-sm font-semibold text-text mb-2">
-                Priority
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {priorities.map((p) => (
-                  <motion.button
-                    key={p.value}
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setPriority(p.value)}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
-                      priority === p.value
-                        ? `${p.color} text-white shadow-sm`
-                        : "bg-bg text-text-secondary border-2 border-border hover:border-primary/30"
-                    }`}
-                  >
-                    {p.label}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
-            {/* Estimated Time & Due Date */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Priority & Est. Time */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-text mb-2">
-                  Est. Time
+                <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                  Priority
+                </label>
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as Priority)}
+                  className="w-full px-3 py-2.5 rounded-xl border-2 border-border bg-bg text-sm text-text focus:outline-none focus:border-primary"
+                >
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="URGENT">Urgent</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                  Est. Time (min)
                 </label>
                 <input
                   type="number"
                   value={estimatedMinutes}
                   onChange={(e) => setEstimatedMinutes(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                   placeholder="30"
                   min="1"
+                  className="w-full px-3 py-2.5 rounded-xl border-2 border-border bg-bg text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-text mb-2">
-                  Due Date
-                </label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-border bg-bg text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
-                />
-              </div>
+            </div>
+
+            {/* Due Date */}
+            <div>
+              <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                Due Date
+              </label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border-2 border-border bg-bg text-sm text-text focus:outline-none focus:border-primary"
+              />
             </div>
 
             {/* Buttons */}
             <div className="flex gap-3 pt-2">
               <motion.button
                 type="button"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowDeleteConfirm(true)}
-                className="px-4 py-3 border-2 border-danger/30 text-danger rounded-xl font-semibold hover:bg-danger-bg transition-all flex items-center gap-2"
+                className="px-4 py-2.5 border-2 border-danger/30 text-danger rounded-xl text-sm font-semibold hover:bg-danger-bg transition-all flex items-center gap-2"
               >
                 <Trash2 size={16} />
                 Delete
@@ -227,7 +217,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onClose}
-                  className="flex-1 py-3 px-4 border-2 border-border text-text-secondary rounded-xl font-semibold hover:bg-border-light transition-all"
+                  className="flex-1 py-2.5 px-4 border-2 border-border text-text-secondary rounded-xl text-sm font-semibold hover:bg-border-light transition-all"
                 >
                   Cancel
                 </motion.button>
@@ -235,8 +225,8 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  disabled={isSubmitting}
-                  className="flex-1 py-3 px-4 bg-primary text-white rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 transition-all"
+                  disabled={isSubmitting || !title.trim()}
+                  className="flex-1 py-2.5 px-4 bg-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 transition-all"
                 >
                   {isSubmitting ? "Saving..." : "Save"}
                 </motion.button>
@@ -251,10 +241,10 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="border-t-2 border-danger/20 bg-danger-bg/10 p-6"
+                className="border-t-2 border-danger/20 bg-danger-bg/10 p-5"
               >
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="p-2 rounded-xl bg-danger-bg">
+                  <div className="p-2 rounded-xl bg-danger-bg flex-shrink-0">
                     <AlertTriangle size={18} className="text-danger" />
                   </div>
                   <div>
@@ -272,7 +262,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 py-2.5 px-4 border-2 border-border text-text-secondary rounded-xl font-semibold hover:bg-border-light transition-all"
+                    className="flex-1 py-2.5 px-4 border-2 border-border text-text-secondary rounded-xl text-sm font-semibold hover:bg-border-light transition-all"
                   >
                     Keep Task
                   </motion.button>
@@ -281,7 +271,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="flex-1 py-2.5 px-4 bg-danger text-white rounded-xl font-semibold hover:bg-danger/90 disabled:opacity-50 transition-all"
+                    className="flex-1 py-2.5 px-4 bg-danger text-white rounded-xl text-sm font-semibold hover:bg-danger/90 disabled:opacity-50 transition-all"
                   >
                     {isDeleting ? "Deleting..." : "Delete"}
                   </motion.button>

@@ -26,9 +26,7 @@ import {
 import {
   Target,
   ChevronDown,
-  ChevronRight,
   ArrowRight,
-  Flag,
 } from "lucide-react";
 import { SortableGoalItem } from "./SortableGoalItem";
 

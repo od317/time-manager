@@ -5,7 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import { useTaskStore } from "@/store/taskStore";
 import { Goal, Task } from "@/types";
-import { X, CheckCircle2, ChevronDown, Layers, Search } from "lucide-react";
+import {
+  X,
+  CheckCircle2,
+  ChevronDown,
+  Layers,
+  Search,
+  Loader2,
+} from "lucide-react";
 import { taskService } from "@/lib/services/taskService";
 
 interface TaskSelectorProps {
@@ -19,6 +26,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   const isRunning = runningTimer?.status === "RUNNING";
 
@@ -223,6 +231,8 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                               <div
                                 onClick={async (e) => {
                                   e.stopPropagation();
+                                  if (completingId) return;
+                                  setCompletingId(task.id);
                                   try {
                                     await taskService.update(task.id, {
                                       status: "COMPLETED",
@@ -231,12 +241,20 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                     if (selectedTask?.id === task.id) {
                                       clearSelection();
                                     }
-                                  } catch {}
+                                  } catch {
+                                    // Toast will go here
+                                  } finally {
+                                    setCompletingId(null);
+                                  }
                                 }}
                                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-success-bg text-text-muted hover:text-success transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                                 title="Mark complete"
                               >
-                                <CheckCircle2 size={14} />
+                                {completingId === task.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <CheckCircle2 size={14} />
+                                )}
                               </div>
                             </div>
                           ))}

@@ -5,6 +5,11 @@ export interface Habit {
   id: HabitId;
   userId: string;
   title: string;
+  todayLog?: HabitLog | null;
+  todayStatus?: "PENDING" | "COMPLETED" | "MISSED" | "SKIPPED";
+  completionCount?: number;
+  remaining?: number;
+  isCompleted?: boolean;
   description: string | null;
   category: string | null;
   tags: string[];

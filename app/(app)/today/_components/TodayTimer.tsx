@@ -9,10 +9,18 @@ import { TaskSelector } from "./TaskSelector";
 import { TimerModeTabs } from "./TimerModeTabs";
 import { QuickLogForm } from "./QuickLogForm";
 import { PomodoroTimer } from "./PomodoroTimer";
-import { Play, Pause, Square, Clock, CheckCircle2 } from "lucide-react";
+import {
+  Play,
+  Pause,
+  Square,
+  Clock,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 import { SessionHistory } from "./SessionHistory";
 import { taskService } from "@/lib/services/taskService";
 import { buildPersistedState, saveTimerState } from "@/lib/timerPersistence";
+import { useState } from "react";
 
 interface TodayTimerProps {
   runningTimer: TimeEntry | null;
@@ -36,6 +44,7 @@ export function TodayTimer({
   const { markComplete } = useTaskStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = useTimerStore((s) => s.selectedTask !== null);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const clearTimerInterval = useCallback(() => {
     if (intervalRef.current) {
@@ -239,6 +248,8 @@ export function TodayTimer({
           </span>
           <button
             onClick={async () => {
+              if (isCompleting) return;
+              setIsCompleting(true);
               try {
                 if (isRunning) await useTimerStore.getState().pause();
                 await taskService.update(selectedTask.id, {
@@ -246,12 +257,22 @@ export function TodayTimer({
                 });
                 markComplete(selectedTask.id);
                 useTimerStore.getState().clearSelection();
-              } catch {}
+              } catch {
+                // Toast will go here
+              } finally {
+                setIsCompleting(false);
+              }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-success hover:bg-success-bg transition-all flex-shrink-0"
+            disabled={isCompleting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-success hover:bg-success-bg transition-all flex-shrink-0 disabled:opacity-50"
             title="Mark task as complete"
           >
-            <CheckCircle2 size={14} /> Complete
+            {isCompleting ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <CheckCircle2 size={14} />
+            )}
+            {isCompleting ? "Completing..." : "Complete"}
           </button>
         </motion.div>
       )}

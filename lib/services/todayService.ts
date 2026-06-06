@@ -18,6 +18,17 @@ export interface TodayResponse {
   };
 }
 
+// Helper: get user's local date in YYYY-MM-DD format
+const getUserLocalDate = (): string => {
+  const now = new Date();
+  return now.toISOString().split("T")[0];
+};
+
 export const todayService = {
-  getAll: () => api.get<TodayResponse>("/today", undefined, CancelKeys.TODAY),
+  getAll: () =>
+    api.get<TodayResponse>(
+      "/today",
+      { date: getUserLocalDate() },
+      CancelKeys.TODAY,
+    ),
 };

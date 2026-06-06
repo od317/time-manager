@@ -29,7 +29,6 @@ interface TodayHabitsProps {
 }
 
 export function TodayHabits({ habits }: TodayHabitsProps) {
-  const todayStr = new Date().toLocaleDateString("en-CA");
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -38,11 +37,7 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
 
   const isCompleted = (habit: Habit): boolean => {
     if (completedIds.has(habit.id)) return true;
-    const todayLog = habit.logs?.find((log) => {
-      if (log.status !== "COMPLETED") return false;
-      return new Date(log.date).toLocaleDateString("en-CA") === todayStr;
-    });
-    return !!todayLog;
+    return habit.isCompleted === true;
   };
 
   const uncompleted = habits.filter((h) => !isCompleted(h));
@@ -59,6 +54,23 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
       setCompletedIds((prev) => new Set([...prev, habit.id]));
     } catch {
       // Handle silently
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleUncomplete = async (habit: Habit) => {
+    if (loadingId) return;
+    setLoadingId(habit.id);
+    try {
+      await habitService.unlog(habit.id);
+      setCompletedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(habit.id);
+        return next;
+      });
+    } catch {
+      // Toast will go here
     } finally {
       setLoadingId(null);
     }
@@ -218,8 +230,8 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
                         <SortableHabitItem
                           key={habit.id}
                           habit={habit}
-                          todayStr={todayStr}
                           onComplete={handleComplete}
+                          onUncomplete={handleUncomplete}
                           isLoading={loadingId === habit.id}
                           isCompleted={false}
                         />
@@ -265,10 +277,10 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
                                 <SortableHabitItem
                                   key={habit.id}
                                   habit={habit}
-                                  todayStr={todayStr}
                                   onComplete={handleComplete}
-                                  isLoading={false}
-                                  isCompleted={true}
+                                  onUncomplete={handleUncomplete}
+                                  isLoading={loadingId === habit.id}
+                                  isCompleted={false}
                                 />
                               ))}
                             </div>

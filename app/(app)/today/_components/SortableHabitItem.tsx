@@ -8,8 +8,8 @@ import { Check, Flame, GripVertical, Target } from "lucide-react";
 
 interface SortableHabitItemProps {
   habit: Habit;
-  todayStr: string;
   onComplete: (habit: Habit) => void;
+  onUncomplete: (habit: Habit) => void;
   isLoading: boolean;
   isCompleted: boolean;
 }
@@ -17,6 +17,7 @@ interface SortableHabitItemProps {
 export function SortableHabitItem({
   habit,
   onComplete,
+  onUncomplete,
   isLoading,
   isCompleted,
 }: SortableHabitItemProps) {
@@ -71,8 +72,10 @@ export function SortableHabitItem({
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => onComplete(habit)}
-          disabled={isLoading || isCompleted}
+          onClick={() =>
+            isCompleted ? onUncomplete(habit) : onComplete(habit)
+          }
+          disabled={isLoading}
           className="flex-shrink-0 relative"
         >
           {isLoading ? (
