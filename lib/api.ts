@@ -232,6 +232,7 @@ interface RequestOptions<TParams = Record<string, unknown>, TData = unknown> {
   timeout?: number;
   cancelKey?: string;
   cancelPrevious?: boolean;
+  silentCancel?: boolean;
 }
 
 class ApiClient {
@@ -280,7 +281,17 @@ class ApiClient {
       return response.data;
     } catch (error) {
       this.registry.complete(requestKey);
-      throw ApiErrorHandler.parse(error as AxiosError<ServerErrorResponse>);
+      const parsedError = ApiErrorHandler.parse(
+        error as AxiosError<ServerErrorResponse>,
+      );
+
+      if (parsedError.code === "CANCELLED") {
+        if (options?.silentCancel !== false) {
+          return undefined as unknown as TResponse;
+        }
+      }
+
+      throw parsedError;
     }
   }
 

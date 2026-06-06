@@ -147,7 +147,7 @@ function getTokenFromCookie(): string | null {
 
 function getApiUrl(): string {
   return (
-    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
     "https://time-manager-api-3r7i.onrender.com/api"
   );
 }

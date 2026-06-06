@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { Goal, TimeEntry } from "@/types";
+import { Goal, Task, TimeEntry } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import { useTaskStore } from "@/store/taskStore";
@@ -251,14 +251,63 @@ export function TodayTimer({
               if (isCompleting) return;
               setIsCompleting(true);
               try {
-                if (isRunning) await useTimerStore.getState().pause();
                 await taskService.update(selectedTask.id, {
                   status: "COMPLETED",
                 });
                 markComplete(selectedTask.id);
-                useTimerStore.getState().clearSelection();
+
+                // Replace the getAllActiveTasks inside onClick:
+                const getAllActiveTasks = (goalList: Goal[]): Task[] => {
+                  const completedIds =
+                    useTaskStore.getState().localCompletedIds;
+                  const localTasks = useTaskStore.getState().localTasks;
+                  const updatedTasks = useTaskStore.getState().updatedTasks;
+
+                  return goalList.flatMap((g) => {
+                    // Local tasks
+                    const localGoalTasks = (localTasks.get(g.id) || [])
+                      .filter((t) => !completedIds.has(t.id))
+                      .filter(
+                        (t) =>
+                          t.status === "TODO" || t.status === "IN_PROGRESS",
+                      )
+                      .filter((t) => t.id !== selectedTask.id);
+
+                    // Server tasks (deduplicate, filter completed, apply updates)
+                    const localIds = new Set(localGoalTasks.map((t) => t.id));
+                    const serverTasks = (g.tasks || [])
+                      .filter((t) => !localIds.has(t.id))
+                      .filter(
+                        (t) =>
+                          t.status === "TODO" || t.status === "IN_PROGRESS",
+                      )
+                      .filter((t) => t.id !== selectedTask.id)
+                      .filter((t) => !completedIds.has(t.id))
+                      .map((t) => {
+                        const updates = updatedTasks.get(t.id);
+                        return updates ? { ...t, ...updates } : t;
+                      });
+
+                    const childTasks = getAllActiveTasks(g.children || []);
+                    return [...localGoalTasks, ...serverTasks, ...childTasks];
+                  });
+                };
+
+                const allActiveTasks = getAllActiveTasks(goals);
+
+                if (allActiveTasks.length > 0) {
+                  useTimerStore.getState().setSelectedTask(allActiveTasks[0]);
+                } else {
+                  const state = useTimerStore.getState();
+                  state.clearSelection();
+                  if (state.timerMode === "POMODORO" && state.pomodoroState) {
+                    await state.endPomodoroSession();
+                  } else {
+                    await state.stop(); // Properly stops timer
+                  }
+                }
               } catch {
-                // Toast will go here
+                // Toast
               } finally {
                 setIsCompleting(false);
               }

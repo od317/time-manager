@@ -9,12 +9,24 @@ interface TodayModalsProps {
   allGoals: Goal[];
 }
 
+// Recursively find a goal by ID (including nested children)
+function findGoalById(goals: Goal[], id: string): Goal | undefined {
+  for (const goal of goals) {
+    if (goal.id === id) return goal;
+    if (goal.children?.length) {
+      const found = findGoalById(goal.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
 export function TodayModals({ allGoals }: TodayModalsProps) {
   const { quickTaskGoalId, editingTask, closeQuickTask, closeEditTask } =
     useModalStore();
 
   const quickTaskGoal = quickTaskGoalId
-    ? allGoals.find((g) => g.id === quickTaskGoalId)
+    ? findGoalById(allGoals, quickTaskGoalId)
     : null;
 
   return (

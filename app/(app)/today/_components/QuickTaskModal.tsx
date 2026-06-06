@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Goal, Priority } from "@/types";
+import { Goal, Priority, Task } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { Calendar } from "@/components/calendar/Calendar";
 import { useCalendarData } from "@/hooks/useCalendarData";
@@ -17,6 +17,7 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { format } from "date-fns";
+import { useTaskStore } from "@/store/taskStore";
 
 interface QuickTaskModalProps {
   goal: Goal;
@@ -94,7 +95,7 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
           : selectedDate.toISOString()
         : undefined;
 
-      await taskService.create({
+      const taskResponse = await taskService.create({
         title: title.trim(),
         goalId: goal.id,
         priority,
@@ -103,10 +104,13 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
           : undefined,
         dueDate,
       });
+
+      // Add task locally - use the actual API response
+      useTaskStore.getState().addTask(goal.id, taskResponse as Task);
+
       setSuccess(true);
       setTimeout(() => {
         onClose();
-        router.refresh();
       }, 800);
     } catch {
       setError("Failed to create task");

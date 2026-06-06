@@ -28,6 +28,11 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
 
+  // Get all store state
+  const localTasks = useTaskStore((s) => s.localTasks);
+  const updatedTasks = useTaskStore((s) => s.updatedTasks);
+  const deletedTaskIds = useTaskStore((s) => s.deletedTaskIds);
+
   const isRunning = runningTimer?.status === "RUNNING";
 
   useEffect(() => {
@@ -50,14 +55,45 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
     setSearch("");
   };
 
-  const activeGoals = goals.filter((g) => g.status === "ACTIVE");
+  const getAllTasksFromGoal = (goal: Goal): (Task & { goal: Goal })[] => {
+    // Local tasks for this goal (filter out deleted)
+    const localGoalTasks = (localTasks.get(goal.id) || []).filter(
+      (t) => !deletedTaskIds.has(t.id),
+    );
 
-  const allTasks = activeGoals.flatMap((goal) =>
-    (goal.tasks || [])
+    // Server tasks (deduplicate, filter deleted, apply updates)
+    const localIds = new Set(localGoalTasks.map((t) => t.id));
+    const serverTasks = (goal.tasks || [])
+      .filter((t) => !localIds.has(t.id))
+      .filter((t) => !deletedTaskIds.has(t.id))
       .filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS")
       .filter((t) => !localCompletedIds.has(t.id))
-      .map((task) => ({ ...task, goal })),
-  );
+      .map((task) => {
+        // Apply updates from store
+        const updates = updatedTasks.get(task.id);
+        return { ...task, ...updates, goal };
+      });
+
+    // Active local tasks
+    const activeLocalTasks = localGoalTasks
+      .filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS")
+      .filter((t) => !localCompletedIds.has(t.id))
+      .map((task) => {
+        const updates = updatedTasks.get(task.id);
+        return { ...task, ...updates, goal };
+      });
+
+    // Recurse into children
+    const childTasks = (goal.children || []).flatMap((child) =>
+      getAllTasksFromGoal(child),
+    );
+
+    return [...activeLocalTasks, ...serverTasks, ...childTasks];
+  };
+
+  const activeGoals = goals.filter((g) => g.status === "ACTIVE");
+
+  const allTasks = activeGoals.flatMap((goal) => getAllTasksFromGoal(goal));
 
   const filteredTasks = search
     ? allTasks.filter((t) =>
@@ -162,30 +198,22 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                   </p>
                 </div>
               ) : (
-                activeGoals
-                  .filter((goal) =>
-                    (goal.tasks || []).some(
-                      (t) =>
-                        (t.status === "TODO" || t.status === "IN_PROGRESS") &&
-                        !localCompletedIds.has(t.id),
-                    ),
-                  )
-                  .map((goal) => {
-                    const goalTasks = (goal.tasks || [])
-                      .filter(
-                        (t) =>
-                          t.status === "TODO" || t.status === "IN_PROGRESS",
-                      )
-                      .filter((t) => !localCompletedIds.has(t.id))
-                      .filter(
-                        (t) =>
-                          !search ||
-                          t.title.toLowerCase().includes(search.toLowerCase()),
-                      );
+                (() => {
+                  const groupedByGoal = new Map<
+                    string,
+                    { goal: Goal; tasks: (Task & { goal: Goal })[] }
+                  >();
 
-                    if (goalTasks.length === 0) return null;
+                  filteredTasks.forEach((task) => {
+                    const goalId = task.goal?.id || task.goalId || "unknown";
+                    if (!groupedByGoal.has(goalId)) {
+                      groupedByGoal.set(goalId, { goal: task.goal, tasks: [] });
+                    }
+                    groupedByGoal.get(goalId)!.tasks.push(task);
+                  });
 
-                    return (
+                  return Array.from(groupedByGoal.values()).map(
+                    ({ goal, tasks }) => (
                       <div key={goal.id} className="mb-1">
                         <div className="flex items-center gap-2 px-3 py-2">
                           <div
@@ -196,11 +224,11 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                             {goal.title}
                           </span>
                           <span className="text-[10px] text-text-muted bg-bg px-2 py-0.5 rounded-full">
-                            {goalTasks.length}
+                            {tasks.length}
                           </span>
                         </div>
                         <div className="ml-4 border-l-2 border-border/50 pl-3 space-y-0.5">
-                          {goalTasks.map((task) => (
+                          {tasks.map((task) => (
                             <div key={task.id} className="relative group">
                               <motion.button
                                 whileHover={{ x: 4 }}
@@ -229,6 +257,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                 )}
                               </motion.button>
                               <div
+                                // In the complete button onClick:
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   if (completingId) return;
@@ -238,8 +267,94 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                       status: "COMPLETED",
                                     });
                                     markComplete(task.id);
+
+                                    // If this was the selected task, find next
+                                    // If this was the selected task, find next
                                     if (selectedTask?.id === task.id) {
-                                      clearSelection();
+                                      // Use fresh data that includes local tasks
+                                      const freshLocalTasks =
+                                        useTaskStore.getState().localTasks;
+                                      const freshUpdatedTasks =
+                                        useTaskStore.getState().updatedTasks;
+                                      const freshCompletedIds =
+                                        useTaskStore.getState()
+                                          .localCompletedIds;
+
+                                      const getAllFreshTasks = (
+                                        goalList: Goal[],
+                                      ): (Task & { goal: Goal })[] => {
+                                        return goalList.flatMap((g) => {
+                                          const localGoalTasks = (
+                                            freshLocalTasks.get(g.id) || []
+                                          )
+                                            .filter(
+                                              (t) =>
+                                                !freshCompletedIds.has(t.id),
+                                            )
+                                            .filter(
+                                              (t) =>
+                                                t.status === "TODO" ||
+                                                t.status === "IN_PROGRESS",
+                                            )
+                                            .map((t) => ({ ...t, goal: g }));
+
+                                          const localIds = new Set(
+                                            localGoalTasks.map((t) => t.id),
+                                          );
+                                          const serverTasks = (g.tasks || [])
+                                            .filter((t) => !localIds.has(t.id))
+                                            .filter(
+                                              (t) =>
+                                                t.status === "TODO" ||
+                                                t.status === "IN_PROGRESS",
+                                            )
+                                            .filter(
+                                              (t) =>
+                                                !freshCompletedIds.has(t.id),
+                                            )
+                                            .map((t) => {
+                                              const updates =
+                                                freshUpdatedTasks.get(t.id);
+                                              return {
+                                                ...(updates
+                                                  ? { ...t, ...updates }
+                                                  : t),
+                                                goal: g,
+                                              };
+                                            });
+
+                                          const childTasks = getAllFreshTasks(
+                                            g.children || [],
+                                          );
+                                          return [
+                                            ...localGoalTasks,
+                                            ...serverTasks,
+                                            ...childTasks,
+                                          ];
+                                        });
+                                      };
+
+                                      const remaining = getAllFreshTasks(
+                                        activeGoals,
+                                      ).filter((t) => t.id !== task.id);
+
+                                      if (remaining.length > 0) {
+                                        handleSelectTask(remaining[0]);
+                                      } else {
+                                        // No tasks left - stop timer or end session
+                                        const timerState =
+                                          useTimerStore.getState();
+                                        clearSelection();
+                                        if (
+                                          timerState.timerMode === "POMODORO" &&
+                                          timerState.pomodoroState
+                                        ) {
+                                          await timerState.endPomodoroSession();
+                                        } else if (timerState.runningTimer) {
+                                          await timerState.stop();
+                                        }
+                                        clearSelection();
+                                      }
                                     }
                                   } catch {
                                     // Toast will go here
@@ -260,8 +375,9 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                           ))}
                         </div>
                       </div>
-                    );
-                  })
+                    ),
+                  );
+                })()
               )}
             </div>
             <div className="p-3 border-t border-border bg-bg">

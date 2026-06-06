@@ -36,6 +36,8 @@ import {
 import { useUIStore } from "@/store/uiStore";
 import { TaskRow } from "./TaskRow";
 import { useModalStore } from "@/store/modalStore";
+import { useTaskStore } from "@/store/taskStore";
+import { useTimerStore } from "@/store/timerStore";
 
 interface SortableGoalItemProps {
   goal: Goal;
@@ -51,7 +53,22 @@ export function SortableGoalItem({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { goalOrder, setGoalOrder } = useUIStore();
-  const router = useRouter();
+  const localGoalTasks = useTaskStore((s) => s.localTasks.get(goal.id)) || [];
+  const updatedTasks = useTaskStore((s) => s.updatedTasks);
+  const deletedTaskIds = useTaskStore((s) => s.deletedTaskIds);
+
+  const localIds = new Set(localGoalTasks.map((t) => t.id));
+  const serverTasks = (goal.tasks || [])
+    .filter((t) => !localIds.has(t.id)) // Don't duplicate local tasks
+    .filter((t) => !deletedTaskIds.has(t.id)) // Hide deleted
+    .map((t) => {
+      // Apply updates from store
+      const updates = updatedTasks.get(t.id);
+      return updates ? { ...t, ...updates } : t;
+    });
+
+  const mergedTasks = [...localGoalTasks, ...serverTasks];
+
   const { openQuickTask } = useModalStore();
 
   const {
@@ -63,21 +80,24 @@ export function SortableGoalItem({
     isDragging,
   } = useSortable({ id: goal.id });
 
+  const selectedTask = useTimerStore((s) => s.selectedTask);
+  const setSelectedTask = useTimerStore((s) => s.setSelectedTask);
+  const clearSelection = useTimerStore((s) => s.clearSelection);
+
+  const subGoals = goal.children || [];
+
+  const activeTasks = mergedTasks.filter(
+    (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
+  );
+  const completedTasks = mergedTasks.filter((t) => t.status === "COMPLETED");
+  const hasChildren =
+    subGoals.length > 0 || activeTasks.length > 0 || completedTasks.length > 0;
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.3 : 1,
   };
-
-  const subGoals = allGoals.filter((g) => g.parentId === goal.id);
-  const activeTasks = (goal.tasks || []).filter(
-    (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
-  );
-  const completedTasks = (goal.tasks || []).filter(
-    (t) => t.status === "COMPLETED",
-  );
-  const hasChildren =
-    subGoals.length > 0 || activeTasks.length > 0 || completedTasks.length > 0;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -121,9 +141,71 @@ export function SortableGoalItem({
 
   const handleToggleTask = async (task: Task) => {
     const newStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
+    console.log(
+      "allGoals:",
+      allGoals.map((g) => g.id),
+    );
+    console.log("localTasks:", [
+      ...useTaskStore.getState().localTasks.entries(),
+    ]);
+    console.log("completedIds:", [
+      ...useTaskStore.getState().localCompletedIds,
+    ]);
     try {
       await taskService.update(task.id, { status: newStatus });
-      router.refresh();
+
+      if (newStatus === "COMPLETED") {
+        useTaskStore.getState().markComplete(task.id);
+
+        const currentSelected = useTimerStore.getState().selectedTask;
+
+        if (currentSelected?.id === task.id) {
+          // Get FRESH state for finding next task
+          const freshCompletedIds = useTaskStore.getState().localCompletedIds;
+          const freshLocalTasks = useTaskStore.getState().localTasks;
+          const freshUpdatedTasks = useTaskStore.getState().updatedTasks;
+
+          const getFreshTasksFromGoal = (g: Goal): Task[] => {
+            const localGoalTasks = (freshLocalTasks.get(g.id) || [])
+              .filter((t) => !freshCompletedIds.has(t.id))
+              .filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS");
+
+            const localIds = new Set(localGoalTasks.map((t) => t.id));
+            const serverTasks = (g.tasks || [])
+              .filter((t) => !localIds.has(t.id))
+              .filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS")
+              .filter((t) => !freshCompletedIds.has(t.id))
+              .map((t) => {
+                const updates = freshUpdatedTasks.get(t.id);
+                return updates ? { ...t, ...updates } : t;
+              });
+
+            const childTasks = (g.children || []).flatMap((child) =>
+              getFreshTasksFromGoal(child),
+            );
+
+            return [...localGoalTasks, ...serverTasks, ...childTasks];
+          };
+
+          const allFreshTasks = allGoals
+            .flatMap((g) => getFreshTasksFromGoal(g))
+            .filter((t) => t.id !== task.id);
+
+          if (allFreshTasks.length > 0) {
+            setSelectedTask(allFreshTasks[0]);
+          } else {
+            const state = useTimerStore.getState();
+            clearSelection();
+            if (state.timerMode === "POMODORO" && state.pomodoroState) {
+              await state.endPomodoroSession();
+            } else {
+              await state.stop();
+            }
+          }
+        }
+      }
+
+      useTaskStore.getState().updateTask(task.id, { status: newStatus });
     } catch {
       // Handle silently
     }

@@ -23,11 +23,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import {
-  Target,
-  ChevronDown,
-  ArrowRight,
-} from "lucide-react";
+import { Target, ChevronDown, ArrowRight } from "lucide-react";
 import { SortableGoalItem } from "./SortableGoalItem";
 
 interface TodayGoalsProps {
@@ -40,8 +36,7 @@ export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { goalOrder, setGoalOrder } = useUIStore();
-
-  const topLevelGoals = goals.filter((g) => !g.parentId);
+  const topLevelGoals = allGoals.filter((g) => !g.parentId);
   const overdueCount = allGoals.filter((g) => g.status === "OVERDUE").length;
 
   const sortedGoals = (() => {

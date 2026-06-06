@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Task, Priority } from "@/types";
 import { taskService } from "@/lib/services/taskService";
+import { useTaskStore } from "@/store/taskStore";
 import { X, Trash2, AlertTriangle } from "lucide-react";
 
 interface TaskEditModalProps {
@@ -40,7 +40,6 @@ const priorities: {
 ];
 
 export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
-  const router = useRouter();
   const [title, setTitle] = useState(task.title);
   const [priority, setPriority] = useState<Priority>(
     (task.priority as Priority) || "MEDIUM",
@@ -75,7 +74,15 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
           : undefined,
         dueDate: dueDate || undefined,
       });
-      router.refresh();
+
+      // Update task locally in the store
+      useTaskStore.getState().updateTask(task.id, {
+        title: title.trim(),
+        priority,
+        estimatedMinutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
+        dueDate: dueDate || null,
+      });
+
       onClose();
     } catch {
       setError("Failed to update task");
@@ -88,7 +95,10 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
     setIsDeleting(true);
     try {
       await taskService.delete(task.id);
-      router.refresh();
+
+      // Remove task locally from the store
+      useTaskStore.getState().removeTask(task.id, task.goalId!);
+
       onClose();
     } catch {
       setError("Failed to delete task");
