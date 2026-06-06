@@ -10,7 +10,6 @@ import { ProductivityPatterns } from "./_components/ProductivityPatterns";
 import { DailyBreakdown } from "./_components/DailyBreakdown";
 import { Comparisons } from "./_components/Comparisons";
 import { RecentActivity } from "./_components/RecentActivity";
-import { AIInsights } from "./_components/AIInsights";
 import { SummaryFeedback } from "./_components/SummaryFeedback";
 import { Task } from "@/types";
 import { serverApi } from "@/lib/server-api";
@@ -19,16 +18,14 @@ import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
-  const [goals, habits, timeSummary, timeEntriesData] = await Promise.all([
-    serverGoalService.getAll({}, false),
-    serverHabitService.getAll({}, false),
-    serverTimeEntryService.getSummary({ period: "month" }),
-    serverTimeEntryService.getAll({ limit: 100 }),
-  ]);
-
-  const tasksData = await serverApi.get<Task[]>("/tasks", {
-    revalidate: false,
-  });
+  const [goals, habits, timeSummary, timeEntriesData, tasksData] =
+    await Promise.all([
+      serverGoalService.getAllNoPagination({}, false),
+      serverHabitService.getAll({}, false),
+      serverTimeEntryService.getSummary({ period: "month" }),
+      serverTimeEntryService.getAll({ limit: 100 }),
+      serverApi.get<Task[]>("/tasks", { revalidate: false }),
+    ]);
 
   const allTasks = Array.isArray(tasksData) ? tasksData : [];
   const timeEntries = Array.isArray(timeEntriesData) ? timeEntriesData : [];
