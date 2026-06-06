@@ -1,15 +1,14 @@
 import { serverGoalService } from "@/lib/services/server/goalService";
-import { GoalList } from "./_components/GoalList";
-import { GoalFilters } from "./_components/GoalFilters";
-import { Plus, Target } from "lucide-react";
+import { GoalListWithFilters } from "./_components/GoalListWithFilters";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function GoalsPage() {
-  const goals = await serverGoalService.getAll({}, false);
+  const allGoals = await serverGoalService.getAllNoPagination({}, false);
 
-  const activeGoals = goals.filter((g) => g.status === "ACTIVE").length;
+  const activeGoals = allGoals.filter((g) => g.status === "ACTIVE").length;
 
   return (
     <div className="space-y-6">
@@ -20,11 +19,9 @@ export default async function GoalsPage() {
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-semibold text-text">
-                {goals.length}
+                {allGoals.length}
               </span>
-              <span className="text-sm text-text-muted">
-                total goal{goals.length !== 1 ? "s" : ""}
-              </span>
+              <span className="text-sm text-text-muted">total goals</span>
             </div>
             <div className="w-1 h-1 rounded-full bg-border" />
             <div className="flex items-center gap-1.5">
@@ -47,11 +44,8 @@ export default async function GoalsPage() {
         </Link>
       </div>
 
-      {/* Filters */}
-      <GoalFilters />
-
-      {/* Goal Tree */}
-      <GoalList goals={goals} />
+      {/* Filters + List */}
+      <GoalListWithFilters goals={allGoals} />
     </div>
   );
 }

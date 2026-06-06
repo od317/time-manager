@@ -23,6 +23,8 @@ export default async function TodayPage() {
     serverApi.get<Task[]>("/tasks", { revalidate: false, tags: ["tasks"] }),
   ]);
 
+  // Extract data from paginated response
+
   const overdueGoals = goals.filter((g) => g.status === "OVERDUE");
   const activeGoals = goals.filter((g) => g.status === "ACTIVE");
 
@@ -77,7 +79,7 @@ export default async function TodayPage() {
         <TodayOverview
           activeGoals={activeGoals.length}
           overdueGoals={overdueGoals.length}
-          goals={goals}
+          totalGoals={goals.length}
           habitsDue={habitsDueToday.length}
           tasksCount={activeTasks.length}
         />

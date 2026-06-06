@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuthStore } from "@/store/authStore";
 import { UserMenu } from "./UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
