@@ -7,11 +7,17 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   isInitialized: boolean;
+  isUserLoading: boolean;
 
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
+}
+
+function getToken(): string | null {
+  if (typeof document === "undefined") return null;
+  return document.cookie.match(/(?:^|;\s*)token=([^;]*)/)?.[1] || null;
 }
 
 function setAuthCookie(token: string) {
@@ -22,29 +28,51 @@ function removeAuthCookie() {
   document.cookie = "token=; path=/; max-age=0";
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
   isAuthenticated: false,
   isInitialized: false,
+  isUserLoading: false,
 
   initialize: async () => {
-    set({ isLoading: true });
-    try {
-      const user = await authService.getMe();
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        isInitialized: true,
-      });
-    } catch {
-      removeAuthCookie();
+    // Prevent duplicate calls
+    if (get().isInitialized) return;
+
+    const token = getToken();
+
+    if (!token) {
       set({
         user: null,
         isAuthenticated: false,
         isLoading: false,
         isInitialized: true,
+        isUserLoading: false,
+      });
+      return;
+    }
+
+    // Only fetch if we don't already have the user
+    if (get().user) {
+      set({ isInitialized: true, isUserLoading: false });
+      return;
+    }
+
+    set({
+      isAuthenticated: true,
+      isInitialized: true,
+      isUserLoading: true,
+    });
+
+    try {
+      const user = await authService.getMe();
+      set({ user, isUserLoading: false });
+    } catch {
+      removeAuthCookie();
+      set({
+        user: null,
+        isAuthenticated: false,
+        isUserLoading: false,
       });
     }
   },
@@ -54,7 +82,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await authService.login({ email, password });
       setAuthCookie(response.token);
-      set({ user: response.user, isAuthenticated: true, isLoading: false });
+      set({
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -73,7 +105,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         timezone,
       });
       setAuthCookie(response.token);
-      set({ user: response.user, isAuthenticated: true, isLoading: false });
+      set({
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -87,7 +123,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Ignore
     }
     removeAuthCookie();
-    set({ user: null, isAuthenticated: false });
+    set({
+      user: null,
+      isAuthenticated: false,
+      isUserLoading: false,
+    });
     window.location.href = "/login";
   },
 }));

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { setUserTimezone } from "@/lib/dateUtils";
@@ -16,8 +16,8 @@ const publicPaths = [
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { initialize, isInitialized, user } = useAuthStore();
-  const [skipped, setSkipped] = useState(false);
+  const { initialize, isInitialized, isAuthenticated } = useAuthStore();
+  const initialized = useRef(false);
   useTimezone();
   useGoalProgressSync();
 
@@ -26,31 +26,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     : false;
 
   useEffect(() => {
-    if (isPublicPath) {
-      setSkipped(true);
-      return;
-    }
-    if (!isInitialized) {
+    if (!isPublicPath && !initialized.current) {
+      initialized.current = true;
       initialize();
     }
-  }, [isPublicPath, isInitialized, initialize]);
+  }, [isPublicPath, initialize]);
 
-  useEffect(() => {
-    if (user) {
-      const tz =
-        user.timezone ||
-        Intl.DateTimeFormat().resolvedOptions().timeZone ||
-        "UTC";
-      setUserTimezone(tz);
+  // Redirect if not authenticated
+  if (!isPublicPath && isInitialized && !isAuthenticated) {
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
     }
-  }, [user]);
+    return null;
+  }
 
-  if (!isInitialized && !skipped) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="animate-pulse text-text-muted">Loading...</div>
-      </div>
-    );
+  // Don't block rendering
+  if (!isInitialized && !isPublicPath) {
+    return null;
   }
 
   return <>{children}</>;

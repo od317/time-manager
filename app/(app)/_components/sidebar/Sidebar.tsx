@@ -199,31 +199,45 @@ export function Sidebar() {
               transition={{ duration: 0.15 }}
               className="flex items-center gap-3"
             >
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center font-semibold text-sm text-white shadow-sm flex-shrink-0"
-              >
-                {user?.name?.charAt(0)?.toUpperCase() ||
-                  user?.email?.charAt(0)?.toUpperCase() ||
-                  "?"}
-              </motion.div>
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <p className="text-sm font-medium text-text truncate">
-                  {user?.name || "User"}
-                </p>
-                <p className="text-xs text-text-muted truncate">
-                  {user?.email}
-                </p>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={logout}
-                className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-danger-bg transition-colors flex-shrink-0"
-                title="Sign out"
-              >
-                <LogOut size={18} />
-              </motion.button>
+              {user ? (
+                <>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center font-semibold text-sm text-white shadow-sm flex-shrink-0"
+                  >
+                    {user.name?.charAt(0)?.toUpperCase() ||
+                      user.email?.charAt(0)?.toUpperCase() ||
+                      "?"}
+                  </motion.div>
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <p className="text-sm font-medium text-text truncate">
+                      {user.name || "User"}
+                    </p>
+                    <p className="text-xs text-text-muted truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 15 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={logout}
+                    className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-danger-bg transition-colors flex-shrink-0"
+                    title="Sign out"
+                  >
+                    <LogOut size={18} />
+                  </motion.button>
+                </>
+              ) : (
+                <>
+                  {/* User skeleton */}
+                  <div className="w-9 h-9 rounded-full bg-border animate-pulse flex-shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-4 bg-border rounded animate-pulse w-24" />
+                    <div className="h-3 bg-border rounded animate-pulse w-32" />
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-border animate-pulse flex-shrink-0" />
+                </>
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -234,21 +248,30 @@ export function Sidebar() {
               transition={{ duration: 0.15 }}
               className="flex flex-col items-center gap-2"
             >
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center font-semibold text-sm text-white shadow-sm"
-              >
-                {user?.name?.charAt(0)?.toUpperCase() || "?"}
-              </motion.div>
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={logout}
-                className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-danger-bg transition-colors"
-                title="Sign out"
-              >
-                <LogOut size={18} />
-              </motion.button>
+              {user ? (
+                <>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center font-semibold text-sm text-white shadow-sm"
+                  >
+                    {user.name?.charAt(0)?.toUpperCase() || "?"}
+                  </motion.div>
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 15 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={logout}
+                    className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-danger-bg transition-colors"
+                    title="Sign out"
+                  >
+                    <LogOut size={18} />
+                  </motion.button>
+                </>
+              ) : (
+                <>
+                  <div className="w-9 h-9 rounded-full bg-border animate-pulse" />
+                  <div className="w-8 h-8 rounded-lg bg-border animate-pulse" />
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

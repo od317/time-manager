@@ -42,9 +42,6 @@ export function AIInsights({ goals, habits, timeEntries }: AIInsightsProps) {
         timeEntries,
         period: "month",
       });
-      if (response.insights?.length > 0) {
-        setInsights(response.insights);
-      }
     } catch (err) {
       console.error("AI Insights error:", err);
       setError("Could not generate insights");

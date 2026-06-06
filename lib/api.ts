@@ -383,4 +383,5 @@ export const CancelKeys = {
   HABIT_SKIP: "habit:skip",
   TIMER_START: "timer:start",
   TIMER_STOP: "timer:stop",
+  TODAY: "today:get",
 } as const;
