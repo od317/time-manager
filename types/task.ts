@@ -36,7 +36,7 @@ export interface Task {
   goal?: {
     id: string;
     title: string;
-    color?: string;
+    color?: string | null;
   };
 }
 
