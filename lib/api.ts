@@ -247,6 +247,24 @@ class ApiClient {
     return `${method}:${url}:${params ? JSON.stringify(params) : ""}`;
   }
 
+  async postLongTimeout<TResponse, TData = unknown>(
+    url: string,
+    data?: TData,
+    cancelKey?: string,
+    timeoutMs: number = 120000,
+  ): Promise<TResponse> {
+    return this.request<TResponse, Record<string, unknown>, TData>(
+      "POST",
+      url,
+      {
+        data,
+        cancelKey,
+        cancelPrevious: true,
+        timeout: timeoutMs,
+      },
+    );
+  }
+
   private async request<
     TResponse,
     TParams = Record<string, unknown>,

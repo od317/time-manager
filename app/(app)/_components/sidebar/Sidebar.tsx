@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Sparkles,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
@@ -22,6 +23,7 @@ const navigation = [
   { name: "Goals", href: "/goals", icon: Target },
   { name: "Habits", href: "/habits", icon: Repeat },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "AI Planner", href: "/create-plan", icon: Sparkles },
 ];
 
 export function Sidebar() {
