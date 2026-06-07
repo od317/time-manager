@@ -87,7 +87,10 @@ export function SortableGoalItem({
   const subGoals = goal.children || [];
 
   const activeTasks = mergedTasks.filter(
-    (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
+    (t) =>
+      t.status === "TODO" ||
+      t.status === "IN_PROGRESS" ||
+      t.status === "OVERDUE",
   );
   const completedTasks = mergedTasks.filter((t) => t.status === "COMPLETED");
   const hasChildren =

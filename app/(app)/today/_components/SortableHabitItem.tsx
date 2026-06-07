@@ -76,7 +76,13 @@ export function SortableHabitItem({
             isCompleted ? onUncomplete(habit) : onComplete(habit)
           }
           disabled={isLoading}
-          className="flex-shrink-0 relative"
+          className={`flex-shrink-0 relative ${
+            isLoading
+              ? "cursor-not-allowed"
+              : isCompleted
+                ? "cursor-pointer"
+                : "cursor-pointer"
+          }`}
         >
           {isLoading ? (
             <motion.div
@@ -90,9 +96,9 @@ export function SortableHabitItem({
               transition={{ duration: 0.3 }}
               className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                 isCompleted
-                  ? "bg-success border-success text-white shadow-sm"
-                  : "border-border hover:border-secondary/50"
-              }`}
+                  ? "bg-success border-success text-white shadow-sm cursor-pointer"
+                  : "border-border hover:border-secondary/50 cursor-pointer"
+              } ${isLoading ? "cursor-not-allowed" : ""}`}
             >
               {isCompleted && <Check size={14} strokeWidth={3} />}
             </motion.div>

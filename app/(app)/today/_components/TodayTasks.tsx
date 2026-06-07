@@ -26,15 +26,42 @@ interface TodayTasksProps {
 }
 
 export function TodayTasks({ tasks, goals }: TodayTasksProps) {
-  const router = useRouter();
   const { setSelectedTask } = useTimerStore();
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const { localCompletedIds, markComplete } = useTaskStore();
-  const visibleTasks = tasks.filter((t) => !localCompletedIds.has(t.id));
+  const localTasks = useTaskStore((s) => s.localTasks);
+  const updatedTasks = useTaskStore((s) => s.updatedTasks);
+  const deletedTaskIds = useTaskStore((s) => s.deletedTaskIds);
 
+  // Get locally added tasks that are due today (or have no due date)
+  const todayStr = new Date().toLocaleDateString("en-CA");
+  const localTasksForToday = Array.from(localTasks.values())
+    .flat()
+    .filter((t) => !deletedTaskIds.has(t.id))
+    .filter((t) => {
+      if (!t.dueDate) return false; // ← No due date = don't show here
+      return new Date(t.dueDate).toLocaleDateString("en-CA") === todayStr;
+    })
+    .filter((t) => !localCompletedIds.has(t.id));
+
+  // Merge with server tasks (deduplicate by id)
+  const localIds = new Set(localTasksForToday.map((t) => t.id));
+  const serverTasks = tasks.filter((t) => !localIds.has(t.id));
+
+  // After computing allVisibleTasks, apply updates and filter deleted:
+  const allVisibleTasks = [...localTasksForToday, ...serverTasks]
+    .filter((t) => !deletedTaskIds.has(t.id)) // Hide deleted
+    .map((t) => {
+      const updates = updatedTasks.get(t.id);
+      return updates ? { ...t, ...updates } : t;
+    });
+
+  const visibleTasks = allVisibleTasks;
+  console.log(tasks);
+  console.log(visibleTasks);
   const handleToggle = async (task: Task) => {
     setCompletingId(task.id);
     try {
@@ -43,7 +70,8 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
       if (newStatus === "COMPLETED") {
         markComplete(task.id);
       }
-      router.refresh();
+      useTaskStore.getState().updateTask(task.id, { status: newStatus });
+      // Remove router.refresh()
     } catch {
       // Handle silently
     } finally {
@@ -97,7 +125,9 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   });
 
   const totalTasks = visibleTasks.length;
-  const completedTasks = visibleTasks.filter((t) => t.status === "COMPLETED").length;
+  const completedTasks = visibleTasks.filter(
+    (t) => t.status === "COMPLETED",
+  ).length;
 
   if (visibleTasks.length === 0) {
     return (

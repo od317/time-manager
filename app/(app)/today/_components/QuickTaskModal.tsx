@@ -79,7 +79,7 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+    console.log("selectedDate:", selectedDate);
     if (!title.trim()) {
       setError("Title is required");
       return;
@@ -92,9 +92,9 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
           ? new Date(
               `${format(selectedDate, "yyyy-MM-dd")}T${selectedTime}:00`,
             ).toISOString()
-          : selectedDate.toISOString()
+          : format(selectedDate, "yyyy-MM-dd") + "T00:00:00.000Z" // Force UTC midnight
         : undefined;
-
+      console.log(dueDate);
       const taskResponse = await taskService.create({
         title: title.trim(),
         goalId: goal.id,

@@ -272,7 +272,7 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
                             items={completed.map((h) => h.id)}
                             strategy={verticalListSortingStrategy}
                           >
-                            <div className="space-y-2 mt-3">
+                            <div className="space-y-2 mt-3 px-2">
                               {completed.map((habit) => (
                                 <SortableHabitItem
                                   key={habit.id}
@@ -280,7 +280,7 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
                                   onComplete={handleComplete}
                                   onUncomplete={handleUncomplete}
                                   isLoading={loadingId === habit.id}
-                                  isCompleted={false}
+                                  isCompleted={true}
                                 />
                               ))}
                             </div>

@@ -33,7 +33,7 @@ interface TodayGoalsProps {
 }
 
 export function TodayGoals({ goals, totalCount, allGoals }: TodayGoalsProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { goalOrder, setGoalOrder } = useUIStore();
   const topLevelGoals = allGoals.filter((g) => !g.parentId);

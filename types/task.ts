@@ -26,12 +26,17 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
 
+  // Enriched fields (from backend)
+  daysOverdue?: number | null;
+  isDueToday?: boolean;
+
   // Relations
   timeEntries?: TimeEntry[];
   checkIns?: TaskCheckIn[];
   goal?: {
     id: string;
     title: string;
+    color?: string;
   };
 }
 
@@ -55,6 +60,7 @@ export interface CreateTaskPayload {
   estimatedMinutes?: number;
   isRecurring?: boolean;
   recurringRule?: string;
+  date?: string; // ← ADDED: User's local date for consistent "today" check
 }
 
 export interface UpdateTaskPayload extends Partial<CreateTaskPayload> {
@@ -64,10 +70,18 @@ export interface UpdateTaskPayload extends Partial<CreateTaskPayload> {
   completedAt?: string;
   failedAt?: string;
   failureReason?: string;
+  date?: string; // ← ADDED: User's local date for consistent status refresh
 }
 
 export interface TaskCheckInPayload {
   value?: number;
   duration?: number;
   note?: string;
+}
+
+// ← ADDED: Query params for GET /tasks
+export interface TaskQueryParams {
+  status?: string;
+  goalId?: string;
+  date?: string;
 }
