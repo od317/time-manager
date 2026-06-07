@@ -72,12 +72,6 @@ export function HabitCard({ habit, todayStr }: HabitCardProps) {
     return "Custom";
   };
 
-  const getCompletionRate = (): number => {
-    if (!habit.logs || habit.logs.length === 0) return 0;
-    const completed = habit.logs.filter((l) => l.status === "COMPLETED").length;
-    return Math.round((completed / habit.logs.length) * 100);
-  };
-
   return (
     <Link
       href={`/habits/${habit.id}`}
@@ -194,31 +188,6 @@ export function HabitCard({ habit, todayStr }: HabitCardProps) {
               </p>
             </div>
           </div>
-
-          {/* Progress bar */}
-          {habit.logs && habit.logs.length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp size={12} className="text-text-muted" />
-                  <span className="text-[10px] font-semibold text-text-muted uppercase">
-                    Completion
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-text-secondary">
-                  {getCompletionRate()}%
-                </span>
-              </div>
-              <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${getCompletionRate()}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full rounded-full bg-gradient-to-r from-secondary to-primary"
-                />
-              </div>
-            </div>
-          )}
 
           {/* Action Button */}
           {habit.status === "ACTIVE" && isDueToday && (

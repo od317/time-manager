@@ -12,7 +12,6 @@ interface HabitListProps {
 
 export function HabitList({ habits }: HabitListProps) {
   if (habits.length === 0) return <EmptyHabits />;
-
   const today = new Date().getDay();
   const todayStr = new Date().toLocaleDateString("en-CA");
 
