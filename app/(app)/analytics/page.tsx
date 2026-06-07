@@ -51,10 +51,7 @@ export default async function AnalyticsPage() {
     (max, h) => Math.max(max, h.longestStreak),
     0,
   );
-
-  const totalHours = timeSummary?.totalTime
-    ? Math.round((timeSummary.totalTime / 3600) * 10) / 10
-    : 0;
+  const totalHours = timeSummary?.totalTime?.hours ?? 0;
 
   return (
     <div className="space-y-6 pb-20 md:pb-6">

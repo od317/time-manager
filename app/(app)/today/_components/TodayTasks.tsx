@@ -60,8 +60,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
     });
 
   const visibleTasks = allVisibleTasks;
-  console.log(tasks);
-  console.log(visibleTasks);
+
   const handleToggle = async (task: Task) => {
     setCompletingId(task.id);
     try {

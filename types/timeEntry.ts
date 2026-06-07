@@ -29,11 +29,55 @@ export interface TimeEntry {
 }
 
 export interface TimeSummary {
-  totalTime: number;
-  unassigned: number;
-  byGoal: TimeGroup[];
-  byHabit: TimeGroup[];
+  period: string;
+  startDate: string;
+  endDate: string;
+  totalTime: {
+    seconds: number;
+    minutes: number;
+    hours: number;
+    formatted: {
+      compact: string;
+      short: string;
+      human: string;
+    };
+  };
+  unassigned: {
+    seconds: number;
+    minutes: number;
+    hours: number;
+    formatted: {
+      compact: string;
+      short: string;
+      human: string;
+    };
+  };
+  byGoal: TimeGroupDetail[];
+  byTask: TimeGroupDetail[];
+  byHabit: TimeGroupDetail[];
   entryCount: number;
+}
+
+export interface TimeGroupDetail {
+  id: string;
+  title: string;
+  color?: string;
+  totalDuration: number;
+  totalDurationSeconds: number;
+  totalDurationMinutes: number;
+  totalDurationHours: number;
+  durationFormatted: {
+    seconds: number;
+    minutes: number;
+    hours: number;
+    formatted: {
+      compact: string;
+      short: string;
+      human: string;
+    };
+  };
+  percentage: number;
+  entries: TimeEntry[];
 }
 
 export interface TimeGroup {

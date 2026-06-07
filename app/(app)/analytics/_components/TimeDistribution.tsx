@@ -28,7 +28,7 @@ const COLORS = [
 ];
 
 export function TimeDistribution({ timeSummary }: TimeDistributionProps) {
-  if (!timeSummary || timeSummary.totalTime === 0) {
+  if (!timeSummary || timeSummary.totalTime.seconds === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -61,13 +61,15 @@ export function TimeDistribution({ timeSummary }: TimeDistributionProps) {
   const data = [
     ...(timeSummary.byGoal || []).map((g) => ({
       name: g.title,
-      value: Math.round((g.totalDuration / 3600) * 10) / 10,
+      value: g.totalDurationHours,
       color: g.color || COLORS[0],
+      percentage: g.percentage,
     })),
     ...(timeSummary.byHabit || []).map((h) => ({
       name: h.title,
-      value: Math.round((h.totalDuration / 3600) * 10) / 10,
+      value: h.totalDurationHours,
       color: h.color || COLORS[1],
+      percentage: h.percentage,
     })),
   ].filter((d) => d.value > 0);
 
@@ -105,7 +107,7 @@ export function TimeDistribution({ timeSummary }: TimeDistributionProps) {
         <div>
           <h3 className="text-lg font-bold text-text">Time Distribution</h3>
           <p className="text-xs text-text-muted">
-            {Math.round((timeSummary.totalTime / 3600) * 10) / 10}h total
+            {timeSummary.totalTime.formatted.short} total
           </p>
         </div>
       </div>
