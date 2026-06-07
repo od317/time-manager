@@ -79,7 +79,6 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    console.log("selectedDate:", selectedDate);
     if (!title.trim()) {
       setError("Title is required");
       return;

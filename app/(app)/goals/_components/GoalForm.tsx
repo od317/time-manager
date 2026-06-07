@@ -3,11 +3,21 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, AlertTriangle, CheckCircle, Save, Target } from "lucide-react";
+import {
+  X,
+  AlertTriangle,
+  CheckCircle,
+  Save,
+  Target,
+  CalendarIcon,
+} from "lucide-react";
 import { goalService } from "@/lib/services";
-import { CreateGoalPayload, Priority, GoalType } from "@/types";
+import { CreateGoalPayload, Priority, GoalType, CalendarEvent } from "@/types";
 import { DEFAULT_GOAL_COLOR } from "@/lib/constants";
 import { ColorPicker } from "./ColorPicker";
+import { useCalendarData } from "@/hooks/useCalendarData";
+import { Calendar } from "@/components/calendar/Calendar";
+import { format } from "date-fns";
 
 interface GoalFormProps {
   onClose: () => void;
@@ -34,7 +44,24 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const { data: calendarData } = useCalendarData();
+  const calendarEvents: CalendarEvent[] = calendarData
+    ? [
+        ...(calendarData.goals || []).map((g) => ({
+          id: g.id,
+          type: "goal" as const,
+          title: g.title,
+          color: g.color || "#9FA1FF",
+          date: g.endDate || g.startDate,
+          status: g.status,
+          time: undefined,
+        })),
+      ]
+    : [];
   const isSubGoal = !!parentId;
   const isColorLocked = isSubGoal;
 
@@ -73,6 +100,12 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
               : undefined,
         color: isSubGoal ? undefined : color,
         parentId,
+        startDate: selectedStartDate
+          ? format(selectedStartDate, "yyyy-MM-dd") + "T00:00:00.000Z"
+          : undefined,
+        endDate: selectedEndDate
+          ? format(selectedEndDate, "yyyy-MM-dd") + "T00:00:00.000Z"
+          : undefined,
       };
 
       await goalService.create(payload);
@@ -280,6 +313,114 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                   </div>
                 </div>
               )}
+
+              {/* Timeline */}
+              <div>
+                <label className="block text-sm font-bold text-text mb-2">
+                  Timeline
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Start Date */}
+                  <div>
+                    <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                      Start Date
+                    </label>
+                    {selectedStartDate ? (
+                      <div className="flex items-center gap-2 p-2.5 bg-primary-bg/20 rounded-xl border border-primary/20">
+                        <CalendarIcon size={14} className="text-primary" />
+                        <span className="text-xs font-medium text-primary flex-1">
+                          {format(selectedStartDate, "MMM d, yyyy")}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStartDate(null)}
+                          className="p-0.5 text-text-muted hover:text-danger"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowStartCalendar(!showStartCalendar)}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-border text-text-muted hover:border-primary/30 hover:text-text transition-all text-xs"
+                      >
+                        <CalendarIcon size={14} /> Pick date
+                      </button>
+                    )}
+                    <AnimatePresence>
+                      {showStartCalendar && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden mt-2"
+                        >
+                          <Calendar
+                            events={calendarEvents}
+                            existingEvents={calendarEvents}
+                            selectedDate={selectedStartDate}
+                            onDateSelect={(date) => {
+                              setSelectedStartDate(date);
+                              setShowStartCalendar(false);
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* End Date */}
+                  <div>
+                    <label className="block text-xs font-semibold text-text-muted mb-1.5">
+                      End Date
+                    </label>
+                    {selectedEndDate ? (
+                      <div className="flex items-center gap-2 p-2.5 bg-primary-bg/20 rounded-xl border border-primary/20">
+                        <CalendarIcon size={14} className="text-primary" />
+                        <span className="text-xs font-medium text-primary flex-1">
+                          {format(selectedEndDate, "MMM d, yyyy")}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEndDate(null)}
+                          className="p-0.5 text-text-muted hover:text-danger"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowEndCalendar(!showEndCalendar)}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-border text-text-muted hover:border-primary/30 hover:text-text transition-all text-xs"
+                      >
+                        <CalendarIcon size={14} /> Pick date
+                      </button>
+                    )}
+                    <AnimatePresence>
+                      {showEndCalendar && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden mt-2"
+                        >
+                          <Calendar
+                            events={calendarEvents}
+                            existingEvents={calendarEvents}
+                            selectedDate={selectedEndDate}
+                            onDateSelect={(date) => {
+                              setSelectedEndDate(date);
+                              setShowEndCalendar(false);
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
 
               {/* Priority */}
               <div>

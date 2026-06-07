@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { format } from "date-fns";
+import { useTaskStore } from "@/store/taskStore";
 
 interface GoalTasksProps {
   goal: Goal;
@@ -71,11 +72,23 @@ export function GoalTasks({ goal }: GoalTasksProps) {
     : [];
 
   const tasks = goal.tasks || [];
-  const activeTasks = tasks.filter(
-    (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
-  );
-  const completedTasks = tasks.filter((t) => t.status === "COMPLETED");
 
+  const localGoalTasks = useTaskStore((s) => s.localTasks.get(goal.id)) || [];
+  const deletedTaskIds = useTaskStore((s) => s.deletedTaskIds);
+
+  const localIds = new Set(localGoalTasks.map((t) => t.id));
+  const serverTasks = (goal.tasks || [])
+    .filter((t) => !localIds.has(t.id))
+    .filter((t) => !deletedTaskIds.has(t.id));
+
+  const allTasks = [...localGoalTasks, ...serverTasks];
+  const activeTasks = allTasks.filter(
+    (t) =>
+      t.status === "TODO" ||
+      t.status === "IN_PROGRESS" ||
+      t.status === "OVERDUE",
+  );
+  const completedTasks = allTasks.filter((t) => t.status === "COMPLETED");
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -87,10 +100,10 @@ export function GoalTasks({ goal }: GoalTasksProps) {
           ? new Date(
               `${format(selectedDate, "yyyy-MM-dd")}T${selectedTime}:00`,
             ).toISOString()
-          : selectedDate.toISOString()
+          : format(selectedDate, "yyyy-MM-dd") + "T00:00:00.000Z"
         : undefined;
 
-      await taskService.create({
+      const taskResponse = await taskService.create({
         title: title.trim(),
         goalId: goal.id,
         priority,
@@ -99,12 +112,16 @@ export function GoalTasks({ goal }: GoalTasksProps) {
           : undefined,
         dueDate,
       });
+
+      // Add to store for instant UI update
+      useTaskStore.getState().addTask(goal.id, taskResponse as Task);
+
       setTitle("");
       setEstimatedMinutes("");
       setSelectedDate(null);
       setSelectedTime("");
       setShowForm(false);
-      router.refresh();
+      // Remove router.refresh()
     } catch {
       // Handle error
     } finally {
@@ -116,7 +133,8 @@ export function GoalTasks({ goal }: GoalTasksProps) {
     const newStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
     try {
       await taskService.update(task.id, { status: newStatus });
-      router.refresh();
+      useTaskStore.getState().updateTask(task.id, { status: newStatus });
+      // Remove router.refresh()
     } catch {
       // Handle error
     }
@@ -125,7 +143,8 @@ export function GoalTasks({ goal }: GoalTasksProps) {
   const handleDeleteTask = async (taskId: string) => {
     try {
       await taskService.delete(taskId);
-      router.refresh();
+      useTaskStore.getState().removeTask(taskId, goal.id);
+      // Remove router.refresh()
     } catch {
       // Handle error
     }
