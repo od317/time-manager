@@ -44,10 +44,7 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
 
   const tasks = goal.tasks || [];
   const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
-  const totalTimeSpent = (goal.timeEntries || []).reduce(
-    (sum, entry) => sum + (entry.duration || 0),
-    0,
-  );
+  const totalTimeSpent = goal.totalTimeSpent || 0;
 
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);

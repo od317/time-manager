@@ -19,7 +19,7 @@ export function GoalProgress({ goal }: GoalProgressProps) {
 
   let currentValue = goal.currentValue || 0;
   if (isTimeBased) {
-    const trackedSeconds = (goal.timeEntries || []).reduce(
+    const trackedSeconds = (goal.allTimeEntries || []).reduce(
       (sum, entry) => sum + (entry.duration || 0),
       0,
     );

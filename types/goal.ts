@@ -8,6 +8,11 @@ export interface Goal {
   combinedProgress?: number;
   allTimeEntries?: TimeEntry[];
   totalTimeSpent?: number;
+  totalTimeFormatted?: {
+    seconds: number;
+    minutes: number;
+    hours: number;
+  };
   parentId: GoalId | null;
   title: string;
   description: string | null;
