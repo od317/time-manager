@@ -5,7 +5,7 @@ import { SidebarWrapper } from "./_components/sidebar/SidebarWrapper";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-bg">
+    <div className="flex h-screen overflow-hidden bg-bg w-full max-w-[100vw]">
       {/* Sidebar - hidden on mobile */}
       <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 z-20">
         <Sidebar />
@@ -14,7 +14,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main content area */}
       <SidebarWrapper>
         <Header />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 w-full min-w-0">
+          {children}
+        </main>{" "}
       </SidebarWrapper>
 
       {/* Mobile bottom nav */}

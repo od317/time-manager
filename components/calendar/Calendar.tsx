@@ -123,7 +123,57 @@ export function Calendar({
       .map((e) => e.time as string);
   }, [selectedDate, events]);
 
-  if (isLoading) return <>loading</>;
+  if (isLoading) {
+    return (
+      <div className="bg-surface rounded-xl border border-border p-4 animate-pulse">
+        {/* Month header skeleton */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-8 h-8 bg-border rounded-lg" />
+          <div className="h-5 w-32 bg-border rounded-md" />
+          <div className="w-8 h-8 bg-border rounded-lg" />
+        </div>
+
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="h-4 bg-border rounded mx-auto w-6" />
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <div key={i} className="aspect-square bg-border rounded-lg" />
+          ))}
+        </div>
+
+        {/* Day details skeleton */}
+        <div className="mt-4 pt-4 border-t border-border space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-border rounded-lg" />
+            <div className="space-y-1.5">
+              <div className="h-4 w-24 bg-border rounded-md" />
+              <div className="h-3 w-32 bg-border rounded-md" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 p-2.5 rounded-lg bg-bg border border-border"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-border" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-28 bg-border rounded-md" />
+                  <div className="h-2 w-16 bg-border rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface rounded-xl border border-border p-4">

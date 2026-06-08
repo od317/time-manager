@@ -9,7 +9,7 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
       layout
-      className={`flex flex-1 flex-col ${
+      className={`flex flex-1 flex-col min-w-0 ${
         isSidebarOpen ? "md:pl-[280px]" : "md:pl-[72px]"
       }`}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
