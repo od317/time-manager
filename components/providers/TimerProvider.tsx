@@ -124,6 +124,12 @@ export function TimerProvider() {
             timerMode: "POMODORO" as TimerMode,
             isPomodoroPaused: false,
             recoveredPomodoro: false,
+            selectedTask: {
+              id: pomodoroData.taskId,
+              title: pomodoroData.taskTitle || "",
+              color: pomodoroData.taskColor || "#6366F1",
+              goalId: pomodoroData.goalId || null,
+            } as Task,
           });
           return;
         }
