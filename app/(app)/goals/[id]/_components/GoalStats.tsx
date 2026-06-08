@@ -7,6 +7,7 @@ import { Goal } from "@/types";
 import { goalService } from "@/lib/services";
 import { useTimerStore } from "@/store/timerStore";
 import { CheckCircle2, Clock, ListTodo, Timer, Target } from "lucide-react";
+import { useTaskStore } from "@/store/taskStore";
 
 interface GoalStatsProps {
   goal: Goal;
@@ -16,6 +17,30 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
   const [goal, setGoal] = useState(initialGoal);
   const { lastStoppedId, clearLastStopped } = useTimerStore();
   const router = useRouter();
+
+  const localGoalTasks = useTaskStore((s) => s.localTasks.get(goal.id)) || [];
+  const updatedTasks = useTaskStore((s) => s.updatedTasks);
+  const deletedTaskIds = useTaskStore((s) => s.deletedTaskIds);
+  const localCompletedIds = useTaskStore((s) => s.localCompletedIds);
+
+  const serverTasks = (goal.tasks || [])
+    .filter((t) => !deletedTaskIds.has(t.id))
+    .map((t) => {
+      const updates = updatedTasks.get(t.id);
+      return updates ? { ...t, ...updates } : t;
+    });
+
+  const localIds = new Set(localGoalTasks.map((t) => t.id));
+  const filteredServerTasks = serverTasks.filter((t) => !localIds.has(t.id));
+
+  const allTasks = [...localGoalTasks, ...filteredServerTasks];
+
+  // Calculate stats from merged tasks
+  const tasks = allTasks;
+  const completedTasks = tasks.filter(
+    (t) => t.status === "COMPLETED" || localCompletedIds.has(t.id),
+  ).length;
+  const totalTimeSpent = goal.totalTimeSpent || 0;
 
   const fetchGoal = useCallback(async () => {
     try {
@@ -41,10 +66,6 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, [fetchGoal]);
-
-  const tasks = goal.tasks || [];
-  const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
-  const totalTimeSpent = goal.totalTimeSpent || 0;
 
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);

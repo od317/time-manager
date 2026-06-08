@@ -267,8 +267,12 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                       status: "COMPLETED",
                                     });
                                     markComplete(task.id);
+                                    useTaskStore
+                                      .getState()
+                                      .updateTask(task.id, {
+                                        status: "COMPLETED",
+                                      });
 
-                                    // If this was the selected task, find next
                                     // If this was the selected task, find next
                                     if (selectedTask?.id === task.id) {
                                       // Use fresh data that includes local tasks
