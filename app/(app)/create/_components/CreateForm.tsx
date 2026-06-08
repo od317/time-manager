@@ -2,19 +2,11 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Goal, Habit, CalendarEvent } from "@/types";
 import { Calendar } from "@/components/calendar/Calendar";
 import { GoalFormSection } from "./GoalFormSection";
 import { HabitFormSection } from "./HabitFormSection";
-import { ContextPanel } from "./ContextPanel";
 import { useCalendarData } from "@/hooks/useCalendarData";
-import {
-  Target,
-  Repeat,
-  Calendar as CalendarIcon,
-  Clock,
-  Sparkles,
-} from "lucide-react";
+import { Target, Repeat, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useSearchParams } from "next/navigation";
 
@@ -48,32 +40,6 @@ export function CreateForm({}) {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState("");
   const [dateMode, setDateMode] = useState<DateMode>(null);
-
-  // Fetch calendar data via hook
-  const { data: calendarData } = useCalendarData();
-
-  const calendarEvents: CalendarEvent[] = calendarData
-    ? [
-        ...(calendarData.goals || []).map((g) => ({
-          id: g.id,
-          type: "goal" as const,
-          title: g.title,
-          color: g.color || "#9FA1FF",
-          date: g.endDate || g.startDate,
-          status: g.status,
-          time: undefined as string | undefined,
-        })),
-        ...(calendarData.habits || []).map((h) => ({
-          id: h.id,
-          type: "habit" as const,
-          title: h.title,
-          color: h.color || "#8B5CF6",
-          date: new Date().toISOString(),
-          status: h.status,
-          time: undefined as string | undefined,
-        })),
-      ]
-    : [];
 
   const handleDateSelect = (date: Date) => {
     if (dateMode === "start") {
@@ -330,19 +296,10 @@ export function CreateForm({}) {
 
           {/* Calendar with conflict detection */}
           <Calendar
-            events={calendarEvents}
-            existingEvents={calendarEvents}
             selectedDate={getActiveDate()}
             onDateSelect={handleDateSelect}
             showTimePicker={!!dateMode && !!getActiveDate()}
             onTimeSelect={handleTimeSelect}
-          />
-
-          <ContextPanel
-            activeGoals={calendarData?.activeGoals || 0}
-            activeHabits={calendarData?.activeHabits || 0}
-            upcomingDeadlines={calendarData?.upcomingDeadlines || 0}
-            activeTab={activeTab}
           />
         </motion.div>
       )}

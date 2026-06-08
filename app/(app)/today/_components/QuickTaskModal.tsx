@@ -293,8 +293,6 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
                     exit={{ height: 0, opacity: 0 }}
                   >
                     <Calendar
-                      events={calendarEvents}
-                      existingEvents={calendarEvents}
                       selectedDate={selectedDate}
                       onDateSelect={(date) => {
                         setSelectedDate(date);

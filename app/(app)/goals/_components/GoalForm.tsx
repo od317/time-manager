@@ -357,8 +357,6 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                           className="overflow-hidden mt-2"
                         >
                           <Calendar
-                            events={calendarEvents}
-                            existingEvents={calendarEvents}
                             selectedDate={selectedStartDate}
                             onDateSelect={(date) => {
                               setSelectedStartDate(date);
@@ -407,8 +405,6 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                           className="overflow-hidden mt-2"
                         >
                           <Calendar
-                            events={calendarEvents}
-                            existingEvents={calendarEvents}
                             selectedDate={selectedEndDate}
                             onDateSelect={(date) => {
                               setSelectedEndDate(date);
@@ -420,6 +416,12 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
                     </AnimatePresence>
                   </div>
                 </div>
+                {selectedEndDate && (
+                  <p className="text-[11px] text-amber-500 bg-amber-50 dark:bg-amber-950 px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-800 mt-3">
+                    ⚠️ Miss the deadline? Your goal goes {"Overdue"} for 30
+                    days, then auto-fails. Choose wisely!
+                  </p>
+                )}
               </div>
 
               {/* Priority */}

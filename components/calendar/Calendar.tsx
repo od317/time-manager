@@ -9,34 +9,58 @@ import { TimePicker } from "./TimePicker";
 import { isBefore, startOfToday } from "date-fns";
 import { isDayToday } from "@/lib/calendarUtils";
 import { AlertCircle } from "lucide-react";
+import { useCalendarData } from "@/hooks/useCalendarData";
 
 interface CalendarProps {
-  events?: CalendarEvent[];
   onDateSelect?: (date: Date, events: CalendarEvent[]) => void;
   onAddEvent?: (date: Date) => void;
   showTimePicker?: boolean;
   onTimeSelect?: (time: string) => void;
   selectedDate?: Date | null;
   selectedTime?: string;
-  existingEvents?: CalendarEvent[]; // For conflict detection
 }
 
 export function Calendar({
-  events = [],
   onDateSelect,
   onAddEvent,
   showTimePicker = false,
   onTimeSelect,
   selectedDate: externalSelectedDate,
   selectedTime,
-  existingEvents = [],
 }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(
     externalSelectedDate || null,
   );
   const [conflictMessage, setConflictMessage] = useState("");
-
+  const { data: calendarData, isLoading } = useCalendarData();
+  console.log("data isss", calendarData);
+  const events: CalendarEvent[] = useMemo(
+    () =>
+      calendarData
+        ? [
+            ...(calendarData.goals || []).map((g) => ({
+              id: g.id,
+              type: "goal" as const,
+              title: g.title,
+              color: g.color || "#9FA1FF",
+              date: g.endDate || g.startDate,
+              status: g.status,
+              time: undefined as string | undefined,
+            })),
+            ...(calendarData.habits || []).map((h) => ({
+              id: h.id,
+              type: "habit" as const,
+              title: h.title,
+              color: h.color || "#8B5CF6",
+              date: new Date().toISOString(),
+              status: h.status,
+              time: undefined as string | undefined,
+            })),
+          ]
+        : [],
+    [calendarData],
+  );
   useEffect(() => {
     if (externalSelectedDate !== undefined) {
       setSelectedDate(externalSelectedDate);
@@ -47,7 +71,7 @@ export function Calendar({
   const checkConflict = (date: Date, time: string): boolean => {
     if (!time) return false;
 
-    const conflicts = existingEvents.filter((event) => {
+    const conflicts = events.filter((event) => {
       const eventDate = new Date(event.date).toDateString();
       const selectedDateStr = date.toDateString();
       if (eventDate !== selectedDateStr) return false;
@@ -91,13 +115,15 @@ export function Calendar({
   // Available time slots for the selected date
   const busyTimes = useMemo(() => {
     if (!selectedDate) return [];
-    return existingEvents
+    return events
       .filter((e) => {
         const eventDate = new Date(e.date).toDateString();
         return eventDate === selectedDate.toDateString() && e.time;
       })
       .map((e) => e.time as string);
-  }, [selectedDate, existingEvents]);
+  }, [selectedDate, events]);
+
+  if (isLoading) return <>loading</>;
 
   return (
     <div className="bg-surface rounded-xl border border-border p-4">

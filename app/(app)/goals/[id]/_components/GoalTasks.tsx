@@ -305,8 +305,6 @@ export function GoalTasks({ goal }: GoalTasksProps) {
                     className="overflow-hidden"
                   >
                     <Calendar
-                      events={calendarEvents}
-                      existingEvents={calendarEvents}
                       selectedDate={selectedDate}
                       onDateSelect={(date) => {
                         setSelectedDate(date);
