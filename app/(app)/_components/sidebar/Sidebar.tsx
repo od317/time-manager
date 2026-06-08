@@ -23,7 +23,7 @@ const navigation = [
   { name: "Goals", href: "/goals", icon: Target },
   { name: "Habits", href: "/habits", icon: Repeat },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "AI Planner", href: "/create-plan", icon: Sparkles },
+  // { name: "AI Planner", href: "/create-plan", icon: Sparkles },
 ];
 
 export function Sidebar() {
