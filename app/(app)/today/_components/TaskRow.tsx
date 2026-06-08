@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Task } from "@/types";
 import { useTimerStore } from "@/store/timerStore";
 import { useTaskStore } from "@/store/taskStore";
 import { useModalStore } from "@/store/modalStore";
-import { Circle, Play, CheckCircle2, Pencil } from "lucide-react";
+import { Circle, Play, CheckCircle2, Pencil, Loader2 } from "lucide-react";
 
 interface TaskRowProps {
   task: Task;
@@ -19,6 +20,14 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
   );
   const isCompleted = task.status === "COMPLETED" || isLocallyCompleted;
   const { openEditTask } = useModalStore();
+  const [isToggling, setIsToggling] = useState(false);
+
+  const handleToggle = async () => {
+    if (!onToggle) return;
+    setIsToggling(true);
+    await onToggle(task);
+    setIsToggling(false);
+  };
 
   const handleStartTask = () => {
     setSelectedTask(task);
@@ -41,10 +50,13 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
     >
       {onToggle ? (
         <button
-          onClick={() => onToggle(task)}
+          onClick={handleToggle}
+          disabled={isToggling}
           className="flex-shrink-0 text-text-muted hover:text-success transition-all"
         >
-          {isCompleted ? (
+          {isToggling ? (
+            <Loader2 size={14} className="animate-spin text-primary" />
+          ) : isCompleted ? (
             <CheckCircle2 size={14} className="text-success" />
           ) : (
             <Circle size={14} />
@@ -67,7 +79,6 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
         </span>
       )}
 
-      {/* Edit button */}
       <button
         onClick={() => openEditTask(task)}
         className="p-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"

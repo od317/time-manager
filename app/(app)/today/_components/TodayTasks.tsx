@@ -7,15 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Task, Goal } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { useTimerStore } from "@/store/timerStore";
-import {
-  CheckCircle2,
-  Clock,
-  Play,
-  ChevronRight,
-  CheckSquare,
-  ChevronDown,
-  ListTodo,
-} from "lucide-react";
+import { ChevronRight, CheckSquare, ChevronDown, ListTodo } from "lucide-react";
 import { TaskEditModal } from "./TaskEditModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { useTaskStore } from "@/store/taskStore";
@@ -35,7 +27,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   const localTasks = useTaskStore((s) => s.localTasks);
   const updatedTasks = useTaskStore((s) => s.updatedTasks);
   const deletedTaskIds = useTaskStore((s) => s.deletedTaskIds);
-
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   // Get locally added tasks that are due today (or have no due date)
   const todayStr = new Date().toLocaleDateString("en-CA");
   const localTasksForToday = Array.from(localTasks.values())
@@ -74,6 +66,18 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
       // Handle silently
     } finally {
       setCompletingId(null);
+    }
+  };
+
+  const handleDelete = async (task: Task) => {
+    setDeletingId(task.id);
+    try {
+      await taskService.delete(task.id);
+      useTaskStore.getState().removeTask(task.id, task.goalId || "");
+    } catch {
+      // Handle error
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -208,9 +212,11 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
                           key={task.id}
                           task={task}
                           isCompleting={completingId === task.id}
+                          isDeleting={deletingId === task.id}
                           onToggle={handleToggle}
                           onStartTimer={handleStartTimer}
                           onEdit={setEditingTask}
+                          onDelete={handleDelete}
                         />
                       ))}
                     </AnimatePresence>
@@ -272,9 +278,11 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
                                 key={task.id}
                                 task={task}
                                 isCompleting={completingId === task.id}
+                                isDeleting={deletingId === task.id}
                                 onToggle={handleToggle}
                                 onStartTimer={handleStartTimer}
                                 onEdit={setEditingTask}
+                                onDelete={handleDelete}
                               />
                             ))}
                           </div>

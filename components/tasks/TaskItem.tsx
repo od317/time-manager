@@ -14,6 +14,7 @@ import {
 interface TaskItemProps {
   task: Task;
   isCompleting?: boolean;
+  isDeleting: boolean;
   onToggle?: (task: Task) => void;
   onStartTimer?: (task: Task) => void;
   onEdit?: (task: Task) => void;
@@ -25,6 +26,7 @@ interface TaskItemProps {
 export function TaskItem({
   task,
   isCompleting = false,
+  isDeleting = false,
   onToggle,
   onStartTimer,
   onEdit,
@@ -33,7 +35,7 @@ export function TaskItem({
   goalColor = "#9FA1FF",
 }: TaskItemProps) {
   const isCompleted = task.status === "COMPLETED";
-
+  console.log(task.status, isCompleted);
   return (
     <motion.div
       layout
@@ -140,10 +142,19 @@ export function TaskItem({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => onDelete(task)}
+            disabled={isDeleting}
             className="p-1.5 text-text-muted hover:text-danger hover:bg-danger-bg rounded-lg transition-all"
             title="Delete task"
           >
-            <Trash2 size={14} />
+            {isDeleting ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-3.5 h-3.5 border-2 border-danger border-t-transparent rounded-full"
+              />
+            ) : (
+              <Trash2 size={14} />
+            )}
           </motion.button>
         )}
 

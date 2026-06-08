@@ -66,7 +66,7 @@ export function SortableGoalItem({
       const updates = updatedTasks.get(t.id);
       return updates ? { ...t, ...updates } : t;
     });
-
+  console.log(goal.title, serverTasks);
   const mergedTasks = [...localGoalTasks, ...serverTasks];
 
   const { openQuickTask } = useModalStore();
@@ -206,6 +206,9 @@ export function SortableGoalItem({
             }
           }
         }
+      } else {
+        // Uncompleting - remove from localCompletedIds
+        useTaskStore.getState().unmarkComplete(task.id);
       }
 
       useTaskStore.getState().updateTask(task.id, { status: newStatus });

@@ -31,6 +31,8 @@ export function GoalTasks({ goal }: GoalTasksProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const tasks = goal.tasks || [];
 
@@ -42,14 +44,29 @@ export function GoalTasks({ goal }: GoalTasksProps) {
     .filter((t) => !localIds.has(t.id))
     .filter((t) => !deletedTaskIds.has(t.id));
 
-  const allTasks = [...localGoalTasks, ...serverTasks];
+  const updatedTasks = useTaskStore((s) => s.updatedTasks);
+
+  // Apply updates to tasks before filtering
+  const allTasks = [...localGoalTasks, ...serverTasks].map((t) => {
+    const updates = updatedTasks.get(t.id);
+    return updates ? { ...t, ...updates } : t;
+  });
+
   const activeTasks = allTasks.filter(
     (t) =>
-      t.status === "TODO" ||
-      t.status === "IN_PROGRESS" ||
-      t.status === "OVERDUE",
+      (t.status === "TODO" ||
+        t.status === "IN_PROGRESS" ||
+        t.status === "OVERDUE") &&
+      t.id !== togglingId, // Don't move if currently toggling
   );
-  const completedTasks = allTasks.filter((t) => t.status === "COMPLETED");
+  const completedTasks = allTasks.filter(
+    (t) => t.status === "COMPLETED" && t.id !== togglingId, // Don't move if currently toggling
+  );
+
+  const togglingTask = togglingId
+    ? allTasks.find((t) => t.id === togglingId)
+    : null;
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -91,23 +108,35 @@ export function GoalTasks({ goal }: GoalTasksProps) {
   };
 
   const handleToggleTask = async (task: Task) => {
+    setTogglingId(task.id);
     const newStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
     try {
       await taskService.update(task.id, { status: newStatus });
+
+      if (newStatus === "COMPLETED") {
+        useTaskStore.getState().markComplete(task.id);
+      } else {
+        useTaskStore.getState().unmarkComplete(task.id);
+      }
+
       useTaskStore.getState().updateTask(task.id, { status: newStatus });
-      // Remove router.refresh()
+      // Remove the artificial delay
     } catch {
       // Handle error
+    } finally {
+      setTogglingId(null);
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    setDeletingId(taskId);
     try {
       await taskService.delete(taskId);
       useTaskStore.getState().removeTask(taskId, goal.id);
-      // Remove router.refresh()
     } catch {
       // Handle error
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -325,17 +354,39 @@ export function GoalTasks({ goal }: GoalTasksProps) {
       <div className="px-6 pb-6">
         {activeTasks.length > 0 && (
           <div className="space-y-1.5 mb-4">
-            {activeTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggle={handleToggleTask}
-                onEdit={setEditingTask}
-                onDelete={(t) => handleDeleteTask(t.id)}
-                showGoalColor
-                goalColor={goal.color || "#9FA1FF"}
-              />
-            ))}
+            {activeTasks.length > 0 && (
+              <div className="space-y-1.5 mb-4">
+                {activeTasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    onToggle={handleToggleTask}
+                    onEdit={setEditingTask}
+                    onDelete={(t) => handleDeleteTask(t.id)}
+                    showGoalColor
+                    goalColor={goal.color || "#9FA1FF"}
+                    isCompleting={togglingId === task.id}
+                    isDeleting={deletingId === task.id}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Show toggling task in its original section during transition */}
+        {togglingTask && togglingTask.status !== "COMPLETED" && (
+          <div className="space-y-1.5 mb-4">
+            <TaskItem
+              task={togglingTask}
+              onToggle={handleToggleTask}
+              onEdit={setEditingTask}
+              onDelete={(t) => handleDeleteTask(t.id)}
+              showGoalColor
+              goalColor={goal.color || "#9FA1FF"}
+              isCompleting={true}
+              isDeleting={false}
+            />
           </div>
         )}
 
@@ -355,9 +406,25 @@ export function GoalTasks({ goal }: GoalTasksProps) {
                   onToggle={handleToggleTask}
                   onEdit={setEditingTask}
                   onDelete={(t) => handleDeleteTask(t.id)}
+                  isDeleting={deletingId === task.id}
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {togglingTask && togglingTask.status === "COMPLETED" && (
+          <div className="space-y-1.5">
+            <TaskItem
+              task={togglingTask}
+              onToggle={handleToggleTask}
+              onEdit={setEditingTask}
+              onDelete={(t) => handleDeleteTask(t.id)}
+              showGoalColor
+              goalColor={goal.color || "#9FA1FF"}
+              isCompleting={true}
+              isDeleting={false}
+            />
           </div>
         )}
 

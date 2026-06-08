@@ -14,7 +14,7 @@ interface TaskState {
   // Task mutations (affects both local + tracked for UI updates)
   updatedTasks: Map<string, Partial<Task>>; // taskId → updates
   deletedTaskIds: Set<string>;
-
+  unmarkComplete: (taskId: string) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   removeTask: (taskId: string, goalId: string) => void;
 }
@@ -28,6 +28,13 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       localCompletedIds: new Set([...state.localCompletedIds, taskId]),
     }));
   },
+
+  unmarkComplete: (taskId: string) =>
+    set((state) => {
+      const next = new Set(state.localCompletedIds);
+      next.delete(taskId);
+      return { localCompletedIds: next };
+    }),
 
   isCompleted: (taskId: string) => {
     return get().localCompletedIds.has(taskId);
