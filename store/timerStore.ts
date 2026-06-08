@@ -121,6 +121,18 @@ const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
 // HELPERS
 // ============================================================================
 
+function findTaskInGoals(goals: Goal[], taskId: string): Task | null {
+  for (const goal of goals) {
+    const task = goal.tasks?.find((t) => t.id === taskId);
+    if (task) return task;
+    if (goal.children?.length) {
+      const childTask = findTaskInGoals(goal.children, taskId);
+      if (childTask) return childTask;
+    }
+  }
+  return null;
+}
+
 function buildPersistedState(state: TimerState, runningTimerId: string | null) {
   return {
     runningTimerId,
@@ -238,6 +250,32 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
     // 2. Handle Simple Timer recovery
     const persisted = loadTimerState();
+
+    if (persisted) {
+      const secondsSinceLastSave = (Date.now() - persisted.savedAt) / 1000;
+      const currentState = get();
+      if (
+        currentState.pomodoroState &&
+        currentState.sessionStartTime &&
+        !currentState.isPomodoroPaused
+      ) {
+        // TimerProvider already restored it - skip
+        return;
+      }
+      if (
+        secondsSinceLastSave < 30 &&
+        persisted.timerMode === "SIMPLE" &&
+        currentState.runningTimer?.status === "RUNNING"
+      ) {
+        // Timer is still running from TimerProvider - don't touch it
+        // Just ensure selectedTask is set
+        if (persisted.selectedTaskId && !currentState.selectedTask) {
+          const task = findTaskInGoals(goals, persisted.selectedTaskId);
+          if (task) set({ selectedTask: task });
+        }
+        return; // Skip recovery entirely
+      }
+    }
 
     let backendTimer: TimeEntry | null = null;
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
 import { Goal, Task, TimeEntry } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
@@ -19,7 +18,6 @@ import {
 } from "lucide-react";
 import { SessionHistory } from "./SessionHistory";
 import { taskService } from "@/lib/services/taskService";
-import { buildPersistedState, saveTimerState } from "@/lib/timerPersistence";
 import { useState } from "react";
 
 interface TodayTimerProps {
@@ -42,57 +40,8 @@ export function TodayTimer({
     selectedTask,
   } = store;
   const { markComplete } = useTaskStore();
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = useTimerStore((s) => s.selectedTask !== null);
   const [isCompleting, setIsCompleting] = useState(false);
-
-  const clearTimerInterval = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (
-      runningTimer?.status === "RUNNING" &&
-      sessionStartTime &&
-      timerMode === "SIMPLE"
-    ) {
-      const tick = () => {
-        const state = useTimerStore.getState();
-        const currentElapsed = Math.floor(
-          (Date.now() - sessionStartTime) / 1000,
-        );
-        const totalElapsed = state.accumulatedBeforePause + currentElapsed;
-
-        useTimerStore.setState({ elapsed: totalElapsed });
-
-        // Save to localStorage every tick
-        saveTimerState(
-          buildPersistedState(
-            {
-              ...state,
-              elapsed: totalElapsed,
-              accumulatedBeforePause: totalElapsed,
-            },
-            state.runningTimer?.id || null,
-          ),
-        );
-      };
-      tick();
-      intervalRef.current = setInterval(tick, 1000);
-    } else {
-      clearTimerInterval();
-    }
-    return clearTimerInterval;
-  }, [
-    runningTimer?.status,
-    sessionStartTime,
-    accumulatedBeforePause,
-    timerMode,
-    clearTimerInterval,
-  ]);
 
   const formatTime = (seconds: number): string => {
     const h = Math.floor(Math.abs(seconds) / 3600);
