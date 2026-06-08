@@ -42,10 +42,10 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
     .flat()
     .filter((t) => !deletedTaskIds.has(t.id))
     .filter((t) => {
-      if (!t.dueDate) return false; // ← No due date = don't show here
+      if (!t.dueDate) return false;
       return new Date(t.dueDate).toLocaleDateString("en-CA") === todayStr;
-    })
-    .filter((t) => !localCompletedIds.has(t.id));
+    });
+  // Remove: .filter((t) => !localCompletedIds.has(t.id));
 
   // Merge with server tasks (deduplicate by id)
   const localIds = new Set(localTasksForToday.map((t) => t.id));
@@ -70,7 +70,6 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
         markComplete(task.id);
       }
       useTaskStore.getState().updateTask(task.id, { status: newStatus });
-      // Remove router.refresh()
     } catch {
       // Handle silently
     } finally {

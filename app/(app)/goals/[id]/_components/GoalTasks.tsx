@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Goal, Task, Priority } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { TaskEditModal } from "@/app/(app)/today/_components/TaskEditModal";
 import { Calendar } from "@/components/calendar/Calendar";
-import { useCalendarData } from "@/hooks/useCalendarData";
-import { CalendarEvent } from "@/types/calendar";
 import {
   Plus,
   ListTodo,
@@ -25,7 +22,6 @@ interface GoalTasksProps {
 }
 
 export function GoalTasks({ goal }: GoalTasksProps) {
-  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [estimatedMinutes, setEstimatedMinutes] = useState("");
@@ -35,41 +31,6 @@ export function GoalTasks({ goal }: GoalTasksProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
-
-  const { data: calendarData } = useCalendarData();
-
-  const calendarEvents: CalendarEvent[] = calendarData
-    ? [
-        ...(calendarData.goals || []).map((g) => ({
-          id: g.id,
-          type: "goal" as const,
-          title: g.title,
-          color: g.color || "#9FA1FF",
-          date: g.endDate || g.startDate,
-          status: g.status,
-          time: undefined,
-        })),
-        ...(calendarData.habits || []).map((h) => ({
-          id: h.id,
-          type: "habit" as const,
-          title: h.title,
-          color: h.color || "#8B5CF6",
-          date: new Date().toISOString(),
-          status: h.status,
-          time: undefined,
-        })),
-        // Include existing tasks for this goal
-        ...(goal.tasks || []).map((t) => ({
-          id: t.id,
-          type: "task" as const,
-          title: t.title,
-          color: goal.color || "#9FA1FF",
-          date: t.dueDate || new Date().toISOString(),
-          status: t.status,
-          time: undefined,
-        })),
-      ]
-    : [];
 
   const tasks = goal.tasks || [];
 
@@ -400,7 +361,7 @@ export function GoalTasks({ goal }: GoalTasksProps) {
           </div>
         )}
 
-        {tasks.length === 0 && !showForm && (
+        {allTasks.length === 0 && !showForm && (
           <div className="text-center py-10">
             <ListTodo
               size={32}

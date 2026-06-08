@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Goal } from "@/types";
 import { goalService } from "@/lib/services";
 import {
   CheckCircle2,
   XCircle,
   Archive,
-  Trash2,
-  AlertTriangle,
   Settings,
   RotateCcw,
 } from "lucide-react";
@@ -22,7 +20,6 @@ interface GoalActionsProps {
 export function GoalActions({ goal }: GoalActionsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasCompletedParent = goal.parent?.status === "COMPLETED";
 
   const handleStatusChange = async (status: string) => {
@@ -31,19 +28,6 @@ export function GoalActions({ goal }: GoalActionsProps) {
       await goalService.update(goal.id, {
         status: status as Goal["status"],
       });
-      router.refresh();
-    } catch {
-      // Handle error
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setIsLoading(true);
-    try {
-      await goalService.delete(goal.id);
-      router.push("/goals");
       router.refresh();
     } catch {
       // Handle error
@@ -138,89 +122,7 @@ export function GoalActions({ goal }: GoalActionsProps) {
             Re-activate
           </motion.button>
         )}
-
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowDeleteConfirm(true)}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm border-2 border-danger/30 text-danger hover:bg-danger-bg transition-all disabled:opacity-50 ml-auto hover:shadow-md"
-        >
-          <Trash2 size={18} />
-          Delete
-        </motion.button>
       </div>
-
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowDeleteConfirm(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-surface rounded-2xl shadow-2xl border-2 border-danger/20 w-full max-w-sm p-6"
-            >
-              <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 rounded-xl bg-danger-bg">
-                  <AlertTriangle size={24} className="text-danger" />
-                </div>
-                <div>
-                  <h4 className="text-lg font-bold text-text mb-1">
-                    Delete Goal?
-                  </h4>
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    This will permanently delete &quot;{goal.title}&quot; and
-                    all its sub-goals and tasks. This action cannot be undone.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-3 px-4 border-2 border-border text-text-secondary rounded-xl font-semibold hover:bg-border-light transition-all"
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleDelete}
-                  disabled={isLoading}
-                  className="flex-1 py-3 px-4 bg-danger text-white rounded-xl font-semibold hover:bg-danger/90 disabled:opacity-50 transition-all shadow-lg shadow-danger/25"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      />
-                      Deleting...
-                    </span>
-                  ) : (
-                    "Delete"
-                  )}
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }

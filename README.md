@@ -1,6 +1,6 @@
 # ⏱️ TimeFlow
 
-A comprehensive time management application with goal tracking, habit building, Pomodoro timer, and analytics. Built with Next.js 16, Express, Prisma, and PostgreSQL.
+A comprehensive time management application with goal tracking, habit building, Pomodoro timer, analytics, and AI-powered planning. Built with Next.js 16, Express, Prisma, and PostgreSQL.
 
 ## 🚀 Tech Stack
 
@@ -24,55 +24,74 @@ A comprehensive time management application with goal tracking, habit building, 
 - **Three modes**: Simple, Pomodoro, Quick Log
 - **Task context switching**: Change tasks while timer runs without losing time
 - **Session history**: Track time per task with grouped display
+- **Auto-select next task**: Completing a task auto-selects the next available one
 - **Pomodoro presets**: Classic, Short Focus, Deep Work, Meeting, Power Hour, Custom
-- **Sound notifications**: Audio cues for phase changes
-- **Persistence**: Survives page reloads via localStorage
+- **Pomodoro persistence**: Full localStorage-based state with 30-minute crash recovery
+- **Bulk session submission**: Single API call at session end (not per-phase)
+- **Offline queue**: Failed submissions retry automatically on reconnect
+- **Sound notifications**: Web Audio API cues for phase changes
 - **Browser tab timer**: See elapsed time in tab title
 
 ### 🎯 Goals
 
-- **Hierarchical**: Nest sub-goals infinitely
+- **Hierarchical**: Nest sub-goals infinitely with recursive task search
 - **Three types**: Quantity, Time-based, Project
-- **16 colors**: Sub-goals inherit parent color
-- **Progress tracking**: Manual + auto-sync from timer
-- **Tasks**: Break goals into actionable items
-- **Calendar**: Pick dates with conflict detection
+- **Custom colors**: 16 presets + custom hex color picker
+- **Inline editing**: Edit title, description, priority, color, and due date
+- **Progress tracking**: Manual + auto-sync from timer + auto-calculated from tasks
+- **Tasks**: Break goals into actionable items with priority and estimated time
+- **Calendar integration**: Date picker with event visualization and conflict detection
 - **Drag & drop**: Reorder goals and sub-goals
-- **Auto-fail**: Overdue goals marked automatically
+- **Overdue system**: Goals past deadline become "Overdue" (not failed) with 30-day grace period
+- **Deadline warnings**: Visual amber indicators for overdue items
 - **Locked completion**: Can't complete goals with active sub-goals/tasks
+- **Rule-based editing**: Different edit permissions based on status (Active/Overdue/Failed)
+
+### 🤖 AI Planner
+
+- **Plan generation**: Describe your goal and AI creates a structured plan with phases
+- **Editable preview**: Modify titles, descriptions, tasks, and dates before creating
+- **Phased breakdown**: AI organizes goals into sequential phases with estimated hours
+- **Task assignment**: Each phase includes actionable tasks with deadlines
+- **Progress indicators**: Rotating status messages during AI processing
+- **One-click creation**: Creates full goal hierarchy with sub-goals and tasks
 
 ### 🔄 Habits
 
 - **Flexible scheduling**: Daily, weekly, custom frequency
+- **Client-side filtering**: Instant filter by Active/Paused/Archived
 - **Streaks**: Current, longest, total completions
 - **Heatmap**: GitHub-style yearly activity view
-- **Log history**: Today/Yesterday labels
+- **Log history**: Today/Yesterday labels with undo support
 - **Browser-based dates**: All logic uses local time
 - **Pause/Resume/Archive**: Full lifecycle
 
 ### 📊 Analytics
 
-- **Overview stats**: Goals, habits, time tracked
-- **Goal progress**: Horizontal bar chart with colors
+- **Overview stats**: Goals by status (Active, Overdue, Completed, Failed, Paused)
+- **Goal progress**: Horizontal bar chart with goal colors
 - **Habit consistency**: Streak comparison chart
-- **Time distribution**: Donut chart by goal
-- **Daily breakdown**: Line chart with week/month/year
-- **Comparison mode**: Previous period comparison
-- **AI insights**: Personalized suggestions (OpenRouter)
+- **Time distribution**: Donut chart by goal with pre-formatted durations
+- **Daily breakdown**: Line chart with week/month/year views and comparison mode
+- **AI insights**: Personalized feedback with strengths, improvements, and recommendations
 - **Productivity patterns**: Day activity, priority distribution
 
 ### 🎨 Dashboard
 
-- **Customizable layout**: Single/double column, drag sections
-- **Collapsible sections**: Habits, Tasks, Goals
-- **Goal hierarchy**: Expand to see sub-goals and tasks
-- **Quick task add**: Modal from any goal
+- **Single endpoint**: `/api/today` aggregates all dashboard data in one call
+- **Collapsible sections**: Habits, Focus Tasks, Goals with expand/collapse
+- **Optimistic updates**: Task CRUD operations update UI instantly via Zustand
+- **Goal hierarchy**: Expand to see sub-goals and tasks at any depth
+- **Quick task add**: Modal from any goal with calendar date picker
+- **Task auto-select**: Completing selected task picks next available task
 - **Dark mode**: Full support, no flash on load
 - **Responsive**: Mobile bottom nav
 
-### 🔧 Auth & Email
+### 🔧 Auth & Optimization
 
 - **Register/Login**: JWT-based with cookies
+- **Instant auth**: Token check is instant, user fetch is lazy-loaded
+- **Skeleton loading**: User-dependent UI shows skeletons, not full-page spinners
 - **Email verification**: Resend integration
 - **Password reset**: Secure token-based flow
 - **Route protection**: Proxy middleware
@@ -85,25 +104,26 @@ timeflow/
 │   ├── app/
 │   │   ├── (auth)/              # Login, Register, Forgot/Reset password
 │   │   └── (app)/               # Authenticated pages
-│   │       ├── today/           # Dashboard with timer, habits, goals
-│   │       ├── goals/           # Goals CRUD + detail page
+│   │       ├── today/           # Dashboard with timer, habits, goals, tasks
+│   │       ├── goals/           # Goals CRUD + detail page with inline editing
 │   │       ├── habits/          # Habits list + detail + heatmap
 │   │       ├── analytics/       # Charts, daily breakdown, AI insights
 │   │       ├── create/          # Goal/habit creation with calendar
+│   │       ├── create-plan/     # AI plan generator with editable preview
 │   │       └── settings/        # Profile management
 │   ├── components/
-│   │   ├── calendar/            # Calendar, TimePicker, DayDetails
-│   │   └── tasks/               # Shared TaskItem
-│   ├── hooks/                   # Custom hooks
-│   ├── lib/                     # API client, services, utils
-│   ├── store/                   # Zustand stores
+│   │   ├── calendar/            # Self-contained Calendar with data fetching
+│   │   └── tasks/               # Shared TaskItem, TaskRow
+│   ├── hooks/                   # useCalendarData, useTimezone
+│   ├── lib/                     # API client, services, persistence
+│   ├── store/                   # Zustand stores (timer, task, auth, modal, toast)
 │   └── types/                   # TypeScript types
 │
 ├── backend/                     # Express API
-│   ├── controllers/             # Auth, Goal, Habit, TimeEntry
+│   ├── controllers/             # Auth, Goal, Habit, TimeEntry, AI
 │   ├── middleware/               # Auth, Error handler
 │   ├── routes/                  # API routes
-│   ├── services/                # Deadline service
+│   ├── services/                # Deadline service, AI service
 │   ├── utils/                   # Prisma, Email (Resend)
 │   ├── prisma/
 │   │   └── schema.prisma        # Database schema
@@ -117,6 +137,7 @@ timeflow/
 - Node.js 20+
 - PostgreSQL (local) or Neon (cloud)
 - Resend account (for emails)
+- OpenRouter API key (for AI features)
 
 ### Installation
 
@@ -201,6 +222,16 @@ api.post("/goals", data, CancelKeys.GOAL_CREATE);
 IDLE → RUNNING → PAUSED → RUNNING → COMPLETED
 ```
 
+### Pomodoro Persistence
+
+```
+localStorage (primary) → Backend (bulk on complete) → Offline queue (retry)
+```
+
+### Optimistic UI Updates
+
+Task/goal mutations update Zustand stores instantly, API calls happen in background. Failed requests can be retried.
+
 ### Browser-Based Date Logic
 
 All date calculations use browser's local time, no server timezone dependencies.
@@ -209,8 +240,10 @@ All date calculations use browser's local time, no server timezone dependencies.
 
 Global modal store prevents prop drilling and DOM nesting issues.
 
+### Self-Contained Calendar
+
+Calendar component fetches its own data via hook, no prop drilling needed.
+
 ## 📄 License
 
 MIT
-
----
