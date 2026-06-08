@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserMenu } from "./UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TimerBar } from "@/components/timer/TimerBar";
 
 const pageTitles: Record<string, string> = {
   "/today": "Today",
@@ -44,6 +45,7 @@ export function Header() {
             {title}
           </motion.h1>
         </AnimatePresence>
+        <TimerBar />
       </div>
 
       <div className="flex items-center gap-2">
