@@ -96,28 +96,30 @@ export function TimerProvider() {
       return;
 
     // Check Pomodoro session first
+
     const pomodoroData = loadPomodoroSession();
     if (pomodoroData) {
-      const secondsSinceLastSave =
+      // Remove the 30-second check for reloads
+      // Only skip if too old (e.g., > 2 hours)
+      const secondsSinceLastActive =
         (Date.now() - pomodoroData.lastActiveAt) / 1000;
-      if (secondsSinceLastSave < 30 && pomodoroData.currentPhase === "WORK") {
-        // Restore running Pomodoro
-        const phaseElapsed = Math.floor(
-          (Date.now() - pomodoroData.sessionStartTime) / 1000,
+      if (
+        secondsSinceLastActive < 7200 &&
+        pomodoroData.currentPhase === "WORK"
+      ) {
+        const gapSeconds = Math.floor(
+          (Date.now() - pomodoroData.lastActiveAt) / 1000,
         );
-        const timeLeft = Math.max(
-          pomodoroData.timeLeftInPhase - phaseElapsed,
-          0,
-        );
+        const timeLeft = Math.max(pomodoroData.timeLeftInPhase - gapSeconds, 0);
 
         if (timeLeft > 0) {
           useTimerStore.setState({
             pomodoroState: {
               phase: pomodoroData.currentPhase as any,
               sessionsCompleted: pomodoroData.sessionsCompleted,
-              timeLeftInPhase: pomodoroData.timeLeftInPhase,
+              timeLeftInPhase: pomodoroData.timeLeftInPhase, // This is 1166 (remaining)
             },
-            sessionStartTime: pomodoroData.sessionStartTime,
+            sessionStartTime: Date.now(), // Reset to NOW, not the original start
             elapsed: timeLeft,
             timerMode: "POMODORO" as TimerMode,
             isPomodoroPaused: false,

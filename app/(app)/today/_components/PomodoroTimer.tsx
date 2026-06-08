@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import {
@@ -44,7 +44,6 @@ export function PomodoroTimer() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState(false);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasSelection = selectedTask !== null;
   const [isOffline, setIsOffline] = useState(false);
   const [totalSessions, setTotalSessions] = useState(() => {
@@ -111,60 +110,8 @@ export function PomodoroTimer() {
   }, []);
 
   // ============================================================================
-  // TIMER INTERVAL MANAGEMENT
-  // ============================================================================
-
-  const clearTimerInterval = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
-
-  // ============================================================================
   // COUNTDOWN LOGIC
   // ============================================================================
-
-  useEffect(() => {
-    if (pomodoroState && sessionStartTime && !isPomodoroPaused) {
-      const tick = () => {
-        const phaseElapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
-        const timeLeft = Math.max(
-          pomodoroState.timeLeftInPhase - phaseElapsed,
-          0,
-        );
-
-        useTimerStore.setState({ elapsed: timeLeft });
-
-        const data = loadPomodoroSession();
-        if (data) {
-          data.timeLeftInPhase = timeLeft;
-          data.lastTickTime = Date.now();
-          data.lastActiveAt = Date.now();
-          savePomodoroSession(data);
-        }
-
-        if (timeLeft <= 0) {
-          clearTimerInterval();
-          handlePhaseComplete();
-        }
-      };
-
-      tick();
-      intervalRef.current = setInterval(tick, 1000);
-    } else {
-      clearTimerInterval();
-    }
-
-    return clearTimerInterval;
-  }, [
-    pomodoroState?.phase,
-    pomodoroState?.sessionsCompleted,
-    sessionStartTime,
-    isPomodoroPaused,
-    clearTimerInterval,
-    handlePhaseComplete,
-  ]);
 
   useEffect(() => {
     if (recoveredPomodoro) {
@@ -193,7 +140,6 @@ export function PomodoroTimer() {
   const handleEndSession = async () => {
     if (isEnding) return;
     setIsEnding(true);
-    clearTimerInterval();
     await endPomodoroSession();
     setIsEnding(false);
   };
@@ -333,7 +279,7 @@ export function PomodoroTimer() {
               </p>
             </div>
           )}
-          
+
           {pendingCount > 0 && !isOffline && (
             <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl">
               <div className="flex items-center justify-between">

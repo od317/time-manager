@@ -193,6 +193,26 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   // ============================================================================
 
   initializeFromStorage: async (goals: Goal[]) => {
+    const currentState = get();
+
+    // TimerProvider already restored Pomodoro - skip
+    if (
+      currentState.timerMode === "POMODORO" &&
+      currentState.pomodoroState &&
+      currentState.sessionStartTime &&
+      !currentState.isPomodoroPaused
+    ) {
+      return;
+    }
+
+    // TimerProvider already restored Simple timer - skip
+    if (
+      currentState.timerMode === "SIMPLE" &&
+      currentState.runningTimer?.status === "RUNNING" &&
+      currentState.sessionStartTime
+    ) {
+      return;
+    }
     // 1. Check for Pomodoro session first
     const { recoverable, data: pomodoroData } = isPomodoroSessionRecoverable();
 
