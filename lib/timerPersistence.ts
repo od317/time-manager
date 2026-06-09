@@ -4,12 +4,23 @@ const STORAGE_KEY = "timer-session";
 
 const POMODORO_CONFIG_KEY = "pomodoro-config";
 
+const SIMPLE_PENDING_KEY = "simple-timer-pending";
+
 interface PomodoroConfigStorage {
   workDuration: number;
   shortBreakDuration: number;
   longBreakDuration: number;
   sessionsBeforeLongBreak: number;
   selectedPreset: string;
+}
+
+export interface PendingSimpleEntry {
+  taskId?: string;
+  goalId?: string;
+  duration: number;
+  startTime: string;
+  note?: string;
+  timestamp: number;
 }
 
 export interface PersistedTimerState {
@@ -99,4 +110,26 @@ export function loadTimerState(): PersistedTimerState | null {
 
 export function clearTimerState() {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+export function addPendingSimpleEntries(entries: PendingSimpleEntry[]) {
+  try {
+    const existing = loadPendingSimpleEntries();
+    localStorage.setItem(
+      SIMPLE_PENDING_KEY,
+      JSON.stringify([...existing, ...entries]),
+    );
+  } catch {}
+}
+
+export function loadPendingSimpleEntries(): PendingSimpleEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(SIMPLE_PENDING_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function clearPendingSimpleEntries() {
+  localStorage.removeItem(SIMPLE_PENDING_KEY);
 }

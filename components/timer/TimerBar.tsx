@@ -1,9 +1,9 @@
-// components/timer/TimerBar.tsx
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
-import { Pause, Play, Square, RotateCcw } from "lucide-react";
+import { Pause, Play, Square, RotateCcw, Loader2 } from "lucide-react";
 
 export function TimerBar() {
   const {
@@ -20,10 +20,12 @@ export function TimerBar() {
     getCurrentPhaseLabel,
   } = useTimerStore();
 
+  const [isStopping, setIsStopping] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
+
   const isSimple = timerMode === "SIMPLE";
   const isPomodoro = timerMode === "POMODORO";
 
-  // Don't show if no timer is active
   if (!selectedTask) return null;
   if (isSimple && !runningTimer) return null;
   if (isPomodoro && !pomodoroState) return null;
@@ -37,6 +39,35 @@ export function TimerBar() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  const handleStop = async () => {
+    if (isStopping) return;
+    setIsStopping(true);
+    useTimerStore.getState().pause();
+    try {
+      await stop();
+    } catch {
+      useTimerStore.getState().resume();
+    } finally {
+      setIsStopping(false);
+    }
+  };
+
+  const handleEndSession = async () => {
+    if (isEnding) return;
+    setIsEnding(true);
+    const state = useTimerStore.getState();
+    if (state.pomodoroState) {
+      useTimerStore.setState({ isPomodoroPaused: true });
+    }
+    try {
+      await endPomodoroSession();
+    } catch {
+      useTimerStore.setState({ isPomodoroPaused: false });
+    } finally {
+      setIsEnding(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -44,7 +75,7 @@ export function TimerBar() {
       className="flex items-center gap-3 px-4 py-1.5 rounded-xl bg-primary-bg/50 border border-primary/20 text-sm"
     >
       {/* Indicator */}
-      {isRunning ? (
+      {isRunning && !isStopping && !isEnding ? (
         <span className="w-2 h-2 rounded-full bg-success animate-pulse flex-shrink-0" />
       ) : (
         <span className="w-2 h-2 rounded-full bg-warning flex-shrink-0" />
@@ -99,20 +130,30 @@ export function TimerBar() {
         )}
         {isSimple && (
           <button
-            onClick={stop}
+            onClick={handleStop}
+            disabled={isStopping}
             className="p-1 rounded-lg hover:bg-danger-bg text-text-muted hover:text-danger transition-colors"
             title="Stop timer"
           >
-            <Square size={14} />
+            {isStopping ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Square size={14} />
+            )}
           </button>
         )}
         {isPomodoro && (
           <button
-            onClick={endPomodoroSession}
+            onClick={handleEndSession}
+            disabled={isEnding}
             className="p-1 rounded-lg hover:bg-danger-bg text-text-muted hover:text-danger transition-colors"
             title="End session"
           >
-            <RotateCcw size={14} />
+            {isEnding ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <RotateCcw size={14} />
+            )}
           </button>
         )}
       </div>

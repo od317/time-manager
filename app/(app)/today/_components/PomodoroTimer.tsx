@@ -140,8 +140,22 @@ export function PomodoroTimer() {
   const handleEndSession = async () => {
     if (isEnding) return;
     setIsEnding(true);
-    await endPomodoroSession();
-    setIsEnding(false);
+    // Pause the Pomodoro locally first
+    const state = useTimerStore.getState();
+    if (state.pomodoroState) {
+      state.isPomodoroPaused = true;
+    }
+    try {
+      await endPomodoroSession();
+    } catch {
+      // If fails, resume
+      const state = useTimerStore.getState();
+      if (state.pomodoroState) {
+        useTimerStore.setState({ isPomodoroPaused: false });
+      }
+    } finally {
+      setIsEnding(false);
+    }
   };
 
   // ============================================================================

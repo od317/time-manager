@@ -26,18 +26,11 @@ interface TodayTimerProps {
 
 export function TodayTimer({ goals }: TodayTimerProps) {
   const store = useTimerStore();
-  const {
-    runningTimer,
-    elapsed,
-    isLoading,
-    sessionStartTime,
-    accumulatedBeforePause,
-    timerMode,
-    selectedTask,
-  } = store;
+  const { runningTimer, elapsed, isLoading, timerMode, selectedTask } = store;
   const { markComplete } = useTaskStore();
   const hasSelection = useTimerStore((s) => s.selectedTask !== null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
 
   const formatTime = (seconds: number): string => {
     const h = Math.floor(Math.abs(seconds) / 3600);
@@ -160,10 +153,29 @@ export function TodayTimer({ goals }: TodayTimerProps) {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => useTimerStore.getState().stop()}
-                      className="flex items-center gap-2 px-6 py-3 bg-danger-bg text-danger rounded-2xl font-semibold hover:shadow-md transition-all"
+                      onClick={async () => {
+                        if (isStopping) return;
+                        setIsStopping(true);
+                        // Pause the timer locally first (stops the tick)
+                        useTimerStore.getState().pause();
+                        try {
+                          await useTimerStore.getState().stop();
+                        } catch {
+                          // If stop fails, resume the timer
+                          useTimerStore.getState().resume();
+                        } finally {
+                          setIsStopping(false);
+                        }
+                      }}
+                      disabled={isStopping}
+                      className="flex items-center gap-2 px-6 py-3 bg-danger-bg text-danger rounded-2xl font-semibold hover:shadow-md transition-all disabled:opacity-50"
                     >
-                      <Square size={18} /> Stop
+                      {isStopping ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <Square size={18} />
+                      )}
+                      {isStopping ? "Stopping..." : "Stop"}
                     </motion.button>
                   </motion.div>
                 )}

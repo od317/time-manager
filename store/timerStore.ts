@@ -12,6 +12,8 @@ import {
   saveTimerState,
   loadTimerState,
   clearTimerState,
+  clearPendingSimpleEntries,
+  loadPendingSimpleEntries,
 } from "@/lib/timerPersistence";
 
 import {
@@ -174,6 +176,21 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   // ============================================================================
 
   initializeFromStorage: async (goals: Goal[]) => {
+    const pendingSimple = loadPendingSimpleEntries();
+    if (pendingSimple.length > 0) {
+      try {
+        await timeEntryService.bulkLog({ entries: pendingSimple });
+        clearPendingSimpleEntries();
+      } catch {
+        // Will retry on next load
+      }
+    }
+
+    // Also sync pending Pomodoro sessions
+    get()
+      .syncCompletedPomodoroSessions()
+      .catch(() => {});
+
     const currentState = get();
 
     // TimerProvider already restored Pomodoro - skip
@@ -250,7 +267,6 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     }
 
     // 2. Handle Simple Timer recovery (localStorage only, no backend)
-    // 2. Handle Simple Timer recovery (localStorage first, then backend)
     const persisted = loadTimerState();
 
     if (!persisted || persisted.timerMode !== "SIMPLE") {
@@ -974,19 +990,16 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     const { runningTimer, sessionHistory, syncInterval } = get();
     if (!runningTimer) return;
 
-    // Clear backup interval
-    if (syncInterval) clearInterval(syncInterval);
-
     const now = Date.now();
     const timerId = runningTimer.id;
 
-    // Finalize history (set endTime for the current task)
+    // Finalize history
     const finalHistory = sessionHistory.map((entry) => {
       if (entry.endTime === null) return { ...entry, endTime: now };
       return entry;
     });
 
-    // Build entries for bulk log from session history
+    // Build entries for bulk log
     const entries = finalHistory
       .map((entry) => {
         const duration = Math.ceil((entry.endTime! - entry.startTime) / 1000);
@@ -999,19 +1012,25 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       })
       .filter((entry) => entry.duration > 0);
 
-    // One API call for all tasks
+    // Try to save via bulk log
     if (entries.length > 0) {
       try {
         await timeEntryService.bulkLog({ entries });
       } catch {
-        // Queue for later if offline
+        // Queue for later sync
+        addPendingSimpleEntries(
+          entries.map((e) => ({ ...e, timestamp: Date.now() })),
+        );
       }
     }
+
+    // Clear backup interval
+    if (syncInterval) clearInterval(syncInterval);
 
     // Clear backend backup
     timerStateService.clear().catch(() => {});
 
-    // Clear everything
+    // Clear everything (data is safe - either saved or queued)
     clearTimerState();
     set({
       runningTimer: null,
