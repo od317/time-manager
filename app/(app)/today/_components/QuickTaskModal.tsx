@@ -93,7 +93,6 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
             ).toISOString()
           : format(selectedDate, "yyyy-MM-dd") + "T00:00:00.000Z" // Force UTC midnight
         : undefined;
-      console.log(dueDate);
       const taskResponse = await taskService.create({
         title: title.trim(),
         goalId: goal.id,

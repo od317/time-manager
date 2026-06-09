@@ -20,8 +20,6 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
-  console.log("Proxy:", pathname, "Token:", !!token);
-
   // If on auth pages and already logged in, redirect to dashboard
   if (authPaths.some((path) => pathname.startsWith(path)) && token) {
     return NextResponse.redirect(new URL("/today", request.url));

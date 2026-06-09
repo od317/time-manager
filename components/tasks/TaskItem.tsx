@@ -35,7 +35,6 @@ export function TaskItem({
   goalColor = "#9FA1FF",
 }: TaskItemProps) {
   const isCompleted = task.status === "COMPLETED";
-  console.log(task.status, isCompleted);
   return (
     <motion.div
       layout

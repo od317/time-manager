@@ -66,7 +66,6 @@ export function SortableGoalItem({
       const updates = updatedTasks.get(t.id);
       return updates ? { ...t, ...updates } : t;
     });
-  console.log(goal.title, serverTasks);
   const mergedTasks = [...localGoalTasks, ...serverTasks];
 
   const { openQuickTask } = useModalStore();
@@ -144,16 +143,6 @@ export function SortableGoalItem({
 
   const handleToggleTask = async (task: Task) => {
     const newStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
-    console.log(
-      "allGoals:",
-      allGoals.map((g) => g.id),
-    );
-    console.log("localTasks:", [
-      ...useTaskStore.getState().localTasks.entries(),
-    ]);
-    console.log("completedIds:", [
-      ...useTaskStore.getState().localCompletedIds,
-    ]);
     try {
       await taskService.update(task.id, { status: newStatus });
 

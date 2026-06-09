@@ -34,7 +34,6 @@ export function Calendar({
   );
   const [conflictMessage, setConflictMessage] = useState("");
   const { data: calendarData, isLoading } = useCalendarData();
-  console.log("data isss", calendarData);
   const events: CalendarEvent[] = useMemo(
     () =>
       calendarData

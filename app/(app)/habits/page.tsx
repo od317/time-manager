@@ -7,9 +7,6 @@ export const dynamic = "force-dynamic";
 
 export default async function HabitsPage() {
   const allHabits = await serverHabitService.getAll({}, false);
-
-  const activeHabits = allHabits.filter((h) => h.status === "ACTIVE").length;
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

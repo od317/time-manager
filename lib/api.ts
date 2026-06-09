@@ -338,7 +338,6 @@ class ApiClient {
     data?: TData,
     cancelKey?: string,
   ): Promise<TResponse> {
-    console.log(data);
     return this.request<TResponse, Record<string, unknown>, TData>(
       "POST",
       url,

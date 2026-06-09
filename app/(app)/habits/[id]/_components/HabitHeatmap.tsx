@@ -147,23 +147,33 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
             className="overflow-x-auto"
           >
             <div className="inline-flex gap-3 min-w-fit">
-              {/* Month labels */}
-              <div className="flex flex-col gap-1 pt-7">
-                {months.map((month) => (
-                  <div
-                    key={month}
-                    className="h-3 text-[10px] font-semibold text-text-muted"
-                  >
-                    {month}
-                  </div>
-                ))}
-              </div>
-
               {/* Grid */}
               <div>
+                {/* Month labels - aligned with first day of each month */}
+                <div className="flex gap-0.5 mb-1">
+                  {weeks.map((week, wi) => {
+                    // Find first day of a month in this week
+                    const firstDayOfMonth = week.find(
+                      (day) => day && day.getDate() === 1,
+                    );
+                    const monthLabel = firstDayOfMonth
+                      ? months[firstDayOfMonth.getMonth()]
+                      : "";
+
+                    return (
+                      <div
+                        key={wi}
+                        className="w-3.5 text-[9px] font-semibold text-text-muted"
+                      >
+                        {monthLabel}
+                      </div>
+                    );
+                  })}
+                </div>
+
                 {/* Day labels */}
                 <div className="flex gap-0.5 mb-1.5">
-                  {["", "Mon", "", "Wed", "", "Fri", ""].map((day, i) => (
+                  {["", "M", "", "W", "", "F", ""].map((day, i) => (
                     <div
                       key={i}
                       className="w-3.5 h-3 text-[9px] font-semibold text-text-muted text-center"
@@ -203,6 +213,20 @@ export function HabitHeatmap({ habitId }: HabitHeatmapProps) {
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-2 mt-6 text-xs font-medium text-text-muted">
+              <span>Less</span>
+              {[
+                "bg-border/50",
+                "bg-success/40",
+                "bg-success/70",
+                "bg-success",
+              ].map((color, i) => (
+                <div key={i} className={`w-3.5 h-3.5 rounded-sm ${color}`} />
+              ))}
+              <span>More</span>
             </div>
 
             {/* Legend */}

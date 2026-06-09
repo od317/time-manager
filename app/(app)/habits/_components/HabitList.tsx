@@ -58,10 +58,15 @@ export function HabitList({ habits }: HabitListProps) {
             variants={container}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
           >
             {dueToday.map((habit) => (
-              <motion.div key={habit.id} variants={item} layout>
+              <motion.div
+                key={habit.id}
+                variants={item}
+                layout
+                className="h-full"
+              >
                 <HabitCard habit={habit} todayStr={todayStr} />
               </motion.div>
             ))}
@@ -86,10 +91,16 @@ export function HabitList({ habits }: HabitListProps) {
             variants={container}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
           >
             {notDueToday.map((habit) => (
-              <motion.div key={habit.id} variants={item} layout>
+              <motion.div
+                key={habit.id}
+                variants={item}
+                layout
+                className="h-full"
+              >
+                {" "}
                 <HabitCard habit={habit} todayStr={todayStr} />
               </motion.div>
             ))}

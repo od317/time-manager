@@ -77,10 +77,11 @@ export function HabitCard({ habit, todayStr }: HabitCardProps) {
       href={`/habits/${habit.id}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="block h-full"
     >
       <motion.div
         whileHover={{ y: -2 }}
-        className={`relative bg-surface rounded-2xl border-2 transition-all overflow-hidden ${
+        className={`relative bg-surface rounded-2xl border-2 transition-all overflow-hidden h-full ${
           isCompletedToday
             ? "border-success/30 ring-2 ring-success/10"
             : habit.status === "ACTIVE"
