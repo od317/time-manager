@@ -14,6 +14,7 @@ import {
   clearTimerState,
   clearPendingSimpleEntries,
   loadPendingSimpleEntries,
+  addPendingSimpleEntries,
 } from "@/lib/timerPersistence";
 
 import {
