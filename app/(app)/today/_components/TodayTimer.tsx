@@ -21,14 +21,10 @@ import { taskService } from "@/lib/services/taskService";
 import { useState } from "react";
 
 interface TodayTimerProps {
-  runningTimer: TimeEntry | null;
   goals: Goal[];
 }
 
-export function TodayTimer({
-  runningTimer: initialTimer,
-  goals,
-}: TodayTimerProps) {
+export function TodayTimer({ goals }: TodayTimerProps) {
   const store = useTimerStore();
   const {
     runningTimer,

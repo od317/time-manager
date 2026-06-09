@@ -1,8 +1,8 @@
-# ⏱️ TimeFlow
+# ⏱ TimeFlow
 
 A comprehensive time management application with goal tracking, habit building, Pomodoro timer, analytics, and AI-powered planning. Built with Next.js 16, Express, Prisma, and PostgreSQL.
 
-## 🚀 Tech Stack
+##  Tech Stack
 
 | Layer           | Technology                                                                    |
 | --------------- | ----------------------------------------------------------------------------- |
@@ -17,9 +17,9 @@ A comprehensive time management application with goal tracking, habit building, 
 | **Database**    | Neon (serverless PostgreSQL)                                                  |
 | **Hosting**     | Vercel (frontend) + Render (backend)                                          |
 
-## ✨ Features
+##  Features
 
-### ⏱️ Timer System
+### ⏱ Timer System
 
 - **Three modes**: Simple, Pomodoro, Quick Log
 - **Task context switching**: Change tasks while timer runs without losing time
@@ -32,7 +32,7 @@ A comprehensive time management application with goal tracking, habit building, 
 - **Sound notifications**: Web Audio API cues for phase changes
 - **Browser tab timer**: See elapsed time in tab title
 
-### 🎯 Goals
+###  Goals
 
 - **Hierarchical**: Nest sub-goals infinitely with recursive task search
 - **Three types**: Quantity, Time-based, Project
@@ -47,7 +47,7 @@ A comprehensive time management application with goal tracking, habit building, 
 - **Locked completion**: Can't complete goals with active sub-goals/tasks
 - **Rule-based editing**: Different edit permissions based on status (Active/Overdue/Failed)
 
-### 🤖 AI Planner
+###  AI Planner
 
 - **Plan generation**: Describe your goal and AI creates a structured plan with phases
 - **Editable preview**: Modify titles, descriptions, tasks, and dates before creating
@@ -56,7 +56,7 @@ A comprehensive time management application with goal tracking, habit building, 
 - **Progress indicators**: Rotating status messages during AI processing
 - **One-click creation**: Creates full goal hierarchy with sub-goals and tasks
 
-### 🔄 Habits
+###  Habits
 
 - **Flexible scheduling**: Daily, weekly, custom frequency
 - **Client-side filtering**: Instant filter by Active/Paused/Archived
@@ -66,7 +66,7 @@ A comprehensive time management application with goal tracking, habit building, 
 - **Browser-based dates**: All logic uses local time
 - **Pause/Resume/Archive**: Full lifecycle
 
-### 📊 Analytics
+###  Analytics
 
 - **Overview stats**: Goals by status (Active, Overdue, Completed, Failed, Paused)
 - **Goal progress**: Horizontal bar chart with goal colors
@@ -76,7 +76,7 @@ A comprehensive time management application with goal tracking, habit building, 
 - **AI insights**: Personalized feedback with strengths, improvements, and recommendations
 - **Productivity patterns**: Day activity, priority distribution
 
-### 🎨 Dashboard
+###  Dashboard
 
 - **Single endpoint**: `/api/today` aggregates all dashboard data in one call
 - **Collapsible sections**: Habits, Focus Tasks, Goals with expand/collapse
@@ -87,7 +87,7 @@ A comprehensive time management application with goal tracking, habit building, 
 - **Dark mode**: Full support, no flash on load
 - **Responsive**: Mobile bottom nav
 
-### 🔧 Auth & Optimization
+###  Auth & Optimization
 
 - **Register/Login**: JWT-based with cookies
 - **Instant auth**: Token check is instant, user fetch is lazy-loaded
@@ -96,7 +96,7 @@ A comprehensive time management application with goal tracking, habit building, 
 - **Password reset**: Secure token-based flow
 - **Route protection**: Proxy middleware
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 timeflow/
@@ -130,7 +130,7 @@ timeflow/
 │   └── server.js                # Entry point
 ```
 
-## 🔧 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -182,7 +182,7 @@ SETUP_SECRET=your-setup-secret
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
-## 🚀 Deployment
+##  Deployment
 
 ### Frontend (Vercel)
 
@@ -206,7 +206,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 3. Set `DATABASE_URL` on Render
 4. Run migrations via setup endpoint
 
-## 🎯 Key Design Patterns
+##  Key Design Patterns
 
 ### Request Deduplication
 
@@ -244,6 +244,6 @@ Global modal store prevents prop drilling and DOM nesting issues.
 
 Calendar component fetches its own data via hook, no prop drilling needed.
 
-## 📄 License
+##  License
 
 MIT

@@ -212,8 +212,16 @@ export function PomodoroTimer() {
   const PhaseIcon = phaseInfo.icon;
   const totalPhaseTime =
     pomodoroState?.timeLeftInPhase || pomodoroConfig.workDuration;
-  const timeSpent = totalPhaseTime - elapsed;
-  const progress = totalPhaseTime > 0 ? (timeSpent / totalPhaseTime) * 100 : 0;
+  const originalPhaseDuration =
+    pomodoroState?.phase === "WORK"
+      ? pomodoroConfig.workDuration
+      : pomodoroState?.phase === "SHORT_BREAK"
+        ? pomodoroConfig.shortBreakDuration
+        : pomodoroConfig.longBreakDuration;
+
+  const timeSpent = originalPhaseDuration - elapsed;
+  const progress =
+    originalPhaseDuration > 0 ? (timeSpent / originalPhaseDuration) * 100 : 0;
 
   // ============================================================================
   // SESSION CALCULATIONS

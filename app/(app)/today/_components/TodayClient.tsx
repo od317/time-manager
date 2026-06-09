@@ -39,7 +39,7 @@ export function TodayClient() {
           tasksCount={data.stats.activeTasks}
         />
 
-        <TodayTimer runningTimer={data.runningTimer} goals={data.goals} />
+        <TodayTimer goals={data.goals} />
 
         <DashboardLayout
           habitsSection={<TodayHabits habits={data.habits} />}

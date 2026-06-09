@@ -25,17 +25,26 @@ export function useGoalProgressSync() {
       processedIds.current.add(lastStoppedId);
 
       try {
-        const { timeEntryService } = await import("@/lib/services");
-        const timeEntry = await timeEntryService.getById(lastStoppedId);
+        // Get data from the store instead of backend
+        const state = useTimerStore.getState();
+        const selectedTask = state.selectedTask;
+        const elapsed =
+          state.sessionHistory.reduce(
+            (sum, entry) =>
+              sum + ((entry.endTime || Date.now()) - entry.startTime),
+            0,
+          ) / 1000;
 
-        if (timeEntry?.goalId && timeEntry.duration && timeEntry.duration > 0) {
-          const goal = await goalService.getById(timeEntry.goalId);
+        const goalId = selectedTask?.goalId;
+
+        if (goalId && elapsed > 0) {
+          const goal = await goalService.getById(goalId);
 
           if (goal && goal.goalType === "time" && goal.targetValue) {
             const trackedInUnit =
               goal.unit?.toLowerCase() === "minutes"
-                ? timeEntry.duration / 60
-                : timeEntry.duration / 3600;
+                ? elapsed / 60
+                : elapsed / 3600;
 
             const newValue = (goal.currentValue || 0) + trackedInUnit;
             const newProgress = Math.min(

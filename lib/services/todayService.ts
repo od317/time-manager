@@ -1,11 +1,10 @@
 import { api, CancelKeys } from "@/lib/api";
-import { Goal, Habit, TimeEntry, Task } from "@/types";
+import { Goal, Habit, Task } from "@/types";
 
 export interface TodayResponse {
   date: string;
   goals: Goal[];
   habits: Habit[];
-  runningTimer: TimeEntry | null;
   tasks: Task[];
   stats: {
     activeGoals: number;
