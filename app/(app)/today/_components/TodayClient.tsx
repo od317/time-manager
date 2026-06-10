@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { todayService, TodayResponse } from "@/lib/services/todayService";
 import { TodayOverview } from "./TodayOverview";
@@ -15,16 +15,25 @@ import { TodaySkeleton } from "./TodaySkeleton";
 
 export function TodayClient() {
   const [data, setData] = useState<TodayResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || fetchedRef.current) return;
+    fetchedRef.current = true;
 
-    todayService.getAll().then(setData).catch(console.error);
+    setLoading(true);
+    todayService
+      .getAll()
+      .then(setData)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, [isAuthenticated]);
 
-  if (!data) return <TodaySkeleton />;
-
+  if (loading) return <TodaySkeleton />;
+  if (!data) return null;
   return (
     <>
       <TimerInitializer goals={data.goals} />

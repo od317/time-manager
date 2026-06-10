@@ -8,10 +8,12 @@ interface AIInsight {
 }
 
 export interface AIFeedback {
-  overall: string;
-  strengths: string[];
-  improvements: string[];
-  recommendation: string;
+  overall?: string;
+  suggestions?: string[];
+  warnings?: string[];
+  focusArea?: string;
+  motivation?: string;
+  aiGenerated?: boolean;
 }
 
 export interface GeneratePlanPayload {
@@ -56,13 +58,8 @@ export interface GeneratedTask {
 }
 
 export const aiService = {
-  generateInsights: (data: {
-    goals: Goal[];
-    habits: Habit[];
-    tasks?: Task[];
-    timeEntries?: TimeEntry[];
-    period: string;
-  }) => api.post<AIFeedback>("/api/ai/insights", data, "ai:insights"),
+  generateInsights: () =>
+    api.post<AIFeedback>("/ai/insights", {}, "ai:insights"),
   generatePlan: (data: GeneratePlanPayload) =>
     api.postLongTimeout<GeneratedPlan>(
       "/ai/generate-plan",

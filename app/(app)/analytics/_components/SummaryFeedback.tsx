@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Goal, Habit, Task } from "@/types";
 import { aiService } from "@/lib/services/aiService";
@@ -11,8 +11,10 @@ import {
   Repeat,
   AlertTriangle,
   Clock,
-  TrendingUp,
-  TrendingDown,
+  RefreshCw,
+  Lightbulb,
+  Zap,
+  WifiOff,
 } from "lucide-react";
 
 interface SummaryFeedbackProps {
@@ -22,10 +24,12 @@ interface SummaryFeedbackProps {
 }
 
 interface AIFeedback {
-  overall: string;
-  strengths: string[];
-  improvements: string[];
-  recommendation: string;
+  overall?: string;
+  suggestions?: string[];
+  warnings?: string[];
+  focusArea?: string;
+  motivation?: string;
+  aiGenerated?: boolean;
 }
 
 export function SummaryFeedback({
@@ -35,13 +39,14 @@ export function SummaryFeedback({
 }: SummaryFeedbackProps) {
   const [feedback, setFeedback] = useState<AIFeedback | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAiFallback, setIsAiFallback] = useState(false);
 
   // Calculate summary stats
   const activeGoals = goals.filter((g) => g.status === "ACTIVE");
   const overdueGoals = goals.filter((g) => g.status === "OVERDUE");
   const pausedGoals = goals.filter((g) => g.status === "PAUSED");
   const completedGoals = goals.filter((g) => g.status === "COMPLETED");
-  const failedGoals = goals.filter((g) => g.status === "FAILED");
 
   const activeTasks = tasks.filter(
     (t) => t.status === "TODO" || t.status === "IN_PROGRESS",
@@ -65,40 +70,37 @@ export function SummaryFeedback({
         )
       : 0;
 
-  useEffect(() => {
-    const fetchFeedback = async () => {
-      try {
-        const response = await aiService.generateInsights({
-          goals,
-          habits,
-          tasks,
-          period: "overall",
-        });
+  const fetchFeedback = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setIsAiFallback(false);
+    setFeedback(null);
 
-        if (response) {
-          setFeedback({
-            overall: response.overall || "Keep pushing forward!",
-            strengths: response.strengths || [],
-            improvements: response.improvements || [],
-            recommendation: response.recommendation || "Focus on consistency.",
-          });
+    try {
+      const response = await aiService.generateInsights();
+      if (response) {
+        setFeedback(response);
+        if (response.aiGenerated === false) {
+          setIsAiFallback(true);
         }
-      } catch {
-        setFeedback({
-          overall: "You're making progress!",
-          strengths: ["Consistent habit tracking", "Regular time logging"],
-          improvements: [
-            "Focus on completing overdue tasks",
-            "Consider pausing goals instead of abandoning them",
-          ],
-          recommendation: "Try completing 2 overdue tasks this week.",
-        });
-      } finally {
-        setIsLoading(false);
       }
-    };
-    fetchFeedback();
+    } catch (err: any) {
+      setError(
+        err?.code === "NETWORK_ERROR"
+          ? "Unable to connect. Check your internet connection."
+          : "Failed to generate insights. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchFeedback();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [fetchFeedback]);
 
   return (
     <div className="space-y-6">
@@ -135,8 +137,8 @@ export function SummaryFeedback({
           title="Active Habits"
           value={activeHabits.length}
           sub={`${pausedHabits.length} paused, best streak: ${bestStreak}`}
-          color="text-purple-500"
-          bg="bg-purple-50 dark:bg-purple-950"
+          color="text-secondary"
+          bg="bg-secondary-bg"
         />
         <SummaryCard
           icon={Clock}
@@ -152,88 +154,238 @@ export function SummaryFeedback({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-surface rounded-2xl border border-border shadow-sm p-6"
+        className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-primary-bg">
-            <Sparkles size={20} className="text-primary" />
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-primary-bg to-secondary-bg">
+              <Sparkles size={20} className="text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text">AI Insights</h3>
+              <p className="text-xs text-text-muted">
+                {isLoading
+                  ? "Analyzing your progress..."
+                  : isAiFallback
+                    ? "Generated locally (AI unavailable)"
+                    : error
+                      ? "Failed to load insights"
+                      : "Personalized analysis of your progress"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-text">AI Feedback</h3>
-            <p className="text-xs text-text-muted">
-              Personalized analysis of your progress
-            </p>
-          </div>
+
+          {/* Retry button - only on error */}
+          {error && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={fetchFeedback}
+              disabled={isLoading}
+              className="p-2.5 text-text-muted hover:text-text rounded-xl hover:bg-border-light transition-all disabled:opacity-50"
+              title="Retry"
+            >
+              <RefreshCw
+                size={16}
+                className={isLoading ? "animate-spin" : ""}
+              />
+            </motion.button>
+          )}
         </div>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-border mt-2" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-border rounded w-3/4" />
-                  <div className="h-3 bg-border rounded w-full" />
-                </div>
+        <div className="px-6 pb-6">
+          {/* Loading State */}
+          {isLoading && (
+            <div className="space-y-4 animate-pulse">
+              <div className="p-4 bg-bg rounded-xl border border-border space-y-2.5">
+                <div className="h-4 bg-border rounded-md w-full" />
+                <div className="h-4 bg-border rounded-md w-5/6" />
+                <div className="h-4 bg-border rounded-md w-2/3" />
               </div>
-            ))}
-          </div>
-        ) : feedback ? (
-          <div className="space-y-6">
-            {/* Overall */}
-            <div className="p-4 bg-bg rounded-xl border border-border">
-              <p className="text-sm font-medium text-text">
-                {feedback.overall}
-              </p>
-            </div>
 
-            {/* Strengths & Improvements */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-semibold text-success flex items-center gap-2 mb-3">
-                  <TrendingUp size={16} /> Strengths
-                </h4>
-                <div className="space-y-2">
-                  {feedback.strengths.map((s, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-text-secondary"
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 flex-shrink-0" />
-                      {s}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="h-4 w-24 bg-border rounded-md" />
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-border mt-1.5 flex-shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-4 bg-border rounded-md w-full" />
+                        <div className="h-4 bg-border rounded-md w-4/5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  <div className="h-4 w-20 bg-border rounded-md" />
+                  {[1, 2].map((i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-border mt-1.5 flex-shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-4 bg-border rounded-md w-full" />
+                        <div className="h-4 bg-border rounded-md w-3/4" />
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-              <div>
-                <h4 className="text-sm font-semibold text-warning flex items-center gap-2 mb-3">
-                  <TrendingDown size={16} /> Areas to Improve
-                </h4>
-                <div className="space-y-2">
-                  {feedback.improvements.map((s, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-text-secondary"
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 flex-shrink-0" />
-                      {s}
-                    </div>
-                  ))}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-bg rounded-xl border border-border space-y-2.5">
+                  <div className="h-4 w-24 bg-border rounded-md" />
+                  <div className="h-4 bg-border rounded-md w-full" />
+                  <div className="h-4 bg-border rounded-md w-3/4" />
+                </div>
+                <div className="p-4 bg-bg rounded-xl border border-border space-y-2.5">
+                  <div className="h-4 w-20 bg-border rounded-md" />
+                  <div className="h-4 bg-border rounded-md w-full" />
+                  <div className="h-4 bg-border rounded-md w-2/3" />
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Recommendation */}
-            <div className="p-4 bg-primary-bg/30 rounded-xl border border-primary/20">
-              <h4 className="text-sm font-semibold text-primary flex items-center gap-2 mb-2">
-                <Sparkles size={16} /> Recommendation
-              </h4>
-              <p className="text-sm text-text-secondary">
-                {feedback.recommendation}
-              </p>
-            </div>
-          </div>
-        ) : null}
+          {/* Error State */}
+          {!isLoading && error && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-10"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-danger-bg border-2 border-danger/20 flex items-center justify-center mx-auto mb-4">
+                <WifiOff size={28} className="text-danger" />
+              </div>
+              <p className="text-sm font-medium text-text mb-3">{error}</p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchFeedback}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+              >
+                <RefreshCw size={16} />
+                Retry
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* Feedback Content */}
+          {!isLoading && !error && feedback && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-4"
+            >
+              {/* AI Fallback Banner */}
+              {isAiFallback && (
+                <div className="flex items-center gap-3 p-3 bg-warning-bg/30 border border-warning/20 rounded-xl">
+                  <AlertTriangle
+                    size={14}
+                    className="text-warning flex-shrink-0"
+                  />
+                  <p className="text-xs text-warning font-medium flex-1">
+                    AI service unavailable. Showing local insights.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={fetchFeedback}
+                    className="text-xs font-bold text-warning hover:underline flex-shrink-0"
+                  >
+                    Retry AI
+                  </motion.button>
+                </div>
+              )}
+
+              {/* Overall */}
+              {feedback.overall && (
+                <div className="p-4 bg-bg rounded-xl border border-border">
+                  <p className="text-sm font-medium text-text leading-relaxed">
+                    {feedback.overall}
+                  </p>
+                </div>
+              )}
+
+              {/* Suggestions & Warnings */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {feedback.suggestions && feedback.suggestions.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-bold text-success flex items-center gap-2 mb-3">
+                      <div className="p-1 rounded-md bg-success-bg">
+                        <Lightbulb size={14} className="text-success" />
+                      </div>
+                      Suggestions
+                    </h4>
+                    <div className="space-y-2">
+                      {feedback.suggestions.map((s, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start gap-2.5 text-sm text-text-secondary leading-relaxed"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 flex-shrink-0" />
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {feedback.warnings && feedback.warnings.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-bold text-warning flex items-center gap-2 mb-3">
+                      <div className="p-1 rounded-md bg-warning-bg">
+                        <AlertTriangle size={14} className="text-warning" />
+                      </div>
+                      Warnings
+                    </h4>
+                    <div className="space-y-2">
+                      {feedback.warnings.map((w, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start gap-2.5 text-sm text-text-secondary leading-relaxed"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 flex-shrink-0" />
+                          {w}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Focus & Motivation */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {feedback.focusArea && (
+                  <div className="p-4 bg-primary-bg/30 rounded-xl border border-primary/20">
+                    <h4 className="text-sm font-bold text-primary flex items-center gap-2 mb-2">
+                      <div className="p-1 rounded-md bg-primary/10">
+                        <Zap size={14} className="text-primary" />
+                      </div>
+                      Today&apos;s Focus
+                    </h4>
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      {feedback.focusArea}
+                    </p>
+                  </div>
+                )}
+
+                {feedback.motivation && (
+                  <div className="p-4 bg-success-bg/20 rounded-xl border border-success/20">
+                    <h4 className="text-sm font-bold text-success flex items-center gap-2 mb-2">
+                      <div className="p-1 rounded-md bg-success/10">
+                        <Sparkles size={14} className="text-success" />
+                      </div>
+                      Motivation
+                    </h4>
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      {feedback.motivation}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </div>
       </motion.div>
     </div>
   );
@@ -268,7 +420,7 @@ function SummaryCard({
           <Icon size={18} className={color} />
         </div>
         {alert && (
-          <span className="flex items-center gap-1 text-xs font-medium text-amber-500 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+          <span className="flex items-center gap-1 text-xs font-medium text-warning bg-warning-bg px-2 py-0.5 rounded-full border border-warning/20">
             <AlertTriangle size={12} />
             {alert}
           </span>
