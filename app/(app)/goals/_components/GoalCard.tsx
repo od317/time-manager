@@ -22,7 +22,7 @@ interface GoalCardProps {
 }
 
 export function GoalCard({ goal, subGoals, allGoals }: GoalCardProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showSubGoalForm, setShowSubGoalForm] = useState(false);
 
   const hasChildren = subGoals.length > 0;

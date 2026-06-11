@@ -7,8 +7,8 @@ import { GoalCard } from "./GoalCard";
 import { EmptyGoals } from "./EmptyGoals";
 
 const filters = [
-  { label: "All", value: "" },
   { label: "Active", value: "ACTIVE" },
+  { label: "All", value: "" },
   { label: "Overdue", value: "OVERDUE" },
   { label: "Completed", value: "COMPLETED" },
   { label: "Paused", value: "PAUSED" },
@@ -20,12 +20,15 @@ interface GoalListWithFiltersProps {
 }
 
 export function GoalListWithFilters({ goals }: GoalListWithFiltersProps) {
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatus, setFilterStatus] = useState("ACTIVE");
 
   const visibleGoals = useMemo(() => {
     if (!filterStatus) return goals;
 
-    const matchingGoals = goals.filter((g) => g.status === filterStatus);
+    // Active filter also shows overdue
+    const statuses =
+      filterStatus === "ACTIVE" ? ["ACTIVE", "OVERDUE"] : [filterStatus];
+    const matchingGoals = goals.filter((g) => statuses.includes(g.status));
 
     const parentIds = new Set<string>();
     matchingGoals.forEach((g) => {
