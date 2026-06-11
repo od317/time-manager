@@ -12,6 +12,7 @@ import { TodayModals } from "./TodayModals";
 import { TimerInitializer } from "./TimerInitializer";
 import { TodaySkeleton } from "./TodaySkeleton";
 import { useDataStore } from "@/store/dataStore";
+import { ErrorState } from "@/components/ErrorState";
 
 export function TodayClient() {
   const { goals, habits, todayTasks, todayStats, todayLoaded, fetchTodayData } =
@@ -31,8 +32,16 @@ export function TodayClient() {
   }, [isAuthenticated, todayLoaded, fetchTodayData]);
 
   if (!todayLoaded) return <TodaySkeleton />;
-  if (error) return <div>Something went wrong. Please try again.</div>;
-
+  if (error)
+    return (
+      <ErrorState
+        description="Failed to load today's data"
+        onRetry={() => {
+          setError(false);
+          fetchTodayData().catch(() => setError(true));
+        }}
+      />
+    );
   return (
     <>
       <TimerInitializer goals={goals} />

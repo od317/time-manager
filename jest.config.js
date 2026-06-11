@@ -1,3 +1,4 @@
+// jest.config.js
 const nextJest = require("next/jest.js");
 
 const createJestConfig = nextJest({
@@ -10,7 +11,6 @@ const config = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
   },
-  testTimeout: 10000,
 };
 
 module.exports = createJestConfig(config);
