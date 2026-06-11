@@ -1,29 +1,41 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDataStore } from "@/store/dataStore";
 import { GoalListWithFilters } from "./_components/GoalListWithFilters";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { GoalsSkeleton } from "./_components/GoalsSkeleton";
+import { ErrorState } from "@/components/ErrorState";
 
 export default function GoalsPage() {
   const { allGoals, allGoalsLoaded, fetchAllGoals } = useDataStore();
   const fetchedRef = useRef(false);
+  const [error, setError] = useState(true);
 
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
     if (!allGoalsLoaded) {
-      fetchAllGoals();
+      fetchAllGoals().catch(() => setError(true));
     }
   }, [allGoalsLoaded, fetchAllGoals]);
+
+  if (error)
+    return (
+      <ErrorState
+        description="Failed to load goals"
+        onRetry={() => {
+          setError(false);
+          fetchAllGoals().catch(() => setError(true));
+        }}
+      />
+    );
 
   if (!allGoalsLoaded) return <GoalsSkeleton />;
 
   const activeGoals = allGoals.filter((g) => g.status === "ACTIVE").length;
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

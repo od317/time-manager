@@ -32,6 +32,7 @@ export function TodayClient() {
   }, [isAuthenticated, todayLoaded, fetchTodayData]);
 
   if (!todayLoaded) return <TodaySkeleton />;
+ 
   if (error)
     return (
       <ErrorState
