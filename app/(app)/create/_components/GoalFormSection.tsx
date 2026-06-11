@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Save,
 } from "lucide-react";
+import { useDataStore } from "@/store/dataStore";
 
 interface GoalFormSectionProps {
   selectedDate: Date | null;
@@ -106,8 +107,15 @@ export function GoalFormSection({
           : undefined,
       };
 
-      await goalService.create(payload);
-
+      const newGoal = await goalService.create(payload);
+      const state = useDataStore.getState();
+      useDataStore.setState({
+        allGoals: [...state.allGoals, newGoal],
+        goals:
+          newGoal.status === "ACTIVE" || newGoal.status === "OVERDUE"
+            ? [...state.goals, newGoal]
+            : state.goals,
+      });
       setSuccess(true);
       setTitle("");
       setDescription("");

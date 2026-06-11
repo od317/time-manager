@@ -15,8 +15,19 @@ interface HabitCardProps {
 
 export function HabitCard({ habit, todayStr }: HabitCardProps) {
   const [isCompleting, setIsCompleting] = useState(false);
-  const [completed, setCompleted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  const cachedHabit = useDataStore(
+    (s) =>
+      s.allHabits.find((h) => h.id === habit.id) ||
+      s.habits.find((h) => h.id === habit.id),
+  );
+  const todayLog = habit.logs?.find((log) => {
+    if (log.status !== "COMPLETED") return false;
+    const logDateStr = new Date(log.date).toLocaleDateString("en-CA");
+    return logDateStr === todayStr;
+  });
+  const isCompletedToday = cachedHabit?.isCompleted || !!todayLog;
 
   const today = new Date().getDay();
 
@@ -25,13 +36,6 @@ export function HabitCard({ habit, todayStr }: HabitCardProps) {
     (habit.frequencyType === "DAILY" ||
       (habit.frequencyType === "WEEKLY" &&
         habit.frequencyDays.includes(today)));
-
-  const todayLog = habit.logs?.find((log) => {
-    if (log.status !== "COMPLETED") return false;
-    const logDateStr = new Date(log.date).toLocaleDateString("en-CA");
-    return logDateStr === todayStr;
-  });
-  const isCompletedToday = !!todayLog || completed;
 
   const handleComplete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -44,7 +48,6 @@ export function HabitCard({ habit, todayStr }: HabitCardProps) {
       await habitService.log(habit.id, {
         value: habit.trackAmount ? (habit.targetValue ?? undefined) : undefined,
       });
-      setCompleted(true);
       useDataStore.getState().updateHabitInCache(habit.id, {
         isCompleted: true,
         todayStatus: "COMPLETED",

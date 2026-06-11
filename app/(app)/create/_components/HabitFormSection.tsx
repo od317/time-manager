@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Save,
 } from "lucide-react";
+import { useDataStore } from "@/store/dataStore";
 
 interface HabitFormSectionProps {
   onSuccess: () => void;
@@ -112,7 +113,16 @@ export function HabitFormSection({ onSuccess }: HabitFormSectionProps) {
         color,
       };
 
-      await habitService.create(payload);
+      const newHabit = await habitService.create(payload);
+
+      const state = useDataStore.getState();
+      useDataStore.setState({
+        allHabits: [...state.allHabits, newHabit],
+        habits:
+          newHabit.status === "ACTIVE"
+            ? [...state.habits, newHabit]
+            : state.habits,
+      });
 
       setSuccess(true);
       setTitle("");
@@ -134,14 +144,6 @@ export function HabitFormSection({ onSuccess }: HabitFormSectionProps) {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const getFrequencyLabel = (): string => {
-    if (frequencyType === "DAILY") return "Every day";
-    if (frequencyType === "WEEKLY") {
-      return `Every ${selectedDays.map((d) => WEEKDAYS[d].label).join(", ")}`;
-    }
-    return "Custom";
   };
 
   return (

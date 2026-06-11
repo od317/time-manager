@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "@/components/calendar/Calendar";
 import { GoalFormSection } from "./GoalFormSection";
 import { HabitFormSection } from "./HabitFormSection";
-import { useCalendarData } from "@/hooks/useCalendarData";
 import { Target, Repeat, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useSearchParams } from "next/navigation";

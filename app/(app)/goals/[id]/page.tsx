@@ -32,7 +32,6 @@ export default function GoalDetailPage({
       setLoading(false);
       return;
     }
-
     // Fetch full detail (includes time entries)
     fetchGoalDetail(id).then((g) => {
       setGoal(g);
