@@ -1,18 +1,31 @@
-import { serverGoalService } from "@/lib/services/server/goalService";
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useDataStore } from "@/store/dataStore";
 import { GoalListWithFilters } from "./_components/GoalListWithFilters";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { GoalsSkeleton } from "./_components/GoalsSkeleton";
 
-export const dynamic = "force-dynamic";
+export default function GoalsPage() {
+  const { allGoals, allGoalsLoaded, fetchAllGoals } = useDataStore();
+  const fetchedRef = useRef(false);
 
-export default async function GoalsPage() {
-  const allGoals = await serverGoalService.getAllNoPagination({}, false);
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    if (!allGoalsLoaded) {
+      fetchAllGoals();
+    }
+  }, [allGoalsLoaded, fetchAllGoals]);
+
+  if (!allGoalsLoaded) return <GoalsSkeleton />;
 
   const activeGoals = allGoals.filter((g) => g.status === "ACTIVE").length;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-text">Goals</h2>
@@ -44,7 +57,6 @@ export default async function GoalsPage() {
         </Link>
       </div>
 
-      {/* Filters + List */}
       <GoalListWithFilters goals={allGoals} />
     </div>
   );

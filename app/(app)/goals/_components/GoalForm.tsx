@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -12,12 +11,12 @@ import {
   CalendarIcon,
 } from "lucide-react";
 import { goalService } from "@/lib/services";
-import { CreateGoalPayload, Priority, GoalType, CalendarEvent } from "@/types";
+import { CreateGoalPayload, Priority, GoalType } from "@/types";
 import { DEFAULT_GOAL_COLOR } from "@/lib/constants";
 import { ColorPicker } from "./ColorPicker";
-import { useCalendarData } from "@/hooks/useCalendarData";
 import { Calendar } from "@/components/calendar/Calendar";
 import { format } from "date-fns";
+import { useDataStore } from "@/store/dataStore";
 
 interface GoalFormProps {
   onClose: () => void;
@@ -33,7 +32,6 @@ const priorities: { value: Priority; label: string; className: string }[] = [
 ];
 
 export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
-  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("MEDIUM");
@@ -48,20 +46,6 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [showStartCalendar, setShowStartCalendar] = useState(false);
   const [showEndCalendar, setShowEndCalendar] = useState(false);
-  const { data: calendarData } = useCalendarData();
-  const calendarEvents: CalendarEvent[] = calendarData
-    ? [
-        ...(calendarData.goals || []).map((g) => ({
-          id: g.id,
-          type: "goal" as const,
-          title: g.title,
-          color: g.color || "#9FA1FF",
-          date: g.endDate || g.startDate,
-          status: g.status,
-          time: undefined,
-        })),
-      ]
-    : [];
   const isSubGoal = !!parentId;
   const isColorLocked = isSubGoal;
 
@@ -108,13 +92,22 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
           : undefined,
       };
 
-      await goalService.create(payload);
+      const newGoal = await goalService.create(payload);
+
+      const state = useDataStore.getState();
+      useDataStore.setState({
+        allGoals: [...state.allGoals, newGoal],
+        goals:
+          newGoal.status === "ACTIVE" || newGoal.status === "OVERDUE"
+            ? [...state.goals, newGoal]
+            : state.goals,
+      });
+
       setSuccess(true);
       setTitle("");
       setDescription("");
       setTargetValue("");
       setUnit("");
-      router.refresh();
 
       setTimeout(() => {
         setSuccess(false);

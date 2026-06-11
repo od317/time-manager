@@ -26,7 +26,6 @@ export function TodayClient() {
     fetchedRef.current = true;
 
     if (!todayLoaded) {
-      console.log("fetching today data");
       fetchTodayData().catch(() => setError(true));
     }
   }, [isAuthenticated, todayLoaded, fetchTodayData]);
