@@ -1,7 +1,5 @@
 // app/(app)/goals/loading.tsx
 
-import { Target } from "lucide-react";
-
 export default function GoalsLoading() {
   return (
     <div className="space-y-6 animate-fade-in">
