@@ -11,7 +11,7 @@ import { ErrorState } from "@/components/ErrorState";
 export default function GoalsPage() {
   const { allGoals, allGoalsLoaded, fetchAllGoals } = useDataStore();
   const fetchedRef = useRef(false);
-  const [error, setError] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (fetchedRef.current) return;

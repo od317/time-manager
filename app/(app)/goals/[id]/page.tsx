@@ -12,6 +12,8 @@ import { ProgressUpdate } from "../_components/ProgressUpdate";
 import { CreateSubGoal } from "./_components/CreateSubGoal";
 import { Layers, Target } from "lucide-react";
 import { Goal } from "@/types";
+import { ErrorState } from "@/components/ErrorState";
+import Link from "next/link";
 
 export default function GoalDetailPage({
   params,
@@ -23,6 +25,7 @@ export default function GoalDetailPage({
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
   const cachedGoal = useDataStore((s) => (id ? s.getGoal(id) : undefined));
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     // Check cache first
@@ -34,10 +37,20 @@ export default function GoalDetailPage({
       return;
     }
     // Fetch full detail (includes time entries)
-    fetchGoalDetail(id).then((g) => {
-      setGoal(g);
-      setLoading(false);
-    });
+    fetchGoalDetail(id)
+      .then((g) => {
+        setGoal(g);
+        setLoading(false);
+      })
+      .catch((err: any) => {
+        setLoading(false);
+        // Check if it's a 404 (goal not found) vs other error
+        if (err?.code === "NOT_FOUND" || err?.status === 404) {
+          setGoal(null); // Will show "not found"
+        } else {
+          setError(true); // Network/server error
+        }
+      });
   }, [id]);
 
   useEffect(() => {
@@ -46,6 +59,25 @@ export default function GoalDetailPage({
       setGoal(cachedGoal);
     }
   }, [cachedGoal]);
+  if (error)
+    return (
+      <ErrorState
+        description="Failed to load goal details"
+        onRetry={() => {
+          setError(false);
+          setLoading(true);
+          fetchGoalDetail(id)
+            .then((g) => {
+              setGoal(g);
+              setLoading(false);
+            })
+            .catch(() => {
+              setLoading(false);
+              setError(true);
+            });
+        }}
+      />
+    );
 
   if (loading) {
     return (
@@ -277,6 +309,12 @@ export default function GoalDetailPage({
         <div className="text-center py-20">
           <Target size={32} className="text-text-muted mx-auto mb-3" />
           <p className="text-text-muted">Goal not found</p>
+          <Link
+            href="/goals"
+            className="inline-block mt-4 px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all"
+          >
+            Back to Goals
+          </Link>
         </div>
       </div>
     );

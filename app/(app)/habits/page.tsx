@@ -1,24 +1,37 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDataStore } from "@/store/dataStore";
 import { HabitListWithFilters } from "./_components/HabitListWithFilters";
 import { HabitCreateButton } from "./_components/HabitCreateButton";
 import { TimeRemaining } from "./_components/TimeRemaining";
 import { Repeat } from "lucide-react";
+import { ErrorState } from "@/components/ErrorState";
 
 export default function HabitsPage() {
   const { allHabits, allHabitsLoaded, fetchAllHabits } = useDataStore();
   const fetchedRef = useRef(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
     if (!allHabitsLoaded) {
-      fetchAllHabits();
+      fetchAllHabits().catch(() => setError(true));
     }
   }, [allHabitsLoaded, fetchAllHabits]);
+
+  if (error)
+    return (
+      <ErrorState
+        description="Failed to load habits"
+        onRetry={() => {
+          setError(false);
+          fetchAllHabits().catch(() => setError(true));
+        }}
+      />
+    );
 
   if (!allHabitsLoaded) {
     return (
