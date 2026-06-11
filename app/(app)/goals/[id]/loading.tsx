@@ -1,6 +1,5 @@
 // app/(app)/goals/[id]/loading.tsx
 
-import { ArrowLeft } from "lucide-react";
 
 export default function GoalDetailLoading() {
   return (

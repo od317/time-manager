@@ -223,6 +223,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   // ==========================================================================
 
   getGoal: (id) => {
+    if (!id) return undefined; // Add this guard
     const state = get();
     return (
       state.goalDetails.get(id) ||

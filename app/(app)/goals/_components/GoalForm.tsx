@@ -102,7 +102,16 @@ export function GoalForm({ onClose, parentId, parentColor }: GoalFormProps) {
             ? [...state.goals, newGoal]
             : state.goals,
       });
-
+      if (parentId) {
+        const parent =
+          state.allGoals.find((g) => g.id === parentId) ||
+          state.goals.find((g) => g.id === parentId);
+        if (parent) {
+          useDataStore.getState().updateGoalInCache(parentId, {
+            children: [...(parent.children || []), newGoal],
+          });
+        }
+      }
       setSuccess(true);
       setTitle("");
       setDescription("");
