@@ -11,7 +11,7 @@ const filters = [
   { label: "All", value: "" },
   { label: "Overdue", value: "OVERDUE" },
   { label: "Completed", value: "COMPLETED" },
-  { label: "Paused", value: "PAUSED" },
+  { label: "Archived", value: "ARCHIVED" },
   { label: "Failed", value: "FAILED" },
 ];
 

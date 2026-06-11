@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Goal } from "@/types";
 import {
   ChevronRight,
-  ChevronDown,
   Plus,
   Target,
   Calendar,

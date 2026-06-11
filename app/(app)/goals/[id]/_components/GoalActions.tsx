@@ -27,9 +27,41 @@ export function GoalActions({ goal }: GoalActionsProps) {
       await goalService.update(goal.id, {
         status: status as Goal["status"],
       });
+
+      // Update the goal in cache
       useDataStore.getState().updateGoalInCache(goal.id, {
         status: status as Goal["status"],
       });
+
+      // If failed or archived, cascade to all children
+      if (status === "FAILED" || status === "ARCHIVED") {
+        const cascadeUpdate = (parentGoal: Goal) => {
+          if (parentGoal.children) {
+            parentGoal.children.forEach((child) => {
+              useDataStore.getState().updateGoalInCache(child.id, {
+                status: status as Goal["status"],
+              });
+              cascadeUpdate(child);
+            });
+          }
+        };
+        cascadeUpdate(goal);
+      }
+
+      // If reactivating, cascade to all children
+      if (status === "ACTIVE") {
+        const cascadeReactivate = (parentGoal: Goal) => {
+          if (parentGoal.children) {
+            parentGoal.children.forEach((child) => {
+              useDataStore.getState().updateGoalInCache(child.id, {
+                status: "ACTIVE" as Goal["status"],
+              });
+              cascadeReactivate(child);
+            });
+          }
+        };
+        cascadeReactivate(goal);
+      }
     } catch {
       // Handle error
     } finally {
