@@ -1,12 +1,54 @@
-import { serverHabitService } from "@/lib/services/server/habitService";
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useDataStore } from "@/store/dataStore";
 import { HabitListWithFilters } from "./_components/HabitListWithFilters";
 import { HabitCreateButton } from "./_components/HabitCreateButton";
 import { TimeRemaining } from "./_components/TimeRemaining";
 
-export const dynamic = "force-dynamic";
+export default function HabitsPage() {
+  const { allHabits, allHabitsLoaded, fetchAllHabits } = useDataStore();
+  const fetchedRef = useRef(false);
 
-export default async function HabitsPage() {
-  const allHabits = await serverHabitService.getAll({}, false);
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    if (!allHabitsLoaded) {
+      fetchAllHabits();
+    }
+  }, [allHabitsLoaded, fetchAllHabits]);
+
+  if (!allHabitsLoaded) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-32 bg-border rounded-lg animate-pulse" />
+            <div className="h-4 w-48 bg-border rounded-lg animate-pulse" />
+          </div>
+          <div className="h-10 w-32 bg-border rounded-2xl animate-pulse" />
+        </div>
+        <div className="flex gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-10 w-20 bg-border rounded-xl animate-pulse"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-48 bg-surface rounded-2xl border border-border animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

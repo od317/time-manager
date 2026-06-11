@@ -1,21 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Habit } from "@/types";
 import { habitService } from "@/lib/services";
-import {
-  Check,
-  Flame,
-  Repeat,
-  Calendar,
-  TrendingUp,
-  Clock,
-  Target,
-  ArrowRight,
-} from "lucide-react";
+import { Check, Flame, Calendar, Clock, Target } from "lucide-react";
+import { useDataStore } from "@/store/dataStore";
 
 interface HabitCardProps {
   habit: Habit;
@@ -23,7 +14,6 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit, todayStr }: HabitCardProps) {
-  const router = useRouter();
   const [isCompleting, setIsCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -55,7 +45,11 @@ export function HabitCard({ habit, todayStr }: HabitCardProps) {
         value: habit.trackAmount ? (habit.targetValue ?? undefined) : undefined,
       });
       setCompleted(true);
-      router.refresh();
+      useDataStore.getState().updateHabitInCache(habit.id, {
+        isCompleted: true,
+        todayStatus: "COMPLETED",
+        currentStreak: habit.currentStreak + 1,
+      });
     } catch {
       // Handle silently
     } finally {

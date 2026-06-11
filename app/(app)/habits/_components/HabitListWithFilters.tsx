@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Habit } from "@/types";
 import { HabitCard } from "./HabitCard";
