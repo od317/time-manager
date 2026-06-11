@@ -362,7 +362,7 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                         ) {
                                           await timerState.endPomodoroSession();
                                         } else if (timerState.runningTimer) {
-                                          await timerState.stop();
+                                          timerState.pause();
                                         }
                                         clearSelection();
                                       }

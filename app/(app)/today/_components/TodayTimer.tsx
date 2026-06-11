@@ -264,7 +264,7 @@ export function TodayTimer({ goals }: TodayTimerProps) {
                   if (state.timerMode === "POMODORO" && state.pomodoroState) {
                     await state.endPomodoroSession();
                   } else {
-                    await state.stop(); // Properly stops timer
+                    state.pause();
                   }
                 }
               } catch {

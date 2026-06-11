@@ -17,6 +17,7 @@ import { TaskItem } from "@/components/tasks/TaskItem";
 import { format } from "date-fns";
 import { useTaskStore } from "@/store/taskStore";
 import { useDataStore } from "@/store/dataStore";
+import { useTimerStore } from "@/store/timerStore";
 
 interface GoalTasksProps {
   goal: Goal;
@@ -117,14 +118,34 @@ export function GoalTasks({ goal }: GoalTasksProps) {
 
       if (newStatus === "COMPLETED") {
         useTaskStore.getState().markComplete(task.id);
+
+        // If this was the selected task in the timer, find next task
+        const timerState = useTimerStore.getState();
+        if (timerState.selectedTask?.id === task.id) {
+          const nextTask = activeTasks.find(
+            (t) => t.id !== task.id && t.status !== "COMPLETED",
+          );
+          if (nextTask) {
+            useTimerStore.getState().setSelectedTask(nextTask);
+          } else {
+            // No tasks left - pause the timer
+            useTimerStore.getState().clearSelection();
+            if (
+              timerState.timerMode === "POMODORO" &&
+              timerState.pomodoroState
+            ) {
+              await timerState.endPomodoroSession();
+            } else if (timerState.runningTimer) {
+              timerState.pause();
+            }
+          }
+        }
       } else {
         useTaskStore.getState().unmarkComplete(task.id);
       }
 
       useTaskStore.getState().updateTask(task.id, { status: newStatus });
       useDataStore.getState().updateTaskInCache(task.id, { status: newStatus });
-
-      // Remove the artificial delay
     } catch {
       // Handle error
     } finally {

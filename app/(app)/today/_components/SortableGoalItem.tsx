@@ -192,7 +192,7 @@ export function SortableGoalItem({
             if (state.timerMode === "POMODORO" && state.pomodoroState) {
               await state.endPomodoroSession();
             } else {
-              await state.stop();
+              state.pause();
             }
           }
         }
