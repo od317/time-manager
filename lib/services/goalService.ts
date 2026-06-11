@@ -12,6 +12,12 @@ export const goalService = {
   getAll: (params?: GoalQueryParams) =>
     api.get<Goal[], GoalQueryParams>("/goals", params),
 
+  getAllNoPagination: (params?: GoalQueryParams) =>
+    api.get<Goal[], GoalQueryParams>("/goals", {
+      ...params,
+      paginated: "false",
+    }),
+
   getById: (id: string) => api.get<Goal>(`/goals/${id}`),
 
   create: (data: CreateGoalPayload) =>

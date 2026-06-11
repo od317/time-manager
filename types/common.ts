@@ -83,6 +83,7 @@ export interface DateRangeParams {
 export interface GoalQueryParams extends PaginationParams {
   status?: GoalStatus;
   parentId?: string | null;
+  paginated?: string;
 }
 
 export interface HabitQueryParams extends PaginationParams {

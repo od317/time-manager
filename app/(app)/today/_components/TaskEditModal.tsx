@@ -6,6 +6,7 @@ import { Task, Priority } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { useTaskStore } from "@/store/taskStore";
 import { X, Trash2, AlertTriangle } from "lucide-react";
+import { useDataStore } from "@/store/dataStore";
 
 interface TaskEditModalProps {
   task: Task;
@@ -83,6 +84,13 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
         dueDate: dueDate || null,
       });
 
+      useDataStore.getState().updateTaskInCache(task.id, {
+        title: title.trim(),
+        priority,
+        estimatedMinutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
+        dueDate: dueDate || null,
+      });
+
       onClose();
     } catch {
       setError("Failed to update task");
@@ -98,6 +106,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
 
       // Remove task locally from the store
       useTaskStore.getState().removeTask(task.id, task.goalId!);
+      useDataStore.getState().removeTaskFromCache(task.id, task.goalId!);
 
       onClose();
     } catch {

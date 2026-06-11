@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { taskService } from "@/lib/services/taskService";
+import { useDataStore } from "@/store/dataStore";
 
 interface TaskSelectorProps {
   goals: Goal[];
@@ -270,6 +271,12 @@ export function TaskSelector({ goals }: TaskSelectorProps) {
                                     useTaskStore
                                       .getState()
                                       .updateTask(task.id, {
+                                        status: "COMPLETED",
+                                      });
+
+                                    useDataStore
+                                      .getState()
+                                      .updateTaskInCache(task.id, {
                                         status: "COMPLETED",
                                       });
 

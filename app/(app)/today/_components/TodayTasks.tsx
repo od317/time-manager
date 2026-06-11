@@ -11,6 +11,7 @@ import { ChevronRight, CheckSquare, ChevronDown, ListTodo } from "lucide-react";
 import { TaskEditModal } from "./TaskEditModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { useTaskStore } from "@/store/taskStore";
+import { useDataStore } from "@/store/dataStore";
 
 interface TodayTasksProps {
   tasks: Task[];
@@ -62,6 +63,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
         markComplete(task.id);
       }
       useTaskStore.getState().updateTask(task.id, { status: newStatus });
+      useDataStore.getState().updateTaskInCache(task.id, { status: newStatus });
     } catch {
       // Handle silently
     } finally {
@@ -74,6 +76,7 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
     try {
       await taskService.delete(task.id);
       useTaskStore.getState().removeTask(task.id, task.goalId || "");
+      useDataStore.getState().removeTaskFromCache(task.id, task.goalId || "");
     } catch {
       // Handle error
     } finally {

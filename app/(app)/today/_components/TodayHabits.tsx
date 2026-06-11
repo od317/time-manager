@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Habit } from "@/types";
 import { habitService } from "@/lib/services";
-import { useUIStore } from "@/store/uiStore";
 import {
   DndContext,
   closestCenter,
@@ -23,6 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { ChevronDown, ChevronRight, Repeat, Sparkles } from "lucide-react";
 import { SortableHabitItem } from "./SortableHabitItem";
+import { useDataStore } from "@/store/dataStore";
 
 interface TodayHabitsProps {
   habits: Habit[];
@@ -52,6 +52,13 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
         value: habit.trackAmount ? (habit.targetValue ?? undefined) : undefined,
       });
       setCompletedIds((prev) => new Set([...prev, habit.id]));
+
+      // Sync cache
+      useDataStore.getState().updateHabitInCache(habit.id, {
+        isCompleted: true,
+        todayStatus: "COMPLETED",
+        currentStreak: habit.currentStreak + 1,
+      });
     } catch {
       // Handle silently
     } finally {
@@ -68,6 +75,13 @@ export function TodayHabits({ habits }: TodayHabitsProps) {
         const next = new Set(prev);
         next.delete(habit.id);
         return next;
+      });
+
+      // Sync cache
+      useDataStore.getState().updateHabitInCache(habit.id, {
+        isCompleted: false,
+        todayStatus: "PENDING",
+        currentStreak: Math.max(0, habit.currentStreak - 1),
       });
     } catch {
       // Toast will go here

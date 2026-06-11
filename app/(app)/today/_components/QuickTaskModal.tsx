@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useTaskStore } from "@/store/taskStore";
+import { useDataStore } from "@/store/dataStore";
 
 interface QuickTaskModalProps {
   goal: Goal;
@@ -105,6 +106,7 @@ export function QuickTaskModal({ goal, onClose }: QuickTaskModalProps) {
 
       // Add task locally - use the actual API response
       useTaskStore.getState().addTask(goal.id, taskResponse as Task);
+      useDataStore.getState().addTaskToCache(goal.id, taskResponse as Task);
 
       setSuccess(true);
       setTimeout(() => {

@@ -38,6 +38,7 @@ import { TaskRow } from "./TaskRow";
 import { useModalStore } from "@/store/modalStore";
 import { useTaskStore } from "@/store/taskStore";
 import { useTimerStore } from "@/store/timerStore";
+import { useDataStore } from "@/store/dataStore";
 
 interface SortableGoalItemProps {
   goal: Goal;
@@ -201,6 +202,7 @@ export function SortableGoalItem({
       }
 
       useTaskStore.getState().updateTask(task.id, { status: newStatus });
+      useDataStore.getState().updateTaskInCache(task.id, { status: newStatus });
     } catch {
       // Handle silently
     }

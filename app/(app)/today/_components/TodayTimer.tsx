@@ -19,6 +19,7 @@ import {
 import { SessionHistory } from "./SessionHistory";
 import { taskService } from "@/lib/services/taskService";
 import { useState } from "react";
+import { useDataStore } from "@/store/dataStore";
 
 interface TodayTimerProps {
   goals: Goal[];
@@ -212,6 +213,9 @@ export function TodayTimer({ goals }: TodayTimerProps) {
                   status: "COMPLETED",
                 });
                 markComplete(selectedTask.id);
+                useDataStore
+                  .getState()
+                  .updateTaskInCache(selectedTask.id, { status: "COMPLETED" });
 
                 // Replace the getAllActiveTasks inside onClick:
                 const getAllActiveTasks = (goalList: Goal[]): Task[] => {
