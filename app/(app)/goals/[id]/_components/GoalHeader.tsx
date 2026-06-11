@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Goal, Priority } from "@/types";
 import { goalService } from "@/lib/services";
 import {
@@ -19,13 +18,13 @@ import {
 import { ColorPicker } from "../../_components/ColorPicker";
 import { format } from "date-fns";
 import { Calendar } from "@/components/calendar/Calendar";
+import { useDataStore } from "@/store/dataStore";
 
 interface GoalHeaderProps {
   goal: Goal;
 }
 
 export function GoalHeader({ goal: initialGoal }: GoalHeaderProps) {
-  const router = useRouter();
   const [goal, setGoal] = useState(initialGoal);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(goal.title);
@@ -94,8 +93,8 @@ export function GoalHeader({ goal: initialGoal }: GoalHeaderProps) {
 
       const updated = await goalService.update(goal.id, updateData);
       setGoal(updated);
+      useDataStore.getState().updateGoalInCache(goal.id, updateData);
       setIsEditing(false);
-      router.refresh();
     } catch (err: any) {
       setError(err?.message || "Failed to update goal");
     } finally {

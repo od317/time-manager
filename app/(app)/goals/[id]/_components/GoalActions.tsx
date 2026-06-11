@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Goal } from "@/types";
 import { goalService } from "@/lib/services";
@@ -12,13 +11,13 @@ import {
   Settings,
   RotateCcw,
 } from "lucide-react";
+import { useDataStore } from "@/store/dataStore";
 
 interface GoalActionsProps {
   goal: Goal;
 }
 
 export function GoalActions({ goal }: GoalActionsProps) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const hasCompletedParent = goal.parent?.status === "COMPLETED";
 
@@ -28,7 +27,9 @@ export function GoalActions({ goal }: GoalActionsProps) {
       await goalService.update(goal.id, {
         status: status as Goal["status"],
       });
-      router.refresh();
+      useDataStore.getState().updateGoalInCache(goal.id, {
+        status: status as Goal["status"],
+      });
     } catch {
       // Handle error
     } finally {

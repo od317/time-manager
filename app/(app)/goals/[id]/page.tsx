@@ -1,5 +1,7 @@
-import { notFound } from "next/navigation";
-import { serverGoalService } from "@/lib/services/server/goalService";
+"use client";
+
+import { useEffect, useState, use } from "react";
+import { useDataStore } from "@/store/dataStore";
 import { GoalHeader } from "./_components/GoalHeader";
 import { GoalProgress } from "./_components/GoalProgress";
 import { GoalStats } from "./_components/GoalStats";
@@ -8,19 +10,56 @@ import { GoalTasks } from "./_components/GoalTasks";
 import { GoalActions } from "./_components/GoalActions";
 import { ProgressUpdate } from "../_components/ProgressUpdate";
 import { CreateSubGoal } from "./_components/CreateSubGoal";
-import { Layers, Target } from "lucide-react";
+import { Layers, Target, Loader2 } from "lucide-react";
+import { Goal } from "@/types";
 
-export const dynamic = "force-dynamic";
-
-interface GoalDetailPageProps {
+export default function GoalDetailPage({
+  params,
+}: {
   params: Promise<{ id: string }>;
-}
+}) {
+  const { id } = use(params);
+  const { getGoal, fetchGoalDetail } = useDataStore();
+  const [goal, setGoal] = useState<Goal | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function GoalDetailPage({ params }: GoalDetailPageProps) {
-  const { id } = await params;
-  const goal = await serverGoalService.getById(id);
+  useEffect(() => {
+    // Check cache first
+    const cached = getGoal(id);
+    if (cached && cached.timeEntries) {
+      // Has full detail with time entries
+      setGoal(cached);
+      setLoading(false);
+      return;
+    }
 
-  if (!goal) notFound();
+    // Fetch full detail (includes time entries)
+    fetchGoalDetail(id).then((g) => {
+      setGoal(g);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={32} className="animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!goal) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6">
+        <div className="text-center py-20">
+          <Target size={32} className="text-text-muted mx-auto mb-3" />
+          <p className="text-text-muted">Goal not found</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6">
@@ -34,7 +73,6 @@ export default async function GoalDetailPage({ params }: GoalDetailPageProps) {
       <GoalStats goal={goal} />
       <GoalTasks goal={goal} />
 
-      {/* Sub-goals section */}
       <div className="bg-surface rounded-2xl border border-border shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

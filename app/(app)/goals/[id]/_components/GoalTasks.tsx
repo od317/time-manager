@@ -16,6 +16,7 @@ import {
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { format } from "date-fns";
 import { useTaskStore } from "@/store/taskStore";
+import { useDataStore } from "@/store/dataStore";
 
 interface GoalTasksProps {
   goal: Goal;
@@ -93,6 +94,7 @@ export function GoalTasks({ goal }: GoalTasksProps) {
 
       // Add to store for instant UI update
       useTaskStore.getState().addTask(goal.id, taskResponse as Task);
+      useDataStore.getState().addTaskToCache(goal.id, taskResponse as Task);
 
       setTitle("");
       setEstimatedMinutes("");
@@ -120,6 +122,8 @@ export function GoalTasks({ goal }: GoalTasksProps) {
       }
 
       useTaskStore.getState().updateTask(task.id, { status: newStatus });
+      useDataStore.getState().updateTaskInCache(task.id, { status: newStatus });
+
       // Remove the artificial delay
     } catch {
       // Handle error
@@ -133,6 +137,7 @@ export function GoalTasks({ goal }: GoalTasksProps) {
     try {
       await taskService.delete(taskId);
       useTaskStore.getState().removeTask(taskId, goal.id);
+      useDataStore.getState().removeTaskFromCache(taskId, goal.id);
     } catch {
       // Handle error
     } finally {
