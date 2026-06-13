@@ -7,7 +7,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Task, Goal } from "@/types";
 import { taskService } from "@/lib/services/taskService";
 import { useTimerStore } from "@/store/timerStore";
-import { ChevronRight, CheckSquare, ChevronDown, ListTodo } from "lucide-react";
+import {
+  ChevronRight,
+  CheckSquare,
+  ChevronDown,
+  ListTodo,
+  Loader2,
+  Trash2,
+  CheckCircle2,
+} from "lucide-react";
 import { TaskEditModal } from "./TaskEditModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { useTaskStore } from "@/store/taskStore";
@@ -29,6 +37,12 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
   const updatedTasks = useTaskStore((s) => s.updatedTasks);
   const deletedTaskIds = useTaskStore((s) => s.deletedTaskIds);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const selectMode = selectedTasks.size > 0;
+
   // Get locally added tasks that are due today (or have no due date)
   const todayStr = new Date().toLocaleDateString("en-CA");
   const localTasksForToday = Array.from(localTasks.values())
@@ -61,6 +75,8 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
       await taskService.update(task.id, { status: newStatus });
       if (newStatus === "COMPLETED") {
         markComplete(task.id);
+      } else {
+        useTaskStore.getState().unmarkComplete(task.id); // ← ADD THIS
       }
       useTaskStore.getState().updateTask(task.id, { status: newStatus });
       useDataStore.getState().updateTaskInCache(task.id, { status: newStatus });
@@ -101,6 +117,57 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
       }
       return next;
     });
+  };
+
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedTasks((prev) => {
+      const next = new Set(prev);
+      next.has(taskId) ? next.delete(taskId) : next.add(taskId);
+      return next;
+    });
+  };
+
+  const bulkComplete = async () => {
+    setBulkLoading(true);
+    setBulkError(null);
+    try {
+      await taskService.bulkUpdate({
+        taskIds: [...selectedTasks],
+        status: "COMPLETED",
+      });
+
+      selectedTasks.forEach((taskId) => {
+        markComplete(taskId);
+        // Also update the task store for local reactivity
+        useTaskStore.getState().updateTask(taskId, { status: "COMPLETED" });
+      });
+
+      useDataStore
+        .getState()
+        .bulkUpdateTasksInCache([...selectedTasks], { status: "COMPLETED" });
+      setSelectedTasks(new Set());
+    } catch {
+      setBulkError("Failed to complete tasks. Please try again.");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    setBulkLoading(true);
+    setBulkError(null);
+    try {
+      await taskService.bulkDelete([...selectedTasks]);
+      useDataStore.getState().bulkRemoveTasksFromCache([...selectedTasks]);
+      selectedTasks.forEach((taskId) => {
+        useTaskStore.getState().removeTask(taskId, "");
+      });
+      setSelectedTasks(new Set());
+    } catch {
+      setBulkError("Failed to delete tasks. Please try again.");
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   const tasksByGoal = new Map<
@@ -191,6 +258,45 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
         </motion.div>
       </button>
 
+      {selectMode && (
+        <div className="px-5 pb-3 space-y-2">
+          {bulkError && (
+            <div className="text-xs text-danger bg-danger-bg px-3 py-1.5 rounded-lg">
+              {bulkError}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">
+              {selectedTasks.size} selected
+            </span>
+            <button
+              onClick={bulkComplete}
+              disabled={bulkLoading}
+              className="flex items-center gap-1 px-3 py-1.5 bg-success-bg text-success rounded-lg text-xs font-semibold disabled:opacity-50"
+            >
+              {bulkLoading ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={12} />
+              )}
+              Complete
+            </button>
+            <button
+              onClick={bulkDelete}
+              disabled={bulkLoading}
+              className="flex items-center gap-1 px-3 py-1.5 bg-danger-bg text-danger rounded-lg text-xs font-semibold disabled:opacity-50"
+            >
+              {bulkLoading ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Trash2 size={12} />
+              )}
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <AnimatePresence>
         {isExpanded && (
@@ -220,6 +326,8 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
                           onStartTimer={handleStartTimer}
                           onEdit={setEditingTask}
                           onDelete={handleDelete}
+                          isSelected={selectedTasks.has(task.id)}
+                          onSelect={() => toggleTaskSelection(task.id)}
                         />
                       ))}
                     </AnimatePresence>
@@ -286,6 +394,8 @@ export function TodayTasks({ tasks, goals }: TodayTasksProps) {
                                 onStartTimer={handleStartTimer}
                                 onEdit={setEditingTask}
                                 onDelete={handleDelete}
+                                isSelected={selectedTasks.has(task.id)}
+                                onSelect={() => toggleTaskSelection(task.id)}
                               />
                             ))}
                           </div>
