@@ -53,6 +53,10 @@ interface DataState {
   isTodayStale: () => boolean;
   isAllGoalsStale: () => boolean;
   isAllHabitsStale: () => boolean;
+
+  bulkAddTasksToCache: (goalId: string, tasks: Task[]) => void;
+  bulkUpdateTasksInCache: (taskIds: string[], updates: Partial<Task>) => void;
+  bulkRemoveTasksFromCache: (taskIds: string[]) => void;
 }
 
 // Recursively update a goal in a nested goal tree
@@ -239,6 +243,65 @@ export const useDataStore = create<DataState>((set, get) => ({
       state.habits.find((h) => h.id === id)
     );
   },
+
+  // In dataStore.ts, add these actions:
+
+  bulkAddTasksToCache: (goalId: string, tasks: Task[]) =>
+    set((state) => {
+      const addTasks = (goals: Goal[]): Goal[] =>
+        goals.map((g) => {
+          if (g.id === goalId) {
+            return { ...g, tasks: [...(g.tasks || []), ...tasks] };
+          }
+          if (g.children?.length) {
+            return { ...g, children: addTasks(g.children) };
+          }
+          return g;
+        });
+
+      return {
+        goals: addTasks(state.goals),
+        allGoals: addTasks(state.allGoals),
+      };
+    }),
+
+  bulkUpdateTasksInCache: (taskIds: string[], updates: Partial<Task>) =>
+    set((state) => {
+      const updateTasks = (tasks: Task[]) =>
+        tasks.map((t) => (taskIds.includes(t.id) ? { ...t, ...updates } : t));
+
+      const updateGoals = (goals: Goal[]): Goal[] =>
+        goals.map((g) => ({
+          ...g,
+          tasks: g.tasks ? updateTasks(g.tasks) : g.tasks,
+          children: g.children ? updateGoals(g.children) : g.children,
+        }));
+
+      return {
+        goals: updateGoals(state.goals),
+        allGoals: updateGoals(state.allGoals),
+        todayTasks: updateTasks(state.todayTasks),
+      };
+    }),
+
+  bulkRemoveTasksFromCache: (taskIds: string[]) =>
+    set((state) => {
+      const removeTasks = (tasks: Task[]) =>
+        tasks.filter((t) => !taskIds.includes(t.id));
+
+      const removeFromGoals = (goals: Goal[]): Goal[] =>
+        goals.map((g) => ({
+          ...g,
+          tasks: g.tasks ? removeTasks(g.tasks) : g.tasks,
+          children: g.children ? removeFromGoals(g.children) : g.children,
+        }));
+
+      return {
+        goals: removeFromGoals(state.goals),
+        allGoals: removeFromGoals(state.allGoals),
+        todayTasks: removeTasks(state.todayTasks),
+      };
+    }),
 
   isTodayStale: () => !get().todayLoaded,
   isAllGoalsStale: () => !get().allGoalsLoaded,

@@ -12,12 +12,17 @@ import {
   X,
   Calendar as CalendarIcon,
   Clock,
+  CheckCircle2,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { format } from "date-fns";
 import { useTaskStore } from "@/store/taskStore";
 import { useDataStore } from "@/store/dataStore";
 import { useTimerStore } from "@/store/timerStore";
+import { useBulkTaskSelection } from "@/hooks/useBulkTaskSelection";
+import { TaskFormWithQueue } from "@/components/tasks/TaskFormWithQueue";
 
 interface GoalTasksProps {
   goal: Goal;
@@ -35,6 +40,17 @@ export function GoalTasks({ goal }: GoalTasksProps) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const {
+    selectMode,
+    selectedTasks,
+    isLoading: bulkLoading,
+    toggleTask: toggleBulkSelect,
+    isSelected: isBulkSelected,
+    bulkComplete,
+    bulkDelete,
+    error,
+  } = useBulkTaskSelection(goal.id);
 
   const tasks = goal.tasks || [];
 
@@ -191,188 +207,68 @@ export function GoalTasks({ goal }: GoalTasksProps) {
             <p className="text-xs text-text-muted">{tasks.length} total</p>
           </div>
         </div>
-        {goal.status !== "COMPLETED" && goal.status !== "FAILED" && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary bg-primary-bg hover:bg-primary hover:text-white rounded-xl transition-all"
-          >
-            <Plus size={16} />
-            Add Task
-          </motion.button>
-        )}
+        <div className="flex items-center gap-2">
+          {goal.status !== "COMPLETED" && goal.status !== "FAILED" && (
+            <>
+              <button
+                onClick={() => {
+                  setShowForm(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary bg-primary-bg hover:bg-primary hover:text-white rounded-xl transition-all"
+              >
+                <Plus size={16} /> Add Tasks
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {selectMode && selectedTasks.size > 0 && (
+        <div className="px-6 pb-3 space-y-2">
+          {error && (
+            <div className="text-xs text-danger bg-danger-bg px-3 py-1.5 rounded-lg">
+              {error}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">
+              {selectedTasks.size} selected
+            </span>
+            <button
+              onClick={bulkComplete}
+              disabled={bulkLoading}
+              className="flex items-center gap-1 px-3 py-1.5 bg-success-bg text-success rounded-lg text-xs font-semibold hover:bg-success/10 transition-all disabled:opacity-50"
+            >
+              {bulkLoading ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={12} />
+              )}
+              Complete
+            </button>
+            <button
+              onClick={bulkDelete}
+              disabled={bulkLoading}
+              className="flex items-center gap-1 px-3 py-1.5 bg-danger-bg text-danger rounded-lg text-xs font-semibold hover:bg-danger/10 transition-all disabled:opacity-50"
+            >
+              {bulkLoading ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Trash2 size={12} />
+              )}
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence>
         {showForm && (
-          <motion.form
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-            onSubmit={handleCreateTask}
-          >
-            <div className="mx-6 mb-4 p-5 bg-bg rounded-2xl border-2 border-dashed border-border space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-text">New Task</h4>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowForm(false)}
-                  className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-border-light transition-colors"
-                >
-                  <X size={16} />
-                </motion.button>
-              </div>
-
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What needs to be done?"
-                className="w-full px-4 py-3 rounded-xl border-2 border-border bg-surface text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium"
-                autoFocus
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted mb-1.5">
-                    Priority
-                  </label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as Priority)}
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-border bg-surface text-sm text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 font-medium"
-                  >
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="URGENT">Urgent</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted mb-1.5">
-                    Est. Time
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={estimatedMinutes}
-                      onChange={(e) => setEstimatedMinutes(e.target.value)}
-                      placeholder="30"
-                      min="1"
-                      className="w-full px-3 py-2.5 pl-9 rounded-xl border-2 border-border bg-surface text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-                    />
-                    <Clock
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Due Date with Calendar */}
-              <div>
-                <label className="block text-xs font-semibold text-text-muted mb-1.5">
-                  Due Date
-                </label>
-                {selectedDate ? (
-                  <div className="flex items-center gap-3 p-3 bg-primary-bg/20 rounded-xl border border-primary/20">
-                    <CalendarIcon size={16} className="text-primary" />
-                    <span className="text-sm font-medium text-primary flex-1">
-                      {format(selectedDate, "EEE, MMM d, yyyy")}
-                      {selectedTime
-                        ? ` at ${formatDisplayTime(selectedTime)}`
-                        : ""}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedDate(null);
-                        setSelectedTime("");
-                      }}
-                      className="p-1 text-text-muted hover:text-danger"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowCalendar(!showCalendar)}
-                    className="w-full flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border text-text-muted hover:border-primary/30 hover:text-text transition-all text-sm"
-                  >
-                    <CalendarIcon size={16} />
-                    Pick a due date (optional)
-                  </button>
-                )}
-              </div>
-
-              {/* Calendar */}
-              <AnimatePresence>
-                {showCalendar && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <Calendar
-                      selectedDate={selectedDate}
-                      onDateSelect={(date) => {
-                        setSelectedDate(date);
-                        setShowCalendar(false);
-                      }}
-                      showTimePicker={!!selectedDate}
-                      onTimeSelect={setSelectedTime}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex gap-3">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowForm(false)}
-                  className="flex-1 py-2.5 px-4 border-2 border-border text-text-secondary rounded-xl text-sm font-semibold hover:bg-border-light transition-all"
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={isSubmitting || !title.trim()}
-                  className="flex-1 py-2.5 px-4 bg-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={16} />
-                      Add Task
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </div>
-          </motion.form>
+          <TaskFormWithQueue
+            goalId={goal.id}
+            goalColor={goal.color || undefined}
+            onClose={() => setShowForm(false)}
+          />
         )}
       </AnimatePresence>
 
@@ -393,6 +289,8 @@ export function GoalTasks({ goal }: GoalTasksProps) {
                     goalColor={goal.color || "#9FA1FF"}
                     isCompleting={togglingId === task.id}
                     isDeleting={deletingId === task.id}
+                    isSelected={isBulkSelected(task.id)}
+                    onSelect={() => toggleBulkSelect(task.id)}
                   />
                 ))}
               </div>

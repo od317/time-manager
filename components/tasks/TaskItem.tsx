@@ -21,6 +21,8 @@ interface TaskItemProps {
   onDelete?: (task: Task) => void;
   showGoalColor?: boolean;
   goalColor?: string;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 export function TaskItem({
@@ -33,8 +35,11 @@ export function TaskItem({
   onDelete,
   showGoalColor = false,
   goalColor = "#9FA1FF",
+  isSelected = false,
+  onSelect,
 }: TaskItemProps) {
   const isCompleted = task.status === "COMPLETED";
+
   return (
     <motion.div
       layout
@@ -43,11 +48,29 @@ export function TaskItem({
       exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
       whileHover={{ scale: 1.01 }}
       className={`flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all group ${
-        isCompleted
-          ? "bg-success-bg/20 border-success/10"
-          : "bg-bg border-border hover:border-primary/20 hover:shadow-sm"
+        isSelected
+          ? "bg-primary-bg/30 border-primary/30"
+          : isCompleted
+            ? "bg-success-bg/20 border-success/10"
+            : "bg-bg border-border hover:border-primary/20 hover:shadow-sm"
       }`}
     >
+      {/* Selection checkbox */}
+      <div
+        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all opacity-0 group-hover:opacity-100 ${
+          isSelected
+            ? "opacity-100 bg-primary border-primary"
+            : "border-border hover:border-primary/50"
+        }`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect?.();
+        }}
+      >
+        {isSelected && (
+          <CheckCircle2 size={14} className="text-white" strokeWidth={3} />
+        )}
+      </div>
       {/* Goal color dot */}
       {showGoalColor && (
         <div

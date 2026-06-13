@@ -377,11 +377,20 @@ class ApiClient {
     );
   }
 
-  async delete<TResponse>(url: string, cancelKey?: string): Promise<TResponse> {
-    return this.request<TResponse>("DELETE", url, {
-      cancelKey,
-      cancelPrevious: true,
-    });
+  async delete<TResponse, TData = unknown>(
+    url: string,
+    data?: TData,
+    cancelKey?: string,
+  ): Promise<TResponse> {
+    return this.request<TResponse, Record<string, unknown>, TData>(
+      "DELETE",
+      url,
+      {
+        data,
+        cancelKey,
+        cancelPrevious: true,
+      },
+    );
   }
 }
 
