@@ -52,6 +52,7 @@ export function CalendarDay({
         }
       }}
       onMouseEnter={() => onHover?.(date, events)}
+      type="button"
       disabled={isPast}
       className={`relative w-full aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-all ${
         !isInMonth

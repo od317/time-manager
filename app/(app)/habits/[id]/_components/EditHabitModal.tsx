@@ -7,6 +7,7 @@ import { Habit } from "@/types";
 import { habitService } from "@/lib/services";
 import { ColorPicker } from "@/app/(app)/goals/_components/ColorPicker";
 import { X, AlertTriangle, Save } from "lucide-react";
+import { useDataStore } from "@/store/dataStore";
 
 interface EditHabitModalProps {
   habit: Habit;
@@ -37,7 +38,14 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
         description: description.trim() || undefined,
         color,
       });
-      router.refresh();
+
+      // Update cache
+      useDataStore.getState().updateHabitInCache(habit.id, {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        color,
+      });
+
       onClose();
     } catch {
       setError("Failed to update habit");

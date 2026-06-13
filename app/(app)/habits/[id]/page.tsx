@@ -23,6 +23,7 @@ export default function HabitDetailPage({
   const [habit, setHabit] = useState<Habit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const cachedHabit = useDataStore((s) => (id ? s.getHabit(id) : undefined));
 
   useEffect(() => {
     // Check cache first
@@ -49,6 +50,12 @@ export default function HabitDetailPage({
         }
       });
   }, [id]);
+
+  useEffect(() => {
+    if (cachedHabit && habit) {
+      setHabit(cachedHabit);
+    }
+  }, [cachedHabit]);
 
   if (error)
     return (
