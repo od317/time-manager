@@ -1,7 +1,6 @@
 // app/(app)/habits/[id]/loading.tsx
 
-
-export default function HabitDetailLoad() {
+export default function HabitDetailLoading() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6 animate-fade-in">
       {/* Header skeleton */}

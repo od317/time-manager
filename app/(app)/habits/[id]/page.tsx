@@ -12,6 +12,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { Habit } from "@/types";
 import Link from "next/link";
 import { Repeat, Loader2 } from "lucide-react";
+import HabitDetailLoading from "./_components/HabitDetailLoading";
 
 export default function HabitDetailPage({
   params,
@@ -78,14 +79,7 @@ export default function HabitDetailPage({
       />
     );
 
-  if (loading)
-    return (
-      <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6">
-        <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-primary" />
-        </div>
-      </div>
-    );
+  if (loading) return <HabitDetailLoading />;
 
   if (!habit)
     return (
