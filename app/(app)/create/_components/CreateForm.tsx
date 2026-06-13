@@ -30,6 +30,153 @@ const tabs = [
 
 type DateMode = "start" | "end" | null;
 
+// Extracted DatePickerCard component
+function DatePickerCard({
+  selectedDate,
+  selectedTime,
+  endDate,
+  endTime,
+  dateMode,
+  setDateMode,
+  setSelectedDate,
+  setSelectedTime,
+  setEndDate,
+  setEndTime,
+  formatDisplayTime,
+}: {
+  selectedDate: Date | null;
+  selectedTime: string;
+  endDate: Date | null;
+  endTime: string;
+  dateMode: DateMode;
+  setDateMode: (mode: DateMode) => void;
+  setSelectedDate: (date: Date | null) => void;
+  setSelectedTime: (time: string) => void;
+  setEndDate: (date: Date | null) => void;
+  setEndTime: (time: string) => void;
+  formatDisplayTime: (time: string) => string;
+}) {
+  return (
+    <div className="bg-surface rounded-2xl border border-border shadow-sm p-5 space-y-4">
+      <h3 className="text-sm font-bold text-text flex items-center gap-2">
+        <div className="p-1.5 rounded-lg bg-primary-bg">
+          <CalendarIcon size={16} className="text-primary" />
+        </div>
+        Dates
+      </h3>
+
+      {/* Start Date */}
+      <motion.div whileHover={{ scale: 1.01 }} className="relative">
+        <button
+          onClick={() => setDateMode(dateMode === "start" ? null : "start")}
+          className={`w-full flex items-center gap-4 p-4 pr-12 rounded-xl border-2 transition-all text-left ${
+            dateMode === "start"
+              ? "border-primary bg-primary-bg/50 shadow-sm"
+              : selectedDate
+                ? "border-primary/30 bg-primary-bg/20"
+                : "border-dashed border-border bg-bg hover:border-primary/30 hover:shadow-sm"
+          }`}
+        >
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+              selectedDate || dateMode === "start"
+                ? "bg-primary text-white shadow-md"
+                : "bg-border/50 text-text-muted"
+            }`}
+          >
+            <CalendarIcon size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-text">
+              {dateMode === "start" ? "Selecting start..." : "Start Date"}
+            </p>
+            {selectedDate ? (
+              <p className="text-xs text-primary font-medium mt-1">
+                {format(selectedDate, "MMM d, yyyy")}
+                {selectedTime ? ` · ${formatDisplayTime(selectedTime)}` : ""}
+              </p>
+            ) : (
+              <p className="text-xs text-text-muted mt-1">Required</p>
+            )}
+          </div>
+        </button>
+        {selectedDate && dateMode !== "start" && (
+          <button
+            onClick={() => {
+              setSelectedDate(null);
+              setSelectedTime("");
+            }}
+            className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
+          >
+            ✕
+          </button>
+        )}
+      </motion.div>
+
+      {/* End Date */}
+      <motion.div whileHover={{ scale: 1.01 }} className="relative">
+        <button
+          onClick={() => setDateMode(dateMode === "end" ? null : "end")}
+          className={`w-full flex items-center gap-4 p-4 pr-12 rounded-xl border-2 transition-all text-left ${
+            dateMode === "end"
+              ? "border-primary bg-primary-bg/50 shadow-sm"
+              : endDate
+                ? "border-primary/30 bg-primary-bg/20"
+                : "border-dashed border-border bg-bg hover:border-primary/30 hover:shadow-sm"
+          }`}
+        >
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+              endDate || dateMode === "end"
+                ? "bg-primary text-white shadow-md"
+                : "bg-border/50 text-text-muted"
+            }`}
+          >
+            <CalendarIcon size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-text">
+              {dateMode === "end" ? "Selecting end..." : "End Date"}
+            </p>
+            {endDate ? (
+              <p className="text-xs text-primary font-medium mt-1">
+                {format(endDate, "MMM d, yyyy")}
+                {endTime ? ` · ${formatDisplayTime(endTime)}` : ""}
+              </p>
+            ) : (
+              <p className="text-xs text-text-muted mt-1">Optional deadline</p>
+            )}
+          </div>
+        </button>
+        {endDate && dateMode !== "end" && (
+          <button
+            onClick={() => {
+              setEndDate(null);
+              setEndTime("");
+            }}
+            className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
+          >
+            ✕
+          </button>
+        )}
+      </motion.div>
+
+      {dateMode && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 bg-warning-bg/50 border border-warning/20 rounded-xl"
+        >
+          <Clock size={14} className="text-warning" />
+          <p className="text-xs text-warning font-semibold">
+            Click a day for {dateMode === "start" ? "start" : "end"} date
+          </p>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 export function CreateForm({}) {
   const params = useSearchParams();
   const tab = params.get("tab") as CreateType;
@@ -128,6 +275,31 @@ export function CreateForm({}) {
           </p>
         </motion.div>
 
+        {/* Calendar - Visible on mobile, before the form */}
+        {activeTab === "goal" && (
+          <div className="lg:hidden space-y-6">
+            <DatePickerCard
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              endDate={endDate}
+              endTime={endTime}
+              dateMode={dateMode}
+              setDateMode={setDateMode}
+              setSelectedDate={setSelectedDate}
+              setSelectedTime={setSelectedTime}
+              setEndDate={setEndDate}
+              setEndTime={setEndTime}
+              formatDisplayTime={formatDisplayTime}
+            />
+            <Calendar
+              selectedDate={getActiveDate()}
+              onDateSelect={handleDateSelect}
+              showTimePicker={!!dateMode && !!getActiveDate()}
+              onTimeSelect={handleTimeSelect}
+            />
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {activeTab === "goal" && (
             <motion.div
@@ -160,140 +332,27 @@ export function CreateForm({}) {
         </AnimatePresence>
       </div>
 
-      {/* Right Sidebar - Only for goals */}
+      {/* Right Sidebar - Only for goals on desktop */}
       {activeTab === "goal" && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="space-y-6"
+          className="hidden lg:block space-y-6"
         >
-          {/* Date Picker Card */}
-          <div className="bg-surface rounded-2xl border border-border shadow-sm p-5 space-y-4">
-            <h3 className="text-sm font-bold text-text flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary-bg">
-                <CalendarIcon size={16} className="text-primary" />
-              </div>
-              Dates
-            </h3>
-
-            {/* Start Date */}
-            <motion.div whileHover={{ scale: 1.01 }} className="relative">
-              <button
-                onClick={() =>
-                  setDateMode(dateMode === "start" ? null : "start")
-                }
-                className={`w-full flex items-center gap-4 p-4 pr-12 rounded-xl border-2 transition-all text-left ${
-                  dateMode === "start"
-                    ? "border-primary bg-primary-bg/50 shadow-sm"
-                    : selectedDate
-                      ? "border-primary/30 bg-primary-bg/20"
-                      : "border-dashed border-border bg-bg hover:border-primary/30 hover:shadow-sm"
-                }`}
-              >
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
-                    selectedDate || dateMode === "start"
-                      ? "bg-primary text-white shadow-md"
-                      : "bg-border/50 text-text-muted"
-                  }`}
-                >
-                  <CalendarIcon size={22} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-text">
-                    {dateMode === "start" ? "Selecting start..." : "Start Date"}
-                  </p>
-                  {selectedDate ? (
-                    <p className="text-xs text-primary font-medium mt-1">
-                      {format(selectedDate, "MMM d, yyyy")}
-                      {selectedTime
-                        ? ` · ${formatDisplayTime(selectedTime)}`
-                        : ""}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-text-muted mt-1">Required</p>
-                  )}
-                </div>
-              </button>
-              {selectedDate && dateMode !== "start" && (
-                <button
-                  onClick={() => {
-                    setSelectedDate(null);
-                    setSelectedTime("");
-                  }}
-                  className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
-                >
-                  ✕
-                </button>
-              )}
-            </motion.div>
-
-            {/* End Date */}
-            <motion.div whileHover={{ scale: 1.01 }} className="relative">
-              <button
-                onClick={() => setDateMode(dateMode === "end" ? null : "end")}
-                className={`w-full flex items-center gap-4 p-4 pr-12 rounded-xl border-2 transition-all text-left ${
-                  dateMode === "end"
-                    ? "border-primary bg-primary-bg/50 shadow-sm"
-                    : endDate
-                      ? "border-primary/30 bg-primary-bg/20"
-                      : "border-dashed border-border bg-bg hover:border-primary/30 hover:shadow-sm"
-                }`}
-              >
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
-                    endDate || dateMode === "end"
-                      ? "bg-primary text-white shadow-md"
-                      : "bg-border/50 text-text-muted"
-                  }`}
-                >
-                  <CalendarIcon size={22} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-text">
-                    {dateMode === "end" ? "Selecting end..." : "End Date"}
-                  </p>
-                  {endDate ? (
-                    <p className="text-xs text-primary font-medium mt-1">
-                      {format(endDate, "MMM d, yyyy")}
-                      {endTime ? ` · ${formatDisplayTime(endTime)}` : ""}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-text-muted mt-1">
-                      Optional deadline
-                    </p>
-                  )}
-                </div>
-              </button>
-              {endDate && dateMode !== "end" && (
-                <button
-                  onClick={() => {
-                    setEndDate(null);
-                    setEndTime("");
-                  }}
-                  className="absolute top-3 right-3 text-xs text-text-muted hover:text-danger p-1.5 rounded-lg hover:bg-danger-bg transition-all"
-                >
-                  ✕
-                </button>
-              )}
-            </motion.div>
-
-            {dateMode && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 p-3 bg-warning-bg/50 border border-warning/20 rounded-xl"
-              >
-                <Clock size={14} className="text-warning" />
-                <p className="text-xs text-warning font-semibold">
-                  Click a day for {dateMode === "start" ? "start" : "end"} date
-                </p>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Calendar with conflict detection */}
+          <DatePickerCard
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            endDate={endDate}
+            endTime={endTime}
+            dateMode={dateMode}
+            setDateMode={setDateMode}
+            setSelectedDate={setSelectedDate}
+            setSelectedTime={setSelectedTime}
+            setEndDate={setEndDate}
+            setEndTime={setEndTime}
+            formatDisplayTime={formatDisplayTime}
+          />
           <Calendar
             selectedDate={getActiveDate()}
             onDateSelect={handleDateSelect}
