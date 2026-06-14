@@ -149,32 +149,6 @@ export function GoalFormSection({
       onSubmit={handleSubmit}
       className="bg-surface rounded-2xl border border-border shadow-sm p-6 space-y-6"
     >
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
-          >
-            <AlertTriangle size={16} />
-            {error}
-          </motion.div>
-        )}
-
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-success-bg text-success border border-success/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
-          >
-            <CheckCircle size={16} />
-            Goal created successfully!
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Title */}
       <div>
         <label className="block text-sm font-bold text-text mb-2">
@@ -394,6 +368,32 @@ export function GoalFormSection({
         selectedDate={selectedDate}
         selectedTime={selectedTime ? formatDisplayTime(selectedTime) : ""}
       />
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-danger-bg text-danger border border-danger/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
+          >
+            <AlertTriangle size={16} />
+            {error}
+          </motion.div>
+        )}
+
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-success-bg text-success border border-success/20 rounded-xl p-4 text-sm font-medium flex items-center gap-2"
+          >
+            <CheckCircle size={16} />
+            Goal created successfully!
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Buttons */}
       <div className="flex gap-3 pt-4 border-t-2 border-border">
