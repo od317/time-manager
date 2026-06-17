@@ -2,7 +2,6 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import { setUserTimezone } from "@/lib/dateUtils";
 import { useTimezone } from "@/hooks/useTimezone";
 import { useGoalProgressSync } from "@/hooks/useGoalProgressSync";
 

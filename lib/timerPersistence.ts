@@ -1,6 +1,6 @@
 // lib/timerPersistence.ts
 
-const STORAGE_KEY = "timer-session";
+export const STORAGE_KEY = "timer-session";
 
 const POMODORO_CONFIG_KEY = "pomodoro-config";
 
@@ -38,12 +38,14 @@ export interface PersistedTimerState {
     startTime: number;
     endTime: number | null;
     color: string;
+    duration: number;
   }[];
   timerMode: string;
   pomodoroPhase: string | null;
   pomodoroSessionsCompleted: number;
   pomodoroTimeLeft: number | null;
   savedAt: number;
+  totalTime: number;
 }
 
 export function buildPersistedState(state: any, runningTimerId: string | null) {
@@ -61,12 +63,14 @@ export function buildPersistedState(state: any, runningTimerId: string | null) {
     pomodoroPhase: state.pomodoroState?.phase || null,
     pomodoroSessionsCompleted: state.pomodoroState?.sessionsCompleted || 0,
     pomodoroTimeLeft: state.pomodoroState?.timeLeftInPhase || null,
+    totalTime: state.totalTime,
     savedAt: Date.now(),
   };
 }
 
 export function saveTimerState(state: PersistedTimerState) {
   try {
+    console.log("saving timerstate");
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -115,6 +119,7 @@ export function clearTimerState() {
 export function addPendingSimpleEntries(entries: PendingSimpleEntry[]) {
   try {
     const existing = loadPendingSimpleEntries();
+    console.log("adding pending entries");
     localStorage.setItem(
       SIMPLE_PENDING_KEY,
       JSON.stringify([...existing, ...entries]),

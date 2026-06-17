@@ -1,6 +1,6 @@
 "use client";
 
-import { Goal, Task, TimeEntry } from "@/types";
+import { Goal, Task } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/store/timerStore";
 import { useTaskStore } from "@/store/taskStore";
@@ -27,7 +27,7 @@ interface TodayTimerProps {
 
 export function TodayTimer({ goals }: TodayTimerProps) {
   const store = useTimerStore();
-  const { runningTimer, elapsed, isLoading, timerMode, selectedTask } = store;
+  const { runningTimer, totalTime, isLoading, timerMode, selectedTask } = store;
   const { markComplete } = useTaskStore();
   const hasSelection = useTimerStore((s) => s.selectedTask !== null);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -79,7 +79,7 @@ export function TodayTimer({ goals }: TodayTimerProps) {
               <span
                 className={`text-7xl font-mono font-bold tabular-nums tracking-tight ${isRunning ? "text-primary" : isPaused ? "text-warning" : "text-text"}`}
               >
-                {formatTime(elapsed)}
+                {formatTime(totalTime)}
               </span>
               {isRunning && (
                 <motion.div

@@ -52,14 +52,6 @@ export function SessionHistory() {
     setIsOpen(!isOpen);
   };
 
-  const getEntryDuration = (entry: {
-    startTime: number;
-    endTime: number | null;
-  }): number => {
-    const end = entry.endTime ?? now;
-    return Math.max(0, Math.floor((end - entry.startTime) / 1000));
-  };
-
   const groupHistory = () => {
     const grouped = new Map<
       string,
@@ -74,7 +66,7 @@ export function SessionHistory() {
 
     sessionHistory.forEach((entry) => {
       const existing = grouped.get(entry.taskId);
-      const duration = getEntryDuration(entry);
+      const duration = entry.duration;
 
       if (existing) {
         existing.totalDuration += duration;

@@ -28,12 +28,7 @@ export function useGoalProgressSync() {
         // Get data from the store instead of backend
         const state = useTimerStore.getState();
         const selectedTask = state.selectedTask;
-        const elapsed =
-          state.sessionHistory.reduce(
-            (sum, entry) =>
-              sum + ((entry.endTime || Date.now()) - entry.startTime),
-            0,
-          ) / 1000;
+        const elapsed = state.totalTime;
 
         const goalId = selectedTask?.goalId;
 

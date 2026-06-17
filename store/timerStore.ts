@@ -15,6 +15,7 @@ import {
   clearPendingSimpleEntries,
   loadPendingSimpleEntries,
   addPendingSimpleEntries,
+  STORAGE_KEY,
 } from "@/lib/timerPersistence";
 
 import {
@@ -26,7 +27,6 @@ import {
   loadPendingSessions,
   clearPendingSessions,
   type PomodoroSessionData,
-  MAX_RECOVERY_GAP_MS,
 } from "@/lib/pomodoroPersistence";
 import { timerStateService } from "@/lib/services/timerStateService";
 
@@ -53,6 +53,7 @@ interface TimerSessionEntry {
   startTime: number;
   endTime: number | null;
   color: string;
+  duration: number;
 }
 
 interface TimerState {
@@ -60,7 +61,7 @@ interface TimerState {
   runningTimer: TimeEntry | null;
   elapsed: number;
   syncInterval: NodeJS.Timeout | null;
-
+  totalTime: number;
   selectedPreset: string;
   isLoading: boolean;
   selectedTask: Task | null;
@@ -71,7 +72,6 @@ interface TimerState {
   sessionStartTime: number | null;
   accumulatedBeforePause: number;
   sessionHistory: TimerSessionEntry[];
-
   // Pomodoro specific
   pomodoroConfig: PomodoroConfig;
   pomodoroState: PomodoroState | null;
@@ -86,7 +86,7 @@ interface TimerState {
   clearSelection: () => void;
   clearLastStopped: () => void;
   setTimerMode: (mode: TimerMode) => void;
-
+  increaseDuration: () => void;
   // Simple Timer actions
   start: (note?: string) => Promise<void>;
   stop: () => Promise<void>;
@@ -144,6 +144,7 @@ function buildPersistedState(state: TimerState, runningTimerId: string | null) {
     pomodoroPhase: state.pomodoroState?.phase || null,
     pomodoroSessionsCompleted: state.pomodoroState?.sessionsCompleted || 0,
     pomodoroTimeLeft: state.pomodoroState?.timeLeftInPhase || null,
+    totalTime: state.totalTime,
     savedAt: Date.now(),
   };
 }
@@ -156,6 +157,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   // Initial state
   runningTimer: null,
   elapsed: 0,
+  totalTime: 0,
   syncInterval: null,
   selectedPreset: "classic",
   isLoading: false,
@@ -163,7 +165,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   selectedGoal: null,
   lastStoppedId: null,
   currentTaskStartTime: null,
-  timerMode: "SIMPLE",
+  timerMode: "SIMPLE" as TimerMode,
   sessionStartTime: null,
   accumulatedBeforePause: 0,
   sessionHistory: [],
@@ -301,6 +303,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
               elapsed: state.accumulatedBeforePause || 0,
               sessionHistory: state.sessionHistory || [],
               timerMode: "SIMPLE",
+              totalTime: state.totalTime || 0,
             });
             return;
           }
@@ -347,6 +350,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       elapsed: persisted.accumulatedBeforePause || 0,
       sessionHistory: persisted.sessionHistory || [],
       timerMode: "SIMPLE",
+      totalTime: persisted.totalTime || 0,
     });
   },
 
@@ -372,6 +376,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       accumulatedBeforePause: 0,
       recoveredPomodoro: false,
       isPomodoroPaused: false,
+      totalTime: 0,
     });
   },
 
@@ -457,6 +462,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
           startTime: now,
           endTime: now, // Will update when phase completes
           color: selectedTask.color || "#6366F1",
+          duration: 0,
         },
       ],
       lastActiveAt: now,
@@ -483,6 +489,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
           startTime: now,
           endTime: null,
           color: selectedTask.color || "#6366F1",
+          duration: 0,
         },
       ],
       recoveredPomodoro: false,
@@ -595,6 +602,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
           startTime: now,
           endTime: now,
           color: currentTask.color || "#6366F1",
+          duration: 0,
         });
       }
     }
@@ -710,13 +718,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
   setSelectedTask: async (task) => {
     const state = get();
-    const {
-      runningTimer,
-      timerMode,
-      pomodoroState,
-      sessionStartTime,
-      pomodoroConfig,
-    } = state;
+    const { runningTimer, timerMode, pomodoroState, sessionStartTime } = state;
     const currentTask = state.selectedTask;
     const now = Date.now();
 
@@ -817,6 +819,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         startTime: now,
         endTime: now,
         color: task.color || "#6366F1",
+        duration: 0,
       });
 
       savePomodoroSession(data);
@@ -862,6 +865,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
               startTime: now,
               endTime: null,
               color: task.color || "#6366F1",
+              duration: 0,
             },
           ]
         : updatedHistory;
@@ -897,6 +901,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
               startTime: now,
               endTime: null,
               color: task.color || "#6366F1",
+              duration: 0,
             },
           ]
         : updatedHistory;
@@ -956,9 +961,11 @@ export const useTimerStore = create<TimerState>((set, get) => ({
           startTime: now,
           endTime: null,
           color: selectedTask.color || "#6366F1",
+          duration: 0,
         },
       ],
       pomodoroState: null,
+      totalTime: 0,
     });
 
     const state = get();
@@ -990,7 +997,6 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   stop: async () => {
     const { runningTimer, sessionHistory, syncInterval } = get();
     if (!runningTimer) return;
-
     const now = Date.now();
     const timerId = runningTimer.id;
 
@@ -1003,10 +1009,9 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     // Build entries for bulk log
     const entries = finalHistory
       .map((entry) => {
-        const duration = Math.ceil((entry.endTime! - entry.startTime) / 1000);
         return {
           taskId: entry.taskId,
-          duration,
+          duration: entry.duration,
           startTime: new Date(entry.startTime).toISOString(),
           note: entry.taskTitle,
         };
@@ -1041,18 +1046,15 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       sessionHistory: [],
       lastStoppedId: timerId,
       syncInterval: null,
+      totalTime: 0,
     });
   },
 
   pause: () => {
-    const { runningTimer, sessionStartTime, accumulatedBeforePause } = get();
+    const { runningTimer, accumulatedBeforePause, totalTime } = get();
     if (!runningTimer) return;
 
-    const now = Date.now();
-    const currentElapsed = sessionStartTime
-      ? Math.floor((now - sessionStartTime) / 1000)
-      : 0;
-    const totalElapsed = accumulatedBeforePause + currentElapsed;
+    const totalElapsed = totalTime;
 
     set({
       accumulatedBeforePause: totalElapsed,
@@ -1088,5 +1090,18 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       })
       .catch(() => {});
     saveTimerState(buildPersistedState(state, state.runningTimer?.id || null));
+  },
+
+  increaseDuration: () => {
+    const { sessionHistory, totalTime, runningTimer } = get();
+    if (!runningTimer) return;
+    if (!sessionHistory.length) return;
+    const last = sessionHistory.length - 1;
+    const lastItem = sessionHistory[last];
+    if (!lastItem) return;
+    const udpatedList = [...sessionHistory];
+    udpatedList[last] = { ...lastItem, duration: lastItem.duration + 1 };
+    set({ sessionHistory: udpatedList, totalTime: totalTime + 1 });
+    saveTimerState(buildPersistedState(get(), runningTimer!.id));
   },
 }));

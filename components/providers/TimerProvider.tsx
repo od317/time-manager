@@ -2,11 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useTimerStore } from "@/store/timerStore";
-import {
-  saveTimerState,
-  buildPersistedState,
-  loadTimerState,
-} from "@/lib/timerPersistence";
+import { loadTimerState } from "@/lib/timerPersistence";
 import {
   loadPomodoroSession,
   savePomodoroSession,
@@ -27,6 +23,8 @@ export function TimerProvider() {
         timerMode,
         pomodoroState,
         isPomodoroPaused,
+        totalTime,
+        increaseDuration,
       } = state;
 
       // Simple timer tick
@@ -35,11 +33,9 @@ export function TimerProvider() {
         runningTimer?.status === "RUNNING" &&
         sessionStartTime
       ) {
-        const currentElapsed = Math.floor(
-          (Date.now() - sessionStartTime) / 1000,
-        );
-        const totalElapsed = accumulatedBeforePause + currentElapsed;
+        const totalElapsed = totalTime;
         useTimerStore.setState({ elapsed: totalElapsed });
+        increaseDuration();
       }
 
       // Pomodoro tick
@@ -71,7 +67,6 @@ export function TimerProvider() {
         }
       }
     };
-
     intervalRef.current = setInterval(tick, 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -168,6 +163,7 @@ export function TimerProvider() {
           : null,
         timerMode: "SIMPLE" as TimerMode,
         sessionHistory: persisted.sessionHistory || [],
+        totalTime: persisted.totalTime || 0,
       });
     }
   }, []);

@@ -54,11 +54,13 @@ export interface PomodoroSessionData {
     startTime: number;
     endTime: number;
     color: string;
+    duration: number;
   }[];
 
   // Timestamp for expiry
   lastActiveAt: number;
   createdAt: number;
+  
 }
 
 export function savePomodoroSession(data: PomodoroSessionData) {

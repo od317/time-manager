@@ -5,7 +5,7 @@ import { useTimerStore } from "@/store/timerStore";
 
 export function TimerTitle() {
   const runningTimer = useTimerStore((state) => state.runningTimer);
-
+  const increaseDuration = useTimerStore((state) => state.increaseDuration);
   useEffect(() => {
     if (runningTimer?.status !== "RUNNING" || !runningTimer.startTime) {
       document.title = "TimeFlow";
@@ -25,6 +25,7 @@ export function TimerTitle() {
     };
 
     const updateTitle = () => {
+      increaseDuration();
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       document.title = `⏱ ${formatTime(elapsed)} - TimeFlow`;
     };
