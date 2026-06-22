@@ -36,5 +36,8 @@ export const goalService = {
   reorder: (data: ReorderPayload) =>
     api.put<void, ReorderPayload>("/goals/reorder", data, "goal:reorder"),
 
+  getTimeSpent: (id: string) =>
+    api.get<{ totalTimeSpent: number }>(`/goals/${id}/time`),
+
   getStats: (id: string) => api.get<GoalStats>(`/goals/${id}/stats`),
 };

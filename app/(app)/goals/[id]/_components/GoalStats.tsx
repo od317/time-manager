@@ -1,3 +1,4 @@
+// In GoalStats.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -6,8 +7,9 @@ import { motion } from "framer-motion";
 import { Goal } from "@/types";
 import { goalService } from "@/lib/services";
 import { useTimerStore } from "@/store/timerStore";
-import { CheckCircle2, Clock, ListTodo, Timer, Target } from "lucide-react";
+import { CheckCircle2, ListTodo, Target } from "lucide-react";
 import { useTaskStore } from "@/store/taskStore";
+import { TimeSpent } from "./TimeSpent";
 
 interface GoalStatsProps {
   goal: Goal;
@@ -40,7 +42,6 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
   const completedTasks = tasks.filter(
     (t) => t.status === "COMPLETED" || localCompletedIds.has(t.id),
   ).length;
-  const totalTimeSpent = goal.totalTimeSpent || 0;
 
   const fetchGoal = useCallback(async () => {
     try {
@@ -67,14 +68,6 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
     return () => window.removeEventListener("focus", handleFocus);
   }, [fetchGoal]);
 
-  const formatDuration = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    if (minutes > 0) return `${minutes}m`;
-    return `${seconds}s`;
-  };
-
   const stats = [
     {
       label: "Tasks",
@@ -87,15 +80,7 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
       color: "text-primary",
       bg: "bg-primary-bg",
       border: "border-primary/20",
-    },
-    {
-      label: "Time Spent",
-      value: formatDuration(totalTimeSpent),
-      subtext: "Tracked time",
-      icon: Timer,
-      color: "text-success",
-      bg: "bg-success-bg",
-      border: "border-success/20",
+      hoverBorder: "hover:border-primary/20",
     },
     {
       label: "Completion",
@@ -108,6 +93,7 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
       color: "text-warning",
       bg: "bg-warning-bg",
       border: "border-warning/20",
+      hoverBorder: "hover:border-warning/20",
     },
     {
       label: "Sub-goals",
@@ -117,6 +103,7 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
       color: "text-info",
       bg: "bg-info-bg",
       border: "border-info/20",
+      hoverBorder: "hover:border-info/20",
     },
   ];
 
@@ -150,7 +137,7 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
             variants={item}
             whileHover={{ y: -2, scale: 1.02 }}
             transition={{ duration: 0.2 }}
-            className="bg-surface rounded-2xl border-2 border-border p-5 hover:shadow-lg hover:border-primary/20 transition-all group"
+            className={`bg-surface rounded-2xl border-2 border-border p-5 hover:shadow-lg ${stat.hoverBorder} transition-all group`}
           >
             <div
               className={`w-10 h-10 rounded-xl ${stat.bg} border ${stat.border} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
@@ -172,6 +159,12 @@ export function GoalStats({ goal: initialGoal }: GoalStatsProps) {
           </motion.div>
         );
       })}
+
+      {/* TimeSpent component - takes the 4th slot */}
+      <TimeSpent
+        goalId={goal.id}
+        initialTotalTimeSpent={goal.totalTimeSpent!}
+      />
     </motion.div>
   );
 }
